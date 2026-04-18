@@ -190,7 +190,10 @@ async def stream_decision(
                 # Oracle stream ended without a terminal event.
                 state.final_status = "provider_error"
                 state.error_message = "oracle stream ended without a terminal event"
-            yield _sse("done", {"status": state.final_status})
+            yield _sse(
+                "done",
+                {"status": state.final_status, "error_message": state.error_message},
+            )
         except asyncio.CancelledError:
             state.final_status = "cancelled"
             raise
@@ -198,7 +201,14 @@ async def stream_decision(
             state.final_status = "provider_error"
             state.error_message = f"{type(exc).__name__}: {exc}"
             with contextlib.suppress(Exception):
-                yield _sse("done", {"status": state.final_status})
+                yield _sse(
+                    "oracle_error",
+                    {"kind": "provider_error", "message": state.error_message},
+                )
+                yield _sse(
+                    "done",
+                    {"status": state.final_status, "error_message": state.error_message},
+                )
         finally:
             _finalize(engine, decision_id, state, started_at)
 

@@ -79,10 +79,14 @@ export function useAdviceStream(): {
                 errorMessage: payload.message ?? "oracle error",
               }));
             } else if (msg.event === "done") {
+              const terminal = payload.status ?? "ok";
+              const isError = terminal !== "ok" && terminal !== "cancelled";
               setState((s) => ({
                 ...s,
-                status: s.status === "error" ? "error" : "done",
-                terminalStatus: payload.status ?? "ok",
+                status: isError || s.status === "error" ? "error" : "done",
+                terminalStatus: terminal,
+                errorMessage:
+                  s.errorMessage ?? (isError ? (payload.error_message ?? terminal) : null),
               }));
             }
           } catch (err) {
