@@ -4,7 +4,9 @@ import { Pot } from "./Pot";
 import { Seat } from "./Seat";
 
 export function PokerTable({ state }: { state: GameState }) {
-  const showVillainHole = state.street === "showdown" || state.street === "complete";
+  const showVillainHole =
+    state.pending_reveal === null &&
+    (state.street === "showdown" || state.street === "complete");
   const potBb = state.pot / state.bb;
   const committedBb = (state.committed.hero + state.committed.villain) / state.bb;
   const streetLabel = state.street.charAt(0).toUpperCase() + state.street.slice(1);
