@@ -17,5 +17,13 @@ def test_system_prompt_documents_confidence_mapping() -> None:
     assert "`low`" in SYSTEM_PROMPT
 
 
-def test_system_prompt_reasoning_budget_is_150_words() -> None:
-    assert "150 words" in SYSTEM_PROMPT or "<=150" in SYSTEM_PROMPT
+def test_system_prompt_reasoning_budget_is_two_sentences() -> None:
+    assert "2 sentences" in SYSTEM_PROMPT
+    assert "40-60 words" in SYSTEM_PROMPT
+
+
+def test_system_prompt_forbids_markdown_in_reasoning() -> None:
+    # The output contract must explicitly ban the formatting that made v2's
+    # first batch of advice hard to scan (headers, bold, bullets).
+    assert "No headers" in SYSTEM_PROMPT
+    assert "no markdown" in SYSTEM_PROMPT

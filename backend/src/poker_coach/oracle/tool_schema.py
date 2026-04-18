@@ -19,9 +19,10 @@ TOOL_DESCRIPTION = (
     "Submit the final recommendation for the hero's action. Call this exactly once "
     "when you have a conclusion. action must be one of the legal types the prompt "
     "listed; to_amount_bb is required for bet and raise, omitted otherwise; "
-    "reasoning is a structured (<=150 word) explanation following the "
-    "frame/decision/plan format described in the system prompt; confidence "
-    "reflects mix closeness (high = dominant, medium = close, low = borderline)."
+    "reasoning is plain prose, exactly 2 sentences, 40-60 words total, no headers "
+    "or markdown (sentence 1 = action + key reason; sentence 2 = next-street plan "
+    "or tie-break exploit); confidence reflects mix closeness (high = dominant, "
+    "medium = close, low = borderline)."
 )
 
 _ACTION_ENUM = ["fold", "check", "call", "bet", "raise", "allin"]

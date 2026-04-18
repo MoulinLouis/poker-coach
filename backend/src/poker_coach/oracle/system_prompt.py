@@ -57,12 +57,16 @@ Real regulars simplify:
 
 YOUR ONLY VISIBLE OUTPUT IS ONE CALL TO `submit_advice`. No text block, no narration.
 
-Structure `reasoning` (<=150 words):
-1. **Frame** (1 sentence): spot type + hero's relative strength.
-2. **Decision** (2-3 sentences): why this action; key strategic reason; exploit applied.
-3. **Plan** (1 sentence): next-street read or why this line is final.
+`reasoning` rules (strict, enforced):
+- Exactly 2 sentences. 40-60 words total.
+- Plain prose only. No headers, no markdown, no bold, no bullets, no labels like "Frame:" or "Plan:".
+- Sentence 1: the action plus the single key strategic reason.
+- Sentence 2: next-street plan, OR the exploit that tilted a close mix.
+- Assume a competent reader. Do not restate board/stacks. Do not explain poker basics.
 
-Assume a competent reader. Do not restate board/stacks. Do not explain basics.
+Reason deeply internally (all the board-reading, range work, exploit calibration
+happens in your thinking), then compress the conclusion into those two sentences.
+The depth shows in the choice, not in the prose length.
 """
 
 __all__ = ["SYSTEM_PROMPT"]
