@@ -47,9 +47,7 @@ def test_translate_to_french_returns_translation_and_cost(
     sample_pricing: PricingSnapshot,
 ) -> None:
     client = _FakeClient(_fake_message("Coucou le monde", input_tokens=50, output_tokens=10))
-    result = asyncio.run(
-        translate_to_french("Hello world", client=client, pricing=sample_pricing)
-    )
+    result = asyncio.run(translate_to_french("Hello world", client=client, pricing=sample_pricing))
     assert result.translation == "Coucou le monde"
     # Haiku test pricing: $1/Mtok input, $5/Mtok output.
     # 50 * 1/1e6 + 10 * 5/1e6 = 5e-5 + 5e-5 = 1e-4
