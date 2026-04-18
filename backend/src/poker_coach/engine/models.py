@@ -64,6 +64,8 @@ class GameState(BaseModel):
     history: list[Action] = Field(default_factory=list)
     rng_seed: int | None = None
     deck_snapshot: list[str] | None = None
+    pending_reveal: Literal["flop", "turn", "river", "runout"] | None = None
+    reveals: list[list[str]] = Field(default_factory=list)
 
 
 def other_seat(seat: Seat) -> Seat:
