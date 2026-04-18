@@ -248,6 +248,7 @@ export function LiveCoach() {
             <PokerTable state={snapshot.state} />
             {!handComplete && snapshot.state.to_act && (
               <ActionBar
+                key={`${snapshot.state.hand_id}:${snapshot.state.history.length}:${snapshot.state.to_act}`}
                 state={snapshot.state}
                 legal={snapshot.legal_actions}
                 actor={snapshot.state.to_act}
