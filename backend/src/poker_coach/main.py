@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import anthropic
+import openai
 
 from poker_coach.api.app import create_app
 from poker_coach.api.oracle_factory import DefaultOracleFactory
@@ -14,9 +15,13 @@ def _build_oracle_factory() -> DefaultOracleFactory:
     anthropic_client: anthropic.AsyncAnthropic | None = None
     if settings.anthropic_api_key:
         anthropic_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    openai_client: openai.AsyncOpenAI | None = None
+    if settings.openai_api_key:
+        openai_client = openai.AsyncOpenAI(api_key=settings.openai_api_key)
     return DefaultOracleFactory(
         pricing=default_pricing(),
         anthropic_client=anthropic_client,
+        openai_client=openai_client,
     )
 
 
