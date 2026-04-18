@@ -11,6 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict
 
 from poker_coach.engine.models import Action, GameState
+from poker_coach.prompts.context import VillainProfile
 
 
 class CreateSessionRequest(BaseModel):
@@ -42,6 +43,7 @@ class CreateDecisionRequest(BaseModel):
     prompt_version: str
     game_state: GameState
     retry_of: str | None = None
+    villain_profile: VillainProfile = "unknown"
 
 
 class CreateDecisionResponse(BaseModel):

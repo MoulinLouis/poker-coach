@@ -38,7 +38,12 @@ class FakeOracle:
     def __init__(self, events: list[OracleEvent]) -> None:
         self._events = events
 
-    async def advise_stream(self, rendered: Any, spec: ModelSpec) -> AsyncIterator[OracleEvent]:
+    async def advise_stream(
+        self,
+        rendered: Any,
+        spec: ModelSpec,
+        system_prompt: str | None = None,
+    ) -> AsyncIterator[OracleEvent]:
         for event in self._events:
             yield event
 
@@ -375,3 +380,61 @@ def test_latency_ms_is_reasonable(app_with_factory: Any, migrated_engine: Engine
     # Logged latency should be <= actual wall time and non-negative.
     assert latency is not None
     assert 0 <= latency <= wall + 100  # some headroom for scheduling jitter
+
+
+def test_v2_decision_persists_villain_profile_and_system_prompt(
+    app_with_factory: Any, migrated_engine: Engine
+) -> None:
+    with TestClient(app_with_factory) as client:
+        session_id = client.post("/api/sessions", json={"mode": "live"}).json()["session_id"]
+        hand_id = client.post(
+            "/api/hands",
+            json={"session_id": session_id, "bb": 100, "effective_stack_start": 10_000},
+        ).json()["hand_id"]
+
+        resp = client.post(
+            "/api/decisions",
+            json={
+                "session_id": session_id,
+                "hand_id": hand_id,
+                "model_preset": "claude-opus-4-7-deep",
+                "prompt_name": "coach",
+                "prompt_version": "v2",
+                "game_state": _sample_game_state(),
+                "villain_profile": "reg",
+            },
+        )
+        assert resp.status_code == 200
+        decision_id = resp.json()["decision_id"]
+
+        with migrated_engine.connect() as conn:
+            row = conn.execute(
+                select(
+                    decisions.c.villain_profile,
+                    decisions.c.system_prompt,
+                    decisions.c.system_prompt_hash,
+                    decisions.c.rendered_prompt,
+                ).where(decisions.c.decision_id == decision_id)
+            ).one()
+        assert row.villain_profile == "reg"
+        assert row.system_prompt is not None
+        assert "solid human regular" in row.system_prompt
+        assert len(row.system_prompt_hash) == 64
+        assert "reg" in row.rendered_prompt
+
+
+def test_v2_decision_rejects_invalid_villain_profile(app_with_factory: Any) -> None:
+    with TestClient(app_with_factory) as client:
+        session_id = client.post("/api/sessions", json={"mode": "spot"}).json()["session_id"]
+        resp = client.post(
+            "/api/decisions",
+            json={
+                "session_id": session_id,
+                "model_preset": "claude-opus-4-7-deep",
+                "prompt_name": "coach",
+                "prompt_version": "v2",
+                "game_state": _sample_game_state(),
+                "villain_profile": "whale",
+            },
+        )
+        assert resp.status_code == 422

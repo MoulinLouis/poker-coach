@@ -126,6 +126,7 @@ async def stream_decision(
                 decisions.c.variables,
                 decisions.c.provider,
                 decisions.c.model_id,
+                decisions.c.system_prompt,
             ).where(decisions.c.decision_id == decision_id)
         ).one()
 
@@ -150,7 +151,9 @@ async def stream_decision(
         started_at = datetime.now(UTC)
         try:
             oracle = oracle_factory.for_spec(spec)
-            async for event in oracle.advise_stream(rendered, spec):
+            async for event in oracle.advise_stream(
+                rendered, spec, system_prompt=row.system_prompt
+            ):
                 if isinstance(event, ReasoningDelta):
                     yield _sse("reasoning_delta", {"text": event.text})
                 elif isinstance(event, ReasoningComplete):

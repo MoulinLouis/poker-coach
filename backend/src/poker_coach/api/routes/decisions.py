@@ -7,6 +7,7 @@ actually happens when the SSE stream endpoint is opened (see stream.py).
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,7 @@ from poker_coach.api.schemas import CreateDecisionRequest, CreateDecisionRespons
 from poker_coach.db.tables import decisions, hands, sessions
 from poker_coach.ids import new_id
 from poker_coach.oracle.presets import MODEL_PRESETS
+from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
 from poker_coach.prompts.context import state_to_coach_variables
 from poker_coach.prompts.renderer import PromptRenderer
 
@@ -35,6 +37,7 @@ class DecisionListRow(BaseModel):
     model_id: str
     prompt_name: str
     prompt_version: str
+    villain_profile: str
     status: str
     parsed_advice: dict[str, Any] | None
     cost_usd: float | None
@@ -46,6 +49,7 @@ class DecisionDetail(DecisionListRow):
     template_hash: str
     template_raw: str
     rendered_prompt: str
+    system_prompt_hash: str | None
     reasoning_text: str | None
     raw_tool_input: dict[str, Any] | None
     reasoning_effort: str | None
@@ -75,12 +79,20 @@ def create_decision(
 
     renderer = PromptRenderer(prompts_root)
     try:
-        variables = state_to_coach_variables(body.game_state)
+        variables = state_to_coach_variables(
+            body.game_state,
+            villain_profile=body.villain_profile if body.prompt_version == "v2" else None,
+        )
         rendered = renderer.render(body.prompt_name, body.prompt_version, variables)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"prompt render failed: {exc}") from exc
+
+    system_prompt_snapshot = SYSTEM_PROMPT
+    system_prompt_hash_snapshot = hashlib.sha256(
+        system_prompt_snapshot.encode("utf-8")
+    ).hexdigest()
 
     with engine.begin() as conn:
         session_row = conn.execute(
@@ -109,6 +121,9 @@ def create_decision(
                 template_raw=rendered.template_raw,
                 rendered_prompt=rendered.rendered_prompt,
                 variables=variables,
+                villain_profile=body.villain_profile,
+                system_prompt=system_prompt_snapshot,
+                system_prompt_hash=system_prompt_hash_snapshot,
                 provider=spec.provider,
                 model_id=spec.model_id,
                 reasoning_effort=spec.reasoning_effort,
@@ -166,6 +181,7 @@ def list_decisions(
             decisions.c.model_id,
             decisions.c.prompt_name,
             decisions.c.prompt_version,
+            decisions.c.villain_profile,
             decisions.c.status,
             decisions.c.parsed_advice,
             decisions.c.cost_usd,
@@ -195,6 +211,7 @@ def list_decisions(
             model_id=r.model_id,
             prompt_name=r.prompt_name,
             prompt_version=r.prompt_version,
+            villain_profile=r.villain_profile,
             status=r.status,
             parsed_advice=r.parsed_advice,
             cost_usd=r.cost_usd,
@@ -221,6 +238,7 @@ def get_decision_detail(
         model_id=row.model_id,
         prompt_name=row.prompt_name,
         prompt_version=row.prompt_version,
+        villain_profile=row.villain_profile,
         status=row.status,
         parsed_advice=row.parsed_advice,
         cost_usd=row.cost_usd,
@@ -229,6 +247,7 @@ def get_decision_detail(
         template_hash=row.template_hash,
         template_raw=row.template_raw,
         rendered_prompt=row.rendered_prompt,
+        system_prompt_hash=row.system_prompt_hash,
         reasoning_text=row.reasoning_text,
         raw_tool_input=row.raw_tool_input,
         reasoning_effort=row.reasoning_effort,
