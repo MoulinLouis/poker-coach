@@ -178,26 +178,37 @@ function SlotGroup({
       <span className="text-[10px] uppercase tracking-widest opacity-60">{title}</span>
       <div className="flex gap-2">
         {slots.map((s) => (
-          <button
-            key={s}
-            data-testid={`slot-${s}`}
-            onClick={() => (values[s] ? onSlotClear(s) : onSlotClick(s))}
-            onDoubleClick={() => onSlotClear(s)}
-            title={values[s] ? "click to clear" : "click to select this slot"}
-            className={`rounded-md p-0.5 transition ${
-              active === s && !values[s]
-                ? "ring-2 ring-amber-400 shadow-lg shadow-amber-500/30"
-                : "ring-1 ring-white/10"
-            }`}
-          >
-            {values[s] ? (
-              <PlayingCard code={values[s]} size="sm" />
-            ) : (
-              <div className="w-10 h-14 rounded-md border-2 border-dashed border-white/20 flex items-center justify-center text-[10px] text-stone-500">
-                {SLOT_META[s].label.split(" ")[1]}
-              </div>
+          <div key={s} className="relative group">
+            <button
+              data-testid={`slot-${s}`}
+              onClick={() => onSlotClick(s)}
+              title="click to select, then pick a card from the grid"
+              className={`rounded-md p-0.5 transition ${
+                active === s
+                  ? "ring-2 ring-amber-400 shadow-lg shadow-amber-500/30"
+                  : "ring-1 ring-white/10 hover:ring-white/30"
+              }`}
+            >
+              {values[s] ? (
+                <PlayingCard code={values[s]} size="sm" />
+              ) : (
+                <div className="w-10 h-14 rounded-md border-2 border-dashed border-white/20 flex items-center justify-center text-[10px] text-stone-500">
+                  {SLOT_META[s].label.split(" ")[1]}
+                </div>
+              )}
+            </button>
+            {values[s] && (
+              <button
+                data-testid={`slot-clear-${s}`}
+                onClick={() => onSlotClear(s)}
+                title="clear this slot"
+                aria-label={`clear ${SLOT_META[s].label}`}
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-stone-700 text-stone-100 text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 ring-1 ring-stone-900 transition"
+              >
+                ×
+              </button>
             )}
-          </button>
+          </div>
         ))}
       </div>
     </div>
