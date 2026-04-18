@@ -128,3 +128,10 @@ export async function savePrompt(
 ): Promise<{ pack: string; version: string; path: string }> {
   return postJSON(`/api/prompts/${pack}`, { version, content });
 }
+
+export async function translateText(text: string): Promise<{
+  translation: string;
+  cost_usd: number;
+}> {
+  return postJSON("/api/translate", { text });
+}
