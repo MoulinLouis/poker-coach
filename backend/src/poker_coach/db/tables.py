@@ -71,6 +71,9 @@ decisions = Table(
     Column("template_raw", Text, nullable=False),
     Column("rendered_prompt", Text, nullable=False),
     Column("variables", JSON, nullable=False),
+    Column("villain_profile", String(16), nullable=False, server_default="unknown"),
+    Column("system_prompt", Text, nullable=True),
+    Column("system_prompt_hash", String(64), nullable=True),
     # Model config
     Column("provider", String(32), nullable=False),
     Column("model_id", String(64), nullable=False),
