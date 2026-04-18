@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { Advice } from "../api/types";
 import type { StreamState } from "../api/useAdviceStream";
 
@@ -44,14 +45,7 @@ export function AdvicePanel({
         </div>
       )}
 
-      {stream.reasoning && (
-        <pre
-          data-testid="advice-reasoning"
-          className="max-h-[300px] overflow-auto text-[11px] leading-relaxed font-mono whitespace-pre-wrap text-stone-300 bg-black/40 rounded p-2 ring-1 ring-white/5"
-        >
-          {stream.reasoning}
-        </pre>
-      )}
+      {stream.reasoning && <ThinkingBlock stream={stream} />}
 
       {stream.advice && <AdviceCard advice={stream.advice} />}
 
@@ -70,6 +64,52 @@ export function AdvicePanel({
         </div>
       )}
     </aside>
+  );
+}
+
+function ThinkingBlock({ stream }: { stream: StreamState }) {
+  // Auto-collapse once the stream reaches a terminal state. Before that
+  // (thinking/streaming), keep expanded so the user can watch it live.
+  // User can override with the toggle; override sticks until the next
+  // decision (when status returns to idle via reset).
+  const [userOverride, setUserOverride] = useState<boolean | null>(null);
+  const prevStatusRef = useRef(stream.status);
+
+  useEffect(() => {
+    if (prevStatusRef.current !== stream.status && stream.status === "idle") {
+      setUserOverride(null);
+    }
+    prevStatusRef.current = stream.status;
+  }, [stream.status]);
+
+  const isTerminal = stream.status === "done" || stream.status === "error";
+  const collapsed = userOverride !== null ? userOverride : isTerminal;
+  const live = stream.status === "streaming" || stream.status === "thinking";
+
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        data-testid="thinking-toggle"
+        onClick={() => setUserOverride(!collapsed)}
+        className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-stone-400 hover:text-stone-200 transition"
+      >
+        <span className="font-mono">{collapsed ? "▶" : "▼"}</span>
+        <span>Thinking</span>
+        {live && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+        <span className="opacity-50 normal-case tracking-normal">
+          {stream.reasoning.length} chars
+        </span>
+      </button>
+      {!collapsed && (
+        <pre
+          data-testid="advice-reasoning"
+          className="max-h-[300px] overflow-auto text-[11px] leading-relaxed font-mono whitespace-pre-wrap text-stone-300 bg-black/40 rounded p-2 ring-1 ring-white/5"
+        >
+          {stream.reasoning}
+        </pre>
+      )}
+    </div>
   );
 }
 
