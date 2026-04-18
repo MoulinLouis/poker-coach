@@ -43,15 +43,18 @@ with canaries + linked commits. Skim the index before reinventing a fix.
 
 6. **CardPicker is uncontrolled.** The parent's `[string, string] | null` prop can't encode "one slot filled, one empty", so the picker owns slot state locally. If you need a forced reset from the parent, pass a new `key` — do NOT add a prop-syncing `useEffect`.
 
+7. **`deck_snapshot` is rewritten by `/engine/reveal` to reflect user-supplied board cards.** Any code reading `deck_snapshot[4:9]` for anything other than replay reconstruction must read `state.board` instead. Treat `deck_snapshot` positions beyond `[0:4]` (hero + villain holes) as implementation detail of replay, not a reliable source of board cards.
+
 ## Engine invariants (don't break)
 
 Property tested in `backend/tests/engine/test_invariants.py`. All five must stay green:
 
 1. Chip conservation: `sum(stacks) + pot + sum(committed)` is constant.
 2. Street monotonicity: only advances forward.
-3. `to_act` consistency: set iff hand in progress, and `legal_actions` non-empty for that actor.
+3. `to_act` consistency: `to_act` is set iff the hand is in progress **AND** `pending_reveal is None`. When `pending_reveal is not None`, `to_act is None` and `legal_actions(state) == []`. Hand progresses only after `apply_reveal` consumes the pending cards.
 4. Illegal-action unreachability: anything not in `legal_actions(state)` raises `IllegalAction`.
-5. Replay idempotency: `reduce(apply_action, state.history, initial_state(state)) == state`. This is the load-bearing one for the "retry with prompt v2" workflow.
+5. Replay idempotency: use `replay(state)` from `engine.rules` — NOT `reduce(apply_action, ...)`, which breaks at `pending_reveal` boundaries. `replay()` interleaves `apply_action` and `apply_reveal` using `state.reveals`.
+6. Deck snapshot board consistency: `deck_snapshot[4 : 4 + len(board)] == board` for every state where `deck_snapshot is not None`.
 
 **Integer chips only.** `bb=100` means 100 chips per BB. No floats in engine math. Display layer divides.
 
