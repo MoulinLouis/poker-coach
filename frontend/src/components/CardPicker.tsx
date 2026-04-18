@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"] as const;
@@ -33,17 +33,34 @@ export function CardPicker({
     villain: [string, string] | null;
   }) => void;
 }) {
+  // Uncontrolled: we own the per-slot state locally. Parent props are read
+  // only to seed initial state — intermediate states (one card set, other
+  // not) don't round-trip cleanly through the parent's [string, string]
+  // contract, which caused picks to be dropped after Clear.
+  const [slots, setSlots] = useState<Record<SlotId, string | null>>(() => ({
+    h1: heroHole?.[0] ?? null,
+    h2: heroHole?.[1] ?? null,
+    v1: villainHole?.[0] ?? null,
+    v2: villainHole?.[1] ?? null,
+  }));
   const [activeSlot, setActiveSlot] = useState<SlotId>("h1");
 
-  const slots: Record<SlotId, string | null> = useMemo(
-    () => ({
-      h1: heroHole?.[0] ?? null,
-      h2: heroHole?.[1] ?? null,
-      v1: villainHole?.[0] ?? null,
-      v2: villainHole?.[1] ?? null,
-    }),
-    [heroHole, villainHole],
-  );
+  // Re-seed when the parent hands us a different full pair (e.g., they ran
+  // Deal random externally or loaded saved state). Compare string so React
+  // doesn't fight us on fresh tuples with the same values.
+  const seededSignature = useRef<string>("");
+  useEffect(() => {
+    const sig = `${heroHole?.[0] ?? ""}|${heroHole?.[1] ?? ""}|${villainHole?.[0] ?? ""}|${villainHole?.[1] ?? ""}`;
+    if (sig !== seededSignature.current) {
+      seededSignature.current = sig;
+      setSlots({
+        h1: heroHole?.[0] ?? null,
+        h2: heroHole?.[1] ?? null,
+        v1: villainHole?.[0] ?? null,
+        v2: villainHole?.[1] ?? null,
+      });
+    }
+  }, [heroHole, villainHole]);
 
   const usedCards = useMemo(
     () => new Set(Object.values(slots).filter((x): x is string => x != null)),
@@ -51,6 +68,9 @@ export function CardPicker({
   );
 
   const commit = (next: Record<SlotId, string | null>) => {
+    setSlots(next);
+    const sig = `${next.h1 ?? ""}|${next.h2 ?? ""}|${next.v1 ?? ""}|${next.v2 ?? ""}`;
+    seededSignature.current = sig;
     const hero: [string, string] | null =
       next.h1 && next.h2 ? [next.h1, next.h2] : null;
     const villain: [string, string] | null =
@@ -58,21 +78,23 @@ export function CardPicker({
     onChange({ hero, villain });
   };
 
-  const firstEmptyAfter = (start: SlotId): SlotId => {
+  const firstEmptyAfter = (
+    start: SlotId,
+    source: Record<SlotId, string | null>,
+  ): SlotId => {
     const idx = SLOT_ORDER.indexOf(start);
     for (let i = 1; i <= SLOT_ORDER.length; i++) {
       const next = SLOT_ORDER[(idx + i) % SLOT_ORDER.length];
-      if (!slots[next]) return next;
+      if (!source[next]) return next;
     }
     return start;
   };
 
   const pickCard = (code: string) => {
-    if (usedCards.has(code)) return;
+    if (usedCards.has(code) && slots[activeSlot] !== code) return;
     const next = { ...slots, [activeSlot]: code };
     commit(next);
-    const advance = firstEmptyAfter(activeSlot);
-    setActiveSlot(advance);
+    setActiveSlot(firstEmptyAfter(activeSlot, next));
   };
 
   const clearSlot = (slot: SlotId) => {
@@ -91,7 +113,6 @@ export function CardPicker({
     const pool: string[] = [];
     for (const r of RANKS) for (const s of SUITS) pool.push(r + s);
     const available = pool.filter((c) => !taken.has(c));
-    // shuffle
     for (let i = available.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [available[i], available[j]] = [available[j], available[i]];
