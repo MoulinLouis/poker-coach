@@ -9,6 +9,7 @@ import type {
   PresetsResponse,
   PromptDetail,
   Seat,
+  VillainProfile,
 } from "./types";
 
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
@@ -75,6 +76,7 @@ export async function createDecision(input: {
   prompt_version: string;
   game_state: GameState;
   retry_of?: string | null;
+  villain_profile?: VillainProfile;
 }): Promise<{ decision_id: string }> {
   return postJSON("/api/decisions", input);
 }

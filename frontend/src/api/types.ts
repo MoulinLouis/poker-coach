@@ -10,6 +10,8 @@ export type ActionType = "fold" | "check" | "call" | "bet" | "raise" | "allin";
 
 export type Confidence = "low" | "medium" | "high";
 
+export type VillainProfile = "reg" | "unknown";
+
 export interface Action {
   actor: Seat;
   type: ActionType;
@@ -92,6 +94,7 @@ export interface DecisionListRow {
   model_id: string;
   prompt_name: string;
   prompt_version: string;
+  villain_profile: string;
   status: string;
   parsed_advice: Advice | null;
   cost_usd: number | null;
@@ -103,6 +106,7 @@ export interface DecisionDetail extends DecisionListRow {
   template_hash: string;
   template_raw: string;
   rendered_prompt: string;
+  system_prompt_hash: string | null;
   reasoning_text: string | null;
   raw_tool_input: Record<string, unknown> | null;
   reasoning_effort: string | null;
