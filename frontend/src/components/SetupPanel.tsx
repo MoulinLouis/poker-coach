@@ -1,4 +1,4 @@
-import type { PresetSummary, Seat } from "../api/types";
+import type { PresetSummary, Seat, VillainProfile } from "../api/types";
 import { CardPicker } from "./CardPicker";
 
 export interface SetupValues {
@@ -7,6 +7,7 @@ export interface SetupValues {
   effectiveStack: number;
   button: Seat;
   presetId: string;
+  villainProfile: VillainProfile;
 }
 
 function parseHole(code: string): [string, string] | null {
@@ -65,6 +66,25 @@ export function SetupPanel({
               </option>
             ))}
           </select>
+        </Field>
+        <Field label="Villain profile">
+          <div className="flex gap-1 rounded bg-stone-900 p-1 ring-1 ring-white/10">
+            {(["reg", "unknown"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                data-testid={`villain-profile-${p}`}
+                className={`rounded px-2 py-1 text-xs transition ${
+                  values.villainProfile === p
+                    ? "bg-stone-600 text-stone-100"
+                    : "text-stone-400 hover:text-stone-200"
+                }`}
+                onClick={() => onChange({ villainProfile: p })}
+              >
+                {p === "reg" ? "Reg" : "Unknown"}
+              </button>
+            ))}
+          </div>
         </Field>
         <button
           data-testid="new-hand"

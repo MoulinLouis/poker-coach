@@ -49,6 +49,7 @@ export function LiveCoach() {
     effectiveStack: 10_000,
     button: "hero",
     presetId: "",
+    villainProfile: "unknown",
   });
   const [snapshot, setSnapshot] = useState<EngineSnapshot | null>(null);
   const [decisionId, setDecisionId] = useState<string | null>(null);
@@ -151,8 +152,9 @@ export function LiveCoach() {
         hand_id: session.handId,
         model_preset: setup.presetId,
         prompt_name: "coach",
-        prompt_version: "v1",
+        prompt_version: "v2",
         game_state: snapshot.state,
+        villain_profile: setup.villainProfile,
       });
       setDecisionId(decision_id);
       setCurrentDiverged(false);
