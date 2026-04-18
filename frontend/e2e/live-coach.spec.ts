@@ -42,8 +42,9 @@ test("start a hand and take the first action", async ({ page }) => {
   // Hero is on the button (SB) and acts first preflop — highlighted ring.
   await expect(page.getByTestId("seat-hero")).toHaveAttribute("data-to-act", "true");
 
-  // Raise to 3bb via the size-input + raise button
-  await page.getByTestId("size-input").fill("3");
+  // Raise to 3bb via the preset pill + raise button
+  await page.getByTestId("preset-3x").click();
+  await expect(page.getByTestId("size-readout-bb")).toHaveText("3.0");
   await page.getByTestId("action-raise").click();
 
   // Villain now to act
