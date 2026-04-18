@@ -30,6 +30,20 @@ from poker_coach.oracle.pricing import PricingSnapshot, compute_cost
 from poker_coach.oracle.tool_schema import anthropic_tool_spec
 from poker_coach.prompts.renderer import RenderedPrompt
 
+# System prompt that runs alongside the coach user prompt. Anthropic
+# rejects forced tool_choice when thinking is on, so we lean hard on the
+# system prompt to prevent the model from answering in prose. Models with
+# thinking tend to produce an explanatory text block after the reasoning
+# unless explicitly told to emit only the tool call.
+_SYSTEM_ENFORCE_TOOL = (
+    "You are a heads-up NLHE poker coach. You have access to exactly one tool "
+    "named `submit_advice`. YOUR ONLY VISIBLE OUTPUT MUST BE A SINGLE CALL TO "
+    "`submit_advice`. Do not reply with a text block. Do not narrate your "
+    "conclusion. Do not restate the spot. Your full explanation goes inside "
+    "the tool call's `reasoning` field (<= 200 words). If you produce any "
+    "text content instead of calling the tool, your response is invalid."
+)
+
 
 class AnthropicStreamCaller(Protocol):
     """Callable that performs `client.messages.stream(**kwargs)`.
@@ -70,6 +84,7 @@ class AnthropicOracle:
         request_kwargs: dict[str, Any] = {
             "model": spec.model_id,
             "max_tokens": max_tokens,
+            "system": _SYSTEM_ENFORCE_TOOL,
             "messages": [{"role": "user", "content": rendered.rendered_prompt}],
             "tools": [anthropic_tool_spec()],
         }
