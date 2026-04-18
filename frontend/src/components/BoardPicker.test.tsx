@@ -81,6 +81,44 @@ describe("BoardPicker", () => {
     expect(onConfirm).toHaveBeenCalledWith(["Ah","Kh","Qh"]);
   });
 
+  it("random fills empty slots then enables Confirm", () => {
+    const onConfirm = vi.fn();
+    render(
+      <BoardPicker
+        street="flop"
+        existingBoard={[]}
+        excludedCards={["As", "Kd"]}
+        onConfirm={onConfirm}
+      />,
+    );
+    expect(screen.getByTestId("board-picker-confirm")).toBeDisabled();
+    fireEvent.click(screen.getByTestId("board-picker-random"));
+    expect(screen.getByTestId("board-picker-confirm")).not.toBeDisabled();
+    fireEvent.click(screen.getByTestId("board-picker-confirm"));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    const picked = onConfirm.mock.calls[0][0] as string[];
+    expect(picked).toHaveLength(3);
+    expect(new Set(picked).size).toBe(3);
+    for (const c of picked) expect(["As", "Kd"]).not.toContain(c);
+  });
+
+  it("random preserves already-picked slots", () => {
+    const onConfirm = vi.fn();
+    render(
+      <BoardPicker
+        street="flop"
+        existingBoard={[]}
+        excludedCards={[]}
+        onConfirm={onConfirm}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("board-grid-Ah"));
+    fireEvent.click(screen.getByTestId("board-picker-random"));
+    fireEvent.click(screen.getByTestId("board-picker-confirm"));
+    const picked = onConfirm.mock.calls[0][0] as string[];
+    expect(picked[0]).toBe("Ah");
+  });
+
   it("hides excluded cards from the grid", () => {
     render(
       <BoardPicker

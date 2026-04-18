@@ -48,6 +48,23 @@ export function BoardPicker({
     if (nextEmpty >= 0) setActiveIdx(nextEmpty);
   };
 
+  const dealRandom = () => {
+    const pool: string[] = [];
+    for (const r of RANKS) for (const s of SUITS) pool.push(r + s);
+    const available = pool.filter((c) => !used.has(c));
+    for (let i = available.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [available[i], available[j]] = [available[j], available[i]];
+    }
+    const next = [...slots];
+    for (let i = 0; i < next.length; i++) {
+      if (next[i] == null && available.length > 0) next[i] = available.shift()!;
+    }
+    setSlots(next);
+    const nextEmpty = next.findIndex((x) => x == null);
+    setActiveIdx(nextEmpty >= 0 ? nextEmpty : 0);
+  };
+
   const confirm = () => {
     if (!allFilled) return;
     onConfirm(slots.filter((x): x is string => x != null));
@@ -99,14 +116,23 @@ export function BoardPicker({
           ))}
         </div>
 
-        <button
-          data-testid="board-picker-confirm"
-          onClick={confirm}
-          disabled={!allFilled}
-          className="self-end px-4 py-2 rounded-md bg-amber-500 text-stone-950 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-400 transition"
-        >
-          Confirmer
-        </button>
+        <div className="flex justify-end gap-2">
+          <button
+            data-testid="board-picker-random"
+            onClick={dealRandom}
+            className="px-4 py-2 rounded-md bg-stone-800 hover:bg-stone-700 text-sm text-stone-100 ring-1 ring-white/10 transition"
+          >
+            Random
+          </button>
+          <button
+            data-testid="board-picker-confirm"
+            onClick={confirm}
+            disabled={!allFilled}
+            className="px-4 py-2 rounded-md bg-amber-500 text-stone-950 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-400 transition"
+          >
+            Confirmer
+          </button>
+        </div>
       </div>
     </div>
   );
