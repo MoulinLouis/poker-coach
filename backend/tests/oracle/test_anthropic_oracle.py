@@ -166,6 +166,57 @@ async def test_provider_exception_emits_oracle_error() -> None:
 
 
 @pytest.mark.asyncio
+async def test_anthropic_oracle_uses_default_system_prompt() -> None:
+    from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
+
+    captured: dict[str, Any] = {}
+    message = FakeMessage(
+        content=[
+            tool_use_block(
+                {"action": "fold", "reasoning": "Too weak.", "confidence": "medium"}
+            )
+        ],
+        usage=FakeUsage(input_tokens=10, output_tokens=10),
+    )
+    inner = fake_stream_caller([], message)
+
+    def capturing(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        return inner(**kwargs)
+
+    oracle = AnthropicOracle(capturing, sample_pricing())
+    async for _ in oracle.advise_stream(sample_rendered(), sample_spec()):
+        pass
+
+    assert captured["system"] == SYSTEM_PROMPT
+
+
+@pytest.mark.asyncio
+async def test_anthropic_oracle_uses_explicit_system_prompt_when_passed() -> None:
+    captured: dict[str, Any] = {}
+    message = FakeMessage(
+        content=[
+            tool_use_block(
+                {"action": "fold", "reasoning": "Too weak.", "confidence": "medium"}
+            )
+        ],
+        usage=FakeUsage(input_tokens=10, output_tokens=10),
+    )
+    inner = fake_stream_caller([], message)
+
+    def capturing(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        return inner(**kwargs)
+
+    oracle = AnthropicOracle(capturing, sample_pricing())
+    custom = "OVERRIDE SYSTEM PROMPT FOR TEST"
+    async for _ in oracle.advise_stream(sample_rendered(), sample_spec(), system_prompt=custom):
+        pass
+
+    assert captured["system"] == custom
+
+
+@pytest.mark.asyncio
 async def test_ignores_non_thinking_deltas() -> None:
     events = [
         FakeStreamEvent(type="content_block_start"),

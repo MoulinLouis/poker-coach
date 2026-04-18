@@ -104,5 +104,8 @@ OracleEvent = ReasoningDelta | ReasoningComplete | ToolCallComplete | UsageCompl
 
 class Oracle(Protocol):
     def advise_stream(
-        self, rendered: RenderedPrompt, spec: ModelSpec
+        self,
+        rendered: RenderedPrompt,
+        spec: ModelSpec,
+        system_prompt: str | None = None,
     ) -> AsyncIterator[OracleEvent]: ...
