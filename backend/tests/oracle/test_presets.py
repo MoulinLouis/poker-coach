@@ -10,15 +10,14 @@ def test_selector_ids_match_keys() -> None:
         assert spec.selector_id == key
 
 
-def test_every_preset_has_exactly_one_effort_signal() -> None:
-    """OpenAI presets use reasoning_effort; Anthropic presets use thinking_budget.
-    Either-or, not both.
+def test_effort_signals_match_provider() -> None:
+    """OpenAI presets always carry reasoning_effort. Anthropic presets may
+    carry thinking_budget, or neither (Haiku runs without thinking so
+    tool_choice can be forced — thinking+forced_tool is a 400 on the API).
     """
     for spec in MODEL_PRESETS.values():
-        has_effort = spec.reasoning_effort is not None
-        has_budget = spec.thinking_budget is not None
-        assert has_effort ^ has_budget, f"{spec.selector_id} must have exactly one of the two"
         if spec.provider == "openai":
-            assert has_effort
+            assert spec.reasoning_effort is not None, spec.selector_id
+            assert spec.thinking_budget is None, spec.selector_id
         else:
-            assert has_budget
+            assert spec.reasoning_effort is None, spec.selector_id

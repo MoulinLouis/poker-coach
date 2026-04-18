@@ -28,12 +28,18 @@ MODEL_PRESETS: dict[str, ModelSpec] = {
         thinking_budget=8192,
         temperature=1.0,
     ),
+    # Haiku intentionally runs *without* thinking: Anthropic forbids
+    # tool_choice forcing when thinking is enabled, and Haiku with
+    # tool_choice=auto is flaky about actually calling the tool (it
+    # prefers to answer in text). No thinking → forced tool_choice →
+    # reliable structured output. Haiku's role is fast/cheap prompt
+    # exploration, not deep reasoning.
     "claude-haiku-4-5-min": ModelSpec(
         selector_id="claude-haiku-4-5-min",
         provider="anthropic",
         model_id="claude-haiku-4-5-20251001",
-        thinking_budget=1024,
-        temperature=1.0,
+        thinking_budget=None,
+        temperature=None,
     ),
 }
 
