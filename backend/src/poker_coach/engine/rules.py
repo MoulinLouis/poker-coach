@@ -202,6 +202,89 @@ def _apply_street_transition(state: GameState) -> GameState:
     )
 
 
+_PENDING_EXPECTED_LEN = {
+    "flop": 3,
+    "turn": 1,
+    "river": 1,
+}
+
+
+def _expected_reveal_len(state: GameState) -> int:
+    pending = state.pending_reveal
+    if pending is None:
+        raise IllegalAction("no pending reveal")
+    if pending == "runout":
+        return 5 - len(state.board)
+    return _PENDING_EXPECTED_LEN[pending]
+
+
+def _swap_into_board_positions(deck: list[str], cards: list[str], start: int) -> list[str]:
+    """Return a deck with `cards` placed at positions [start : start+len(cards)].
+
+    Cards already present elsewhere in the deck get swapped to the positions the
+    new cards vacated. Preserves the "52 unique cards" invariant.
+    """
+    new_deck = list(deck)
+    for i, card in enumerate(cards):
+        target = start + i
+        if new_deck[target] == card:
+            continue
+        try:
+            source = new_deck.index(card)
+        except ValueError as exc:
+            raise IllegalAction(f"card {card} not in deck_snapshot") from exc
+        new_deck[target], new_deck[source] = new_deck[source], new_deck[target]
+    return new_deck
+
+
+def apply_reveal(state: GameState, cards: list[str]) -> GameState:
+    """Consume `pending_reveal` by committing user-supplied board cards.
+
+    Validates length, uniqueness (no dupes with holes or existing board, no
+    dupes within `cards`), rewrites `deck_snapshot` so positions [4:4+len(board)]
+    match the new board in order, and clears `pending_reveal`.
+    """
+    if state.pending_reveal is None:
+        raise IllegalAction("no pending reveal")
+
+    expected = _expected_reveal_len(state)
+    if len(cards) != expected:
+        raise IllegalAction(
+            f"{state.pending_reveal} reveal expects {expected} cards, got {len(cards)}"
+        )
+
+    if len(set(cards)) != len(cards):
+        raise IllegalAction(f"duplicate cards in reveal: {cards}")
+
+    excluded: set[str] = set(state.hero_hole)
+    if state.villain_hole is not None:
+        excluded.update(state.villain_hole)
+    excluded.update(state.board)
+    clash = excluded.intersection(cards)
+    if clash:
+        raise IllegalAction(f"reveal duplicates existing cards: {sorted(clash)}")
+
+    new_board = [*state.board, *cards]
+    new_reveals = [*state.reveals, list(cards)]
+
+    new_deck = state.deck_snapshot
+    if new_deck is not None:
+        new_deck = _swap_into_board_positions(new_deck, new_board, start=4)
+
+    if state.street in ("showdown", "complete"):
+        to_act: Seat | None = None
+    else:
+        to_act = other_seat(state.button)
+
+    return state.model_copy(update={
+        "board": new_board,
+        "reveals": new_reveals,
+        "pending_reveal": None,
+        "deck_snapshot": new_deck,
+        "to_act": to_act,
+    })
+
+
 def apply_action(state: GameState, action: Action) -> GameState:
     if state.street in ("showdown", "complete"):
         raise IllegalAction(f"hand already at {state.street}")

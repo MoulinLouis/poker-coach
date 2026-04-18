@@ -4,6 +4,7 @@ from poker_coach.engine.models import Action, GameState
 from poker_coach.engine.rules import (
     IllegalAction,
     apply_action,
+    apply_reveal,
     legal_actions,
     start_hand,
 )
@@ -217,3 +218,93 @@ class TestAllIn:
         assert s.pot == 1_000
         assert s.stacks == {"hero": 0, "villain": 0}
         assert s.street == "showdown"
+
+
+class TestApplyReveal:
+    def _state_with_pending(self, pending: str, board: list[str]) -> GameState:
+        """Build a state in a pending_reveal mid-hand posture."""
+        deck = [
+            # hero, villain holes
+            "As","Kd","Qc","Qh",
+            # positions 4..8: initial flop/turn/river from seeded deck
+            "2c","3d","4h","5s","6c",
+            # rest irrelevant
+            "7h","8d","9s","Tc","Jd","Qs","Kh","Ac","2s","3h","4d","5c","6d","7c",
+            "8s","9h","Th","Jh","Qd","Kc","Ah","2h","3s","4c","5h","6h","7s","8h",
+            "9d","Tc","Js","Jc","Kh","Ad","2d","3c",
+        ][:52]
+        s = start_hand(
+            effective_stack=10_000,
+            bb=100,
+            button="hero",
+            hero_hole=("As","Kd"),
+            villain_hole=("Qc","Qh"),
+            deck_snapshot=deck,
+        )
+        return s.model_copy(update={
+            "pending_reveal": pending,
+            "board": list(board),
+            "street": {"flop":"flop","turn":"turn","river":"river","runout":"showdown"}[pending],
+            "to_act": None,
+        })
+
+    def test_reveal_flop_sets_board_and_clears_flag(self) -> None:
+        s = self._state_with_pending("flop", [])
+        out = apply_reveal(s, ["Ah","Kh","2h"])
+        assert out.board == ["Ah","Kh","2h"]
+        assert out.pending_reveal is None
+        assert out.reveals == [["Ah","Kh","2h"]]
+        assert out.deck_snapshot is not None
+        assert out.deck_snapshot[4:7] == ["Ah","Kh","2h"]
+
+    def test_reveal_turn_appends_one_card(self) -> None:
+        s = self._state_with_pending("turn", ["Ah","Kh","Qh"])
+        out = apply_reveal(s, ["2s"])
+        assert out.board == ["Ah","Kh","Qh","2s"]
+        assert out.pending_reveal is None
+        assert out.reveals == [["2s"]]
+        assert out.deck_snapshot is not None
+        assert out.deck_snapshot[4:8] == ["Ah","Kh","Qh","2s"]
+
+    def test_reveal_runout_from_preflop_allin(self) -> None:
+        s = self._state_with_pending("runout", [])
+        out = apply_reveal(s, ["Ah","Kh","2h","2s","3s"])
+        assert out.board == ["Ah","Kh","2h","2s","3s"]
+        assert out.pending_reveal is None
+        assert out.deck_snapshot is not None
+        assert out.deck_snapshot[4:9] == ["Ah","Kh","2h","2s","3s"]
+
+    def test_reveal_runout_from_flop_allin_expects_two_cards(self) -> None:
+        s = self._state_with_pending("runout", ["Ah","Kh","Qh"])
+        out = apply_reveal(s, ["2s","3s"])
+        assert out.board == ["Ah","Kh","Qh","2s","3s"]
+        assert out.deck_snapshot is not None
+        assert out.deck_snapshot[4:9] == ["Ah","Kh","Qh","2s","3s"]
+
+    def test_reveal_rejects_wrong_length(self) -> None:
+        s = self._state_with_pending("flop", [])
+        with pytest.raises(IllegalAction):
+            apply_reveal(s, ["Ah","Kh"])  # need 3
+        s2 = self._state_with_pending("runout", ["Ah","Kh","Qh"])
+        with pytest.raises(IllegalAction):
+            apply_reveal(s2, ["2s","3s","4s"])  # need 2, got 3
+
+    def test_reveal_rejects_duplicate_with_hero_hole(self) -> None:
+        s = self._state_with_pending("flop", [])
+        with pytest.raises(IllegalAction):
+            apply_reveal(s, ["As","Kh","Qh"])  # As is hero_hole[0]
+
+    def test_reveal_rejects_duplicate_with_villain_hole(self) -> None:
+        s = self._state_with_pending("flop", [])
+        with pytest.raises(IllegalAction):
+            apply_reveal(s, ["Qc","Kh","2s"])  # Qc is villain_hole[0]
+
+    def test_reveal_rejects_duplicate_within_cards(self) -> None:
+        s = self._state_with_pending("flop", [])
+        with pytest.raises(IllegalAction):
+            apply_reveal(s, ["Ah","Ah","Qh"])
+
+    def test_reveal_rejects_when_no_pending(self) -> None:
+        s = fresh_hand()  # preflop, no pending_reveal
+        with pytest.raises(IllegalAction):
+            apply_reveal(s, ["Ah","Kh","Qh"])
