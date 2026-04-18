@@ -32,8 +32,20 @@ class Advice(BaseModel):
     confidence: Confidence
 
 
+ThinkingMode = Literal["enabled", "adaptive"]
+
+
 class ModelSpec(BaseModel):
-    """A (provider, model, effort) preset selected from the UI."""
+    """A (provider, model, effort) preset selected from the UI.
+
+    Anthropic has two thinking API shapes:
+
+    - `thinking_mode="enabled"`: legacy, takes `thinking_budget` tokens.
+      Used by Haiku 4.5 (no thinking) and Sonnet 4.6.
+    - `thinking_mode="adaptive"`: Opus 4.7 and forward. Effort level
+      comes via `output_config.effort`; `reasoning_effort` on the spec
+      maps to that value. `thinking_budget` is ignored.
+    """
 
     model_config = ConfigDict(frozen=True)
 
@@ -42,6 +54,7 @@ class ModelSpec(BaseModel):
     model_id: str
     reasoning_effort: ReasoningEffort | None = None
     thinking_budget: int | None = None
+    thinking_mode: ThinkingMode | None = None
     temperature: float | None = None
 
 

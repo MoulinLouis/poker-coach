@@ -56,13 +56,16 @@ class AnthropicOracle:
     async def advise_stream(
         self, rendered: RenderedPrompt, spec: ModelSpec
     ) -> AsyncIterator[OracleEvent]:
-        # Anthropic requires max_tokens > thinking.budget_tokens (thinking
-        # tokens count against max_tokens). Give the tool-call output
-        # enough headroom beyond the thinking budget.
+        # Anthropic requires max_tokens > thinking.budget_tokens on the
+        # legacy "enabled" API (thinking tokens count against max_tokens).
+        # On adaptive thinking (Opus 4.7+) the model self-paces, so a
+        # generous ceiling is fine.
         tool_headroom = 2048
         max_tokens = self.max_output_tokens
-        if spec.thinking_budget is not None:
+        if spec.thinking_mode == "enabled" and spec.thinking_budget is not None:
             max_tokens = max(max_tokens, spec.thinking_budget + tool_headroom)
+        elif spec.thinking_mode == "adaptive":
+            max_tokens = max(max_tokens, 16384)
 
         request_kwargs: dict[str, Any] = {
             "model": spec.model_id,
@@ -70,17 +73,26 @@ class AnthropicOracle:
             "messages": [{"role": "user", "content": rendered.rendered_prompt}],
             "tools": [anthropic_tool_spec()],
         }
-        # Anthropic rejects tool_choice={"type": "tool"} / "any" when thinking
-        # is enabled. With a single tool + an explicit prompt instruction to
-        # call it, "auto" gets the tool call in practice without the 400.
-        if spec.thinking_budget is not None:
+
+        # tool_choice rules:
+        # - No thinking: force `submit_advice` tool (most reliable).
+        # - Any thinking (enabled or adaptive): Anthropic rejects forced
+        #   tool_choice, so fall back to auto. With a single tool + an
+        #   explicit prompt instruction, models reliably call it.
+        if spec.thinking_mode == "enabled" and spec.thinking_budget is not None:
             request_kwargs["thinking"] = {
                 "type": "enabled",
                 "budget_tokens": spec.thinking_budget,
             }
             request_kwargs["tool_choice"] = {"type": "auto"}
+        elif spec.thinking_mode == "adaptive":
+            request_kwargs["thinking"] = {"type": "adaptive"}
+            if spec.reasoning_effort is not None:
+                request_kwargs["output_config"] = {"effort": spec.reasoning_effort}
+            request_kwargs["tool_choice"] = {"type": "auto"}
         else:
             request_kwargs["tool_choice"] = {"type": "tool", "name": "submit_advice"}
+
         if spec.temperature is not None:
             request_kwargs["temperature"] = spec.temperature
 

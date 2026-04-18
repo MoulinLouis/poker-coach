@@ -10,14 +10,28 @@ def test_selector_ids_match_keys() -> None:
         assert spec.selector_id == key
 
 
-def test_effort_signals_match_provider() -> None:
-    """OpenAI presets always carry reasoning_effort. Anthropic presets may
-    carry thinking_budget, or neither (Haiku runs without thinking so
-    tool_choice can be forced — thinking+forced_tool is a 400 on the API).
+def test_provider_configuration_is_consistent() -> None:
+    """Per-provider invariants:
+
+    - OpenAI: reasoning_effort set, thinking_* unused.
+    - Anthropic with thinking_mode="enabled": needs a thinking_budget.
+    - Anthropic with thinking_mode="adaptive": needs a reasoning_effort.
+    - Anthropic with thinking_mode=None: no thinking at all.
     """
     for spec in MODEL_PRESETS.values():
         if spec.provider == "openai":
             assert spec.reasoning_effort is not None, spec.selector_id
             assert spec.thinking_budget is None, spec.selector_id
+            assert spec.thinking_mode is None, spec.selector_id
+            continue
+
+        if spec.thinking_mode == "enabled":
+            assert spec.thinking_budget is not None, spec.selector_id
+            assert spec.reasoning_effort is None, spec.selector_id
+        elif spec.thinking_mode == "adaptive":
+            assert spec.reasoning_effort is not None, spec.selector_id
+            assert spec.thinking_budget is None, spec.selector_id
         else:
+            assert spec.thinking_mode is None, spec.selector_id
+            assert spec.thinking_budget is None, spec.selector_id
             assert spec.reasoning_effort is None, spec.selector_id
