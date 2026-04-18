@@ -1,8 +1,23 @@
-from fastapi import FastAPI
+"""Production entrypoint: `uvicorn poker_coach.main:app`."""
 
-app = FastAPI(title="poker-coach", version="0.0.0")
+from __future__ import annotations
+
+import anthropic
+
+from poker_coach.api.app import create_app
+from poker_coach.api.oracle_factory import DefaultOracleFactory
+from poker_coach.oracle.pricing import default_pricing
+from poker_coach.settings import settings
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def _build_oracle_factory() -> DefaultOracleFactory:
+    anthropic_client: anthropic.AsyncAnthropic | None = None
+    if settings.anthropic_api_key:
+        anthropic_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    return DefaultOracleFactory(
+        pricing=default_pricing(),
+        anthropic_client=anthropic_client,
+    )
+
+
+app = create_app(oracle_factory=_build_oracle_factory())

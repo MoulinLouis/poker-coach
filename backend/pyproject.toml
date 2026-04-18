@@ -52,6 +52,9 @@ select = [
     "RUF", # ruff-specific
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Header"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
