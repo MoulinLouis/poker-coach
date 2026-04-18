@@ -7,21 +7,15 @@ type Route = "live" | "spot";
 export function App() {
   const [route, setRoute] = useState<Route>("live");
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif" }}>
-      <nav
-        style={{
-          display: "flex",
-          gap: 12,
-          padding: "8px 16px",
-          borderBottom: "1px solid #ddd",
-        }}
-      >
+    <div className="min-h-screen bg-stone-950 text-stone-100 font-sans">
+      <nav className="flex items-center gap-2 px-6 py-3 border-b border-stone-800 bg-stone-900/60 backdrop-blur">
+        <span className="font-semibold tracking-tight mr-3">Poker HU Coach</span>
         <NavLink current={route} value="live" label="Live Coach" onSelect={setRoute} />
         <NavLink current={route} value="spot" label="Spot Analysis" onSelect={setRoute} />
       </nav>
-      <div style={{ padding: 16 }}>
+      <main className="px-6 py-6">
         {route === "live" ? <LiveCoach /> : <SpotAnalysis />}
-      </div>
+      </main>
     </div>
   );
 }
@@ -42,12 +36,9 @@ function NavLink({
     <button
       data-testid={`nav-${value}`}
       onClick={() => onSelect(value)}
-      style={{
-        padding: "4px 8px",
-        border: on ? "1px solid #333" : "1px solid transparent",
-        background: on ? "#f0f0f0" : "transparent",
-        cursor: "pointer",
-      }}
+      className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+        on ? "bg-stone-800 text-white" : "text-stone-400 hover:text-stone-200"
+      }`}
     >
       {label}
     </button>
