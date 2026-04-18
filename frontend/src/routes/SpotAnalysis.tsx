@@ -14,6 +14,7 @@ import type {
   LegalAction,
   PresetSummary,
   Seat,
+  VillainProfile,
 } from "../api/types";
 import { useAdviceStream, type StreamState } from "../api/useAdviceStream";
 
@@ -61,6 +62,7 @@ export function SpotAnalysis() {
   const [villainHole, setVillainHole] = useState<string>("QcQh");
   const [effectiveStack, setEffectiveStack] = useState<number>(10000);
   const [button, setButton] = useState<Seat>("hero");
+  const [villainProfile, setVillainProfile] = useState<VillainProfile>("unknown");
   const [actionForm, setActionForm] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -147,8 +149,9 @@ export function SpotAnalysis() {
             session_id: sessionId,
             model_preset: c.presetId,
             prompt_name: "coach",
-            prompt_version: "v1",
+            prompt_version: "v2",
             game_state: snapshot.state,
+            villain_profile: villainProfile,
           }),
         ),
       );
@@ -156,7 +159,7 @@ export function SpotAnalysis() {
     } catch (err) {
       setError(String(err));
     }
-  }, [columns, initSession, selected.length, snapshot]);
+  }, [columns, initSession, selected.length, snapshot, villainProfile]);
 
   const toggleSelected = (id: string) => {
     setSelected((current) => {
@@ -193,6 +196,16 @@ export function SpotAnalysis() {
             <select value={button} onChange={(e) => setButton(e.target.value as Seat)}>
               <option value="hero">hero</option>
               <option value="villain">villain</option>
+            </select>
+          </label>
+          <label>
+            Villain profile{" "}
+            <select
+              value={villainProfile}
+              onChange={(e) => setVillainProfile(e.target.value as VillainProfile)}
+            >
+              <option value="unknown">unknown</option>
+              <option value="reg">reg</option>
             </select>
           </label>
           <button onClick={start} data-testid="spot-start">Start</button>
