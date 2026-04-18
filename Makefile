@@ -1,4 +1,4 @@
-.PHONY: dev test lint fmt install db-upgrade
+.PHONY: dev test e2e lint fmt install db-upgrade
 
 install:
 	cd backend && uv sync
@@ -14,6 +14,9 @@ dev:
 test:
 	cd backend && uv run pytest
 	cd frontend && npm test
+
+e2e:
+	cd frontend && npm run e2e
 
 lint:
 	cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy src

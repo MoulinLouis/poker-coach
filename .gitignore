@@ -12,6 +12,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Playwright
+playwright-report/
+test-results/
+
 # Data (SQLite lives here)
 data/
 
