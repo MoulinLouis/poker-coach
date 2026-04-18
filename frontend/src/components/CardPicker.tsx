@@ -21,6 +21,10 @@ const SLOT_META: Record<SlotId, { owner: "hero" | "villain"; label: string }> = 
   v2: { owner: "villain", label: "Villain 2" },
 };
 
+function allSlotsFilled(slots: Record<SlotId, string | null>): boolean {
+  return SLOT_ORDER.every((s) => slots[s] != null);
+}
+
 export function CardPicker({
   heroHole,
   villainHole,
@@ -34,11 +38,7 @@ export function CardPicker({
   }) => void;
 }) {
   // Uncontrolled: we own the per-slot state locally. Parent props seed the
-  // initial state only — we never re-sync from them. The parent's
-  // `[string, string] | null` contract can't represent "one slot filled,
-  // the other empty", so attempts to round-trip those states through
-  // props clobber intermediate slots. If the parent needs to force a
-  // reset, it should pass a new `key` to remount the picker.
+  // initial state only — see commit history on this file for the why.
   const [slots, setSlots] = useState<Record<SlotId, string | null>>(() => ({
     h1: heroHole?.[0] ?? null,
     h2: heroHole?.[1] ?? null,
@@ -46,6 +46,14 @@ export function CardPicker({
     v2: villainHole?.[1] ?? null,
   }));
   const [activeSlot, setActiveSlot] = useState<SlotId>("h1");
+  // Collapsed by default when everything is already set on mount; otherwise
+  // open so the user can pick.
+  const [expanded, setExpanded] = useState<boolean>(() => !allSlotsFilled({
+    h1: heroHole?.[0] ?? null,
+    h2: heroHole?.[1] ?? null,
+    v1: villainHole?.[0] ?? null,
+    v2: villainHole?.[1] ?? null,
+  }));
 
   const usedCards = useMemo(
     () => new Set(Object.values(slots).filter((x): x is string => x != null)),
@@ -80,15 +88,22 @@ export function CardPicker({
     setActiveSlot(firstEmptyAfter(activeSlot, next));
   };
 
+  const selectSlot = (slot: SlotId) => {
+    setActiveSlot(slot);
+    setExpanded(true);
+  };
+
   const clearSlot = (slot: SlotId) => {
     const next = { ...slots, [slot]: null };
     commit(next);
     setActiveSlot(slot);
+    setExpanded(true);
   };
 
   const clearAll = () => {
     commit({ h1: null, h2: null, v1: null, v2: null });
     setActiveSlot("h1");
+    setExpanded(true);
   };
 
   const dealRandom = () => {
@@ -105,17 +120,20 @@ export function CardPicker({
       if (!next[slot] && available.length > 0) next[slot] = available.shift()!;
     }
     commit(next);
+    // Dealing completes the selection — close the grid so the table is the
+    // primary focus.
+    if (allSlotsFilled(next)) setExpanded(false);
   };
 
   return (
     <div className="flex flex-col gap-3" data-testid="card-picker">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-wrap">
         <SlotGroup
           title="Hero"
           slots={["h1", "h2"]}
           active={activeSlot}
           values={slots}
-          onSlotClick={(s) => setActiveSlot(s)}
+          onSlotClick={selectSlot}
           onSlotClear={clearSlot}
         />
         <div className="w-px self-stretch bg-white/10" />
@@ -124,10 +142,10 @@ export function CardPicker({
           slots={["v1", "v2"]}
           active={activeSlot}
           values={slots}
-          onSlotClick={(s) => setActiveSlot(s)}
+          onSlotClick={selectSlot}
           onSlotClear={clearSlot}
         />
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 items-center">
           <button
             data-testid="card-deal-random"
             onClick={dealRandom}
@@ -142,22 +160,43 @@ export function CardPicker({
           >
             Clear
           </button>
+          <button
+            data-testid="card-picker-toggle"
+            onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            aria-controls="card-picker-grid"
+            title={expanded ? "Hide card grid" : "Show card grid"}
+            className="px-2 py-1.5 rounded-md bg-stone-800 hover:bg-stone-700 text-sm text-stone-100 ring-1 ring-white/10 transition flex items-center gap-1"
+          >
+            <span
+              className={`inline-block transition-transform ${expanded ? "rotate-180" : ""}`}
+              aria-hidden
+            >
+              ▾
+            </span>
+            <span className="text-xs uppercase tracking-wider">
+              {expanded ? "Hide" : "Edit"}
+            </span>
+          </button>
         </div>
       </div>
 
-      <div
-        className="grid gap-1 bg-stone-950 rounded-lg p-2 ring-1 ring-white/5"
-        style={{ gridTemplateColumns: `auto repeat(${RANKS.length}, minmax(0, 1fr))` }}
-      >
-        {SUITS.map((suit) => (
-          <SuitRow
-            key={suit}
-            suit={suit}
-            usedCards={usedCards}
-            onPick={pickCard}
-          />
-        ))}
-      </div>
+      {expanded && (
+        <div
+          id="card-picker-grid"
+          className="grid gap-1 bg-stone-950 rounded-lg p-2 ring-1 ring-white/5 anim-fade-up"
+          style={{ gridTemplateColumns: `auto repeat(${RANKS.length}, minmax(0, 1fr))` }}
+        >
+          {SUITS.map((suit) => (
+            <SuitRow
+              key={suit}
+              suit={suit}
+              usedCards={usedCards}
+              onPick={pickCard}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
