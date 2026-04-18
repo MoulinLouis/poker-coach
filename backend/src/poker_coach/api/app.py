@@ -67,12 +67,11 @@ def create_app(
                 "wiring should build a DefaultOracleFactory."
             )
         app.state.oracle_factory = oracle_factory
-        if anthropic_client is None:
-            from anthropic import AsyncAnthropic
-
-            app.state.anthropic_client = AsyncAnthropic()
-        else:
-            app.state.anthropic_client = anthropic_client
+        # Anthropic client is optional at startup: if absent, /api/translate
+        # raises a clear RuntimeError at dispatch (see get_anthropic_client).
+        # This matches the codebase pattern — missing provider keys fail
+        # lazily, not at boot.
+        app.state.anthropic_client = anthropic_client
 
         sweeper_task: asyncio.Task[Any] | None = None
         if sweeper_interval_seconds > 0:
