@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-felt: #0e5a33;
+  --color-felt-dark: #083d22;
+  --color-card-bg: #fafafa;
+  --color-card-red: #c0352c;
+  --color-card-black: #111111;
+  --color-chip-gold: #d4a14a;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.bg-felt {
+  background: radial-gradient(
+    ellipse at center,
+    var(--color-felt) 0%,
+    var(--color-felt-dark) 100%
+  );
+}
+
+/* Reset the default Vite margins */
+body {
+  margin: 0;
+}
