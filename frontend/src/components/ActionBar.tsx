@@ -200,6 +200,16 @@ function SizingPanel({
   const min = la.min_to!;
   const max = la.max_to!;
   const activeLabel = presets.find((p) => p.toChips === sizeChips)?.label;
+  const [editing, setEditing] = useState(false);
+  const [rawInput, setRawInput] = useState("");
+
+  const commitEdit = () => {
+    const parsed = parseFloat(rawInput);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      onSetChips(Math.round(parsed * state.bb));
+    }
+    setEditing(false);
+  };
 
   return (
     <div className="rounded-lg bg-black/30 ring-1 ring-white/5 p-3 flex flex-col gap-3">
@@ -278,12 +288,30 @@ function SizingPanel({
 
       <div className="flex items-baseline justify-between">
         <div className="flex items-baseline gap-2">
-          <span
-            data-testid="size-readout-bb"
-            className="text-3xl font-bold tabular-nums text-stone-50"
-          >
-            {sizeBb.toFixed(1)}
-          </span>
+          {editing ? (
+            <input
+              type="text"
+              value={rawInput}
+              onChange={(e) => setRawInput(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.currentTarget.blur(); }
+                if (e.key === "Escape") { setEditing(false); }
+              }}
+              autoFocus
+              aria-label="Bet size in bb"
+              className="text-3xl font-bold tabular-nums text-stone-50 bg-transparent border-b-2 border-emerald-400 outline-none w-20 transition-colors"
+            />
+          ) : (
+            <span
+              data-testid="size-readout-bb"
+              onClick={() => { setEditing(true); setRawInput(sizeBb.toFixed(1)); }}
+              className="text-3xl font-bold tabular-nums text-stone-50 cursor-text hover:text-emerald-300 transition-colors select-none"
+              title="Click to type a size"
+            >
+              {sizeBb.toFixed(1)}
+            </span>
+          )}
           <span className="text-xs text-stone-400">bb</span>
         </div>
         <span className="text-xs text-stone-400 tabular-nums">
