@@ -11,7 +11,11 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Let callers override via `cfg.set_main_option("sqlalchemy.url", ...)` before
+# invoking alembic (e.g. tests targeting a throwaway DB). Fall back to settings
+# only when nothing's been set.
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", settings.database_url)
 
 target_metadata = metadata
 
