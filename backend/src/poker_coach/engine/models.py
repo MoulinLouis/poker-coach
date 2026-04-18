@@ -59,6 +59,8 @@ class GameState(BaseModel):
     to_act: Seat | None = None
     last_aggressor: Seat | None = None
     last_raise_size: int = 0
+    raises_open: bool = True
+    acted_this_street: frozenset[Seat] = Field(default_factory=frozenset)
     history: list[Action] = Field(default_factory=list)
     rng_seed: int | None = None
     deck_snapshot: list[str] | None = None
