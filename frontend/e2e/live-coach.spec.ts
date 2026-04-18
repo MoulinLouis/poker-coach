@@ -9,19 +9,18 @@ import { test, expect } from "@playwright/test";
 test("start a hand and take the first action", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { name: "Live Coach" })).toBeVisible();
+  await expect(page.getByTestId("nav-live")).toBeVisible();
 
-  await page.getByRole("button", { name: "New hand" }).click();
-  await expect(page.getByTestId("game-state")).toBeVisible();
+  await page.getByTestId("new-hand").click();
+  await expect(page.getByTestId("poker-table")).toBeVisible();
 
-  const stateText = await page.getByTestId("game-state").innerText();
-  expect(stateText).toContain("preflop");
-  expect(stateText).toContain("To act: hero");
+  // Hero is on the button (SB) and acts first preflop — highlighted ring.
+  await expect(page.getByTestId("seat-hero")).toHaveAttribute("data-to-act", "true");
 
-  // Hero raises to 3bb (300 chips = 3.0 bb)
-  await page.getByTestId("size-raise").fill("3");
+  // Raise to 3bb via the size-input + raise button
+  await page.getByTestId("size-input").fill("3");
   await page.getByTestId("action-raise").click();
 
-  await expect(page.getByTestId("game-state")).toContainText("To act: villain");
-  await expect(page.getByTestId("game-state")).toContainText("hero raise to 3.0bb");
+  // Villain now to act
+  await expect(page.getByTestId("seat-villain")).toHaveAttribute("data-to-act", "true");
 });
