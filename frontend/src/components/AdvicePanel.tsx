@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Advice } from "../api/types";
 import type { StreamState } from "../api/useAdviceStream";
+import { type TranslationState, useTranslation } from "../api/useTranslation";
 
 export function AdvicePanel({
   stream,
@@ -86,30 +87,62 @@ function ThinkingBlock({ stream }: { stream: StreamState }) {
   const collapsed = userOverride !== null ? userOverride : isTerminal;
   const live = stream.status === "streaming" || stream.status === "thinking";
 
+  const translation = useTranslation(stream.reasoning);
+  const displayedReasoning =
+    translation.lang === "fr" && translation.frText !== null
+      ? translation.frText
+      : stream.reasoning;
+
   return (
     <div className="flex flex-col gap-1">
-      <button
-        type="button"
-        data-testid="thinking-toggle"
-        onClick={() => setUserOverride(!collapsed)}
-        className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-stone-400 hover:text-stone-200 transition"
-      >
-        <span className="font-mono">{collapsed ? "▶" : "▼"}</span>
-        <span>Thinking</span>
-        {live && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
-        <span className="opacity-50 normal-case tracking-normal">
-          {stream.reasoning.length} chars
-        </span>
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          data-testid="thinking-toggle"
+          onClick={() => setUserOverride(!collapsed)}
+          className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-stone-400 hover:text-stone-200 transition"
+        >
+          <span className="font-mono">{collapsed ? "▶" : "▼"}</span>
+          <span>Thinking</span>
+          {live && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+          <span className="opacity-50 normal-case tracking-normal">
+            {stream.reasoning.length} chars
+          </span>
+        </button>
+        <LangToggle state={translation} disabled={!isTerminal} />
+      </div>
       {!collapsed && (
         <pre
           data-testid="advice-reasoning"
           className="max-h-[300px] overflow-auto text-[11px] leading-relaxed font-mono whitespace-pre-wrap text-stone-300 bg-black/40 rounded p-2 ring-1 ring-white/5"
         >
-          {stream.reasoning}
+          {displayedReasoning}
         </pre>
       )}
     </div>
+  );
+}
+
+function LangToggle({
+  state,
+  disabled = false,
+}: {
+  state: TranslationState;
+  disabled?: boolean;
+}) {
+  const { lang, loading, error, toggle } = state;
+  const label = loading ? "…" : error ? "!" : lang === "fr" ? "FR" : "EN";
+  return (
+    <button
+      type="button"
+      data-testid="lang-toggle"
+      disabled={disabled || loading}
+      onClick={toggle}
+      className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border border-white/10 text-stone-300 hover:text-stone-100 hover:border-white/30 transition disabled:opacity-40 disabled:cursor-not-allowed"
+      title={error ? `translation error: ${error}` : undefined}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -119,6 +152,12 @@ function AdviceCard({ advice }: { advice: Advice }) {
     medium: "bg-amber-500/20 text-amber-300 border-amber-500/40",
     low: "bg-stone-500/20 text-stone-300 border-stone-500/40",
   }[advice.confidence];
+
+  const translation = useTranslation(advice.reasoning);
+  const displayedReasoning =
+    translation.lang === "fr" && translation.frText !== null
+      ? translation.frText
+      : advice.reasoning;
 
   return (
     <div
@@ -134,13 +173,16 @@ function AdviceCard({ advice }: { advice: Advice }) {
             </span>
           )}
         </span>
-        <span
-          className={`px-2 py-0.5 rounded text-[10px] border uppercase tracking-wider ${confidenceStyle}`}
-        >
-          {advice.confidence}
-        </span>
+        <div className="flex items-center gap-2">
+          <LangToggle state={translation} />
+          <span
+            className={`px-2 py-0.5 rounded text-[10px] border uppercase tracking-wider ${confidenceStyle}`}
+          >
+            {advice.confidence}
+          </span>
+        </div>
       </div>
-      <p className="text-sm opacity-90 leading-relaxed">{advice.reasoning}</p>
+      <p className="text-sm opacity-90 leading-relaxed">{displayedReasoning}</p>
     </div>
   );
 }
