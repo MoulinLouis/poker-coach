@@ -32,8 +32,8 @@ export function AdvicePanel({
 
       {stream.status === "idle" && (
         <p className="text-sm opacity-60">
-          Press <kbd className="px-1 rounded bg-white/10">space</kbd> on hero's turn to ask
-          the coach.
+          Click <span className="font-semibold text-amber-300">advise</span> on hero's turn
+          to ask the coach.
         </p>
       )}
 
