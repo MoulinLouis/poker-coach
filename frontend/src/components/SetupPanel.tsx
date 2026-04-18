@@ -1,11 +1,17 @@
 import type { PresetSummary, Seat } from "../api/types";
+import { CardPicker } from "./CardPicker";
 
 export interface SetupValues {
-  heroHole: string;
+  heroHole: string; // 4-char code like "AsKd"
   villainHole: string;
   effectiveStack: number;
   button: Seat;
   presetId: string;
+}
+
+function parseHole(code: string): [string, string] | null {
+  if (code.length !== 4) return null;
+  return [code.slice(0, 2), code.slice(2, 4)];
 }
 
 export function SetupPanel({
@@ -21,66 +27,66 @@ export function SetupPanel({
   onStart: () => void;
   disabled?: boolean;
 }) {
+  const hero = parseHole(values.heroHole);
+  const villain = parseHole(values.villainHole);
+
   return (
-    <section className="rounded-xl bg-stone-800 p-4 text-stone-100 flex flex-wrap items-end gap-4 ring-1 ring-white/5">
-      <Field label="Hero hole">
-        <input
-          value={values.heroHole}
-          onChange={(e) => onChange({ heroHole: e.target.value })}
-          placeholder="AsKd"
-          className="w-20 bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-        />
-      </Field>
-      <Field label="Villain hole">
-        <input
-          value={values.villainHole}
-          onChange={(e) => onChange({ villainHole: e.target.value })}
-          placeholder="QcQh"
-          className="w-20 bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-        />
-      </Field>
-      <Field label="Effective stack (chips)">
-        <input
-          type="number"
-          value={values.effectiveStack}
-          onChange={(e) =>
-            onChange({ effectiveStack: parseInt(e.target.value || "0", 10) })
-          }
-          className="w-24 bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-        />
-      </Field>
-      <Field label="Button">
-        <select
-          value={values.button}
-          onChange={(e) => onChange({ button: e.target.value as Seat })}
-          className="bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
+    <section className="rounded-xl bg-stone-800 p-4 text-stone-100 flex flex-col gap-4 ring-1 ring-white/5">
+      <div className="flex flex-wrap items-end gap-4">
+        <Field label="Effective stack (chips)">
+          <input
+            type="number"
+            value={values.effectiveStack}
+            onChange={(e) =>
+              onChange({ effectiveStack: parseInt(e.target.value || "0", 10) })
+            }
+            className="w-24 bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
+          />
+        </Field>
+        <Field label="Button">
+          <select
+            value={values.button}
+            onChange={(e) => onChange({ button: e.target.value as Seat })}
+            className="bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
+          >
+            <option value="hero">hero</option>
+            <option value="villain">villain</option>
+          </select>
+        </Field>
+        <Field label="Model">
+          <select
+            value={values.presetId}
+            onChange={(e) => onChange({ presetId: e.target.value })}
+            className="bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
+          >
+            {presets.map((p) => (
+              <option key={p.selector_id} value={p.selector_id}>
+                {p.selector_id}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <button
+          data-testid="new-hand"
+          onClick={onStart}
+          disabled={disabled}
+          className="ml-auto px-4 py-2 rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition"
         >
-          <option value="hero">hero</option>
-          <option value="villain">villain</option>
-        </select>
-      </Field>
-      <Field label="Model">
-        <select
-          value={values.presetId}
-          onChange={(e) => onChange({ presetId: e.target.value })}
-          className="bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-        >
-          {presets.map((p) => (
-            <option key={p.selector_id} value={p.selector_id}>
-              {p.selector_id}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <button
-        data-testid="new-hand"
-        onClick={onStart}
-        disabled={disabled}
-        className="px-4 py-2 rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition"
-      >
-        <kbd className="mr-2 opacity-60 text-[10px] font-mono">n</kbd>
-        New hand
-      </button>
+          <kbd className="mr-2 opacity-60 text-[10px] font-mono">n</kbd>
+          New hand
+        </button>
+      </div>
+
+      <CardPicker
+        heroHole={hero}
+        villainHole={villain}
+        onChange={({ hero: h, villain: v }) =>
+          onChange({
+            heroHole: h ? h[0] + h[1] : "",
+            villainHole: v ? v[0] + v[1] : "",
+          })
+        }
+      />
     </section>
   );
 }
