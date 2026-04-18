@@ -126,7 +126,7 @@ class AnthropicOracle:
                         if text:
                             thinking_chunks.append(text)
                             yield ReasoningDelta(text=text)
-                message = stream.get_final_message()
+                message = await stream.get_final_message()
         except Exception as exc:
             yield OracleError(
                 kind="provider_error",

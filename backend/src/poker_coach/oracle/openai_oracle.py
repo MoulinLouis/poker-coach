@@ -88,7 +88,7 @@ class OpenAIOracle:
                         if delta:
                             reasoning_chunks.append(delta)
                             yield ReasoningDelta(text=delta)
-                response = stream.get_final_response()
+                response = await stream.get_final_response()
         except Exception as exc:
             yield OracleError(
                 kind="provider_error",

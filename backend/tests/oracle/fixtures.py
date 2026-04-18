@@ -65,7 +65,7 @@ class FakeStream:
         self._index += 1
         return event
 
-    def get_final_message(self) -> FakeMessage:
+    async def get_final_message(self) -> FakeMessage:
         return self._final
 
 

@@ -70,7 +70,7 @@ class FakeStream:
         self._index += 1
         return event
 
-    def get_final_response(self) -> FakeResponse:
+    async def get_final_response(self) -> FakeResponse:
         return self._response
 
 
