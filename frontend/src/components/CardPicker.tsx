@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"] as const;
@@ -33,10 +33,12 @@ export function CardPicker({
     villain: [string, string] | null;
   }) => void;
 }) {
-  // Uncontrolled: we own the per-slot state locally. Parent props are read
-  // only to seed initial state — intermediate states (one card set, other
-  // not) don't round-trip cleanly through the parent's [string, string]
-  // contract, which caused picks to be dropped after Clear.
+  // Uncontrolled: we own the per-slot state locally. Parent props seed the
+  // initial state only — we never re-sync from them. The parent's
+  // `[string, string] | null` contract can't represent "one slot filled,
+  // the other empty", so attempts to round-trip those states through
+  // props clobber intermediate slots. If the parent needs to force a
+  // reset, it should pass a new `key` to remount the picker.
   const [slots, setSlots] = useState<Record<SlotId, string | null>>(() => ({
     h1: heroHole?.[0] ?? null,
     h2: heroHole?.[1] ?? null,
@@ -45,23 +47,6 @@ export function CardPicker({
   }));
   const [activeSlot, setActiveSlot] = useState<SlotId>("h1");
 
-  // Re-seed when the parent hands us a different full pair (e.g., they ran
-  // Deal random externally or loaded saved state). Compare string so React
-  // doesn't fight us on fresh tuples with the same values.
-  const seededSignature = useRef<string>("");
-  useEffect(() => {
-    const sig = `${heroHole?.[0] ?? ""}|${heroHole?.[1] ?? ""}|${villainHole?.[0] ?? ""}|${villainHole?.[1] ?? ""}`;
-    if (sig !== seededSignature.current) {
-      seededSignature.current = sig;
-      setSlots({
-        h1: heroHole?.[0] ?? null,
-        h2: heroHole?.[1] ?? null,
-        v1: villainHole?.[0] ?? null,
-        v2: villainHole?.[1] ?? null,
-      });
-    }
-  }, [heroHole, villainHole]);
-
   const usedCards = useMemo(
     () => new Set(Object.values(slots).filter((x): x is string => x != null)),
     [slots],
@@ -69,8 +54,6 @@ export function CardPicker({
 
   const commit = (next: Record<SlotId, string | null>) => {
     setSlots(next);
-    const sig = `${next.h1 ?? ""}|${next.h2 ?? ""}|${next.v1 ?? ""}|${next.v2 ?? ""}`;
-    seededSignature.current = sig;
     const hero: [string, string] | null =
       next.h1 && next.h2 ? [next.h1, next.h2] : null;
     const villain: [string, string] | null =
