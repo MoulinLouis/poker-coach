@@ -52,6 +52,10 @@ python_version = "3.12"
 strict = true
 files = ["src"]
 
+[[tool.mypy.overrides]]
+module = ["phevaluator", "phevaluator.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
