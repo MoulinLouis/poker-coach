@@ -186,7 +186,13 @@ async def test_anthropic_oracle_uses_default_system_prompt() -> None:
     async for _ in oracle.advise_stream(sample_rendered(), sample_spec()):
         pass
 
-    assert captured["system"] == SYSTEM_PROMPT
+    assert captured["system"] == [
+        {
+            "type": "text",
+            "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
 
 
 @pytest.mark.asyncio
@@ -209,7 +215,80 @@ async def test_anthropic_oracle_uses_explicit_system_prompt_when_passed() -> Non
     async for _ in oracle.advise_stream(sample_rendered(), sample_spec(), system_prompt=custom):
         pass
 
-    assert captured["system"] == custom
+    assert captured["system"] == [
+        {
+            "type": "text",
+            "text": custom,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_anthropic_oracle_parses_cache_tokens_and_applies_multipliers() -> None:
+    # Cache-hit scenario: 50 fresh input + 800 read from cache + 0 writes.
+    # Effective input tokens for cost = 50 + 800*0.1 = 130.
+    # 130/1M * 15 + 200/1M * 75 = 0.00195 + 0.015 = 0.01695.
+    # Reported input_tokens on the event = uncached + write + read = 850.
+    message = FakeMessage(
+        content=[
+            tool_use_block(
+                {"action": "check", "reasoning": "Weak but realized.", "confidence": "low"}
+            )
+        ],
+        usage=FakeUsage(
+            input_tokens=50,
+            output_tokens=200,
+            cache_creation_input_tokens=0,
+            cache_read_input_tokens=800,
+        ),
+    )
+    oracle = AnthropicOracle(fake_stream_caller([], message), sample_pricing())
+
+    emitted = await collect(oracle)
+    usage = emitted[-1]
+    assert isinstance(usage, UsageComplete)
+    assert usage.input_tokens == 850
+    assert usage.cache_read_input_tokens == 800
+    assert usage.cache_creation_input_tokens == 0
+    assert usage.output_tokens == 200
+    assert usage.total_tokens == 1050
+    assert round(usage.cost_usd, 5) == 0.01695
+    assert usage.pricing_snapshot["cache_read_multiplier"] == 0.1
+    assert usage.pricing_snapshot["cache_write_multiplier"] == 1.25
+
+
+@pytest.mark.asyncio
+async def test_anthropic_oracle_applies_cache_write_premium_on_first_call() -> None:
+    # Cache-miss/first-call scenario: 50 fresh + 1000 being written to cache.
+    # Effective input tokens for cost = 50 + 1000*1.25 = 1300.
+    # 1300/1M * 15 + 100/1M * 75 = 0.0195 + 0.0075 = 0.027.
+    message = FakeMessage(
+        content=[
+            tool_use_block(
+                {
+                    "action": "bet",
+                    "to_amount_bb": 3.0,
+                    "reasoning": "Value.",
+                    "confidence": "high",
+                }
+            )
+        ],
+        usage=FakeUsage(
+            input_tokens=50,
+            output_tokens=100,
+            cache_creation_input_tokens=1000,
+            cache_read_input_tokens=0,
+        ),
+    )
+    oracle = AnthropicOracle(fake_stream_caller([], message), sample_pricing())
+
+    emitted = await collect(oracle)
+    usage = emitted[-1]
+    assert isinstance(usage, UsageComplete)
+    assert usage.cache_creation_input_tokens == 1000
+    assert usage.cache_read_input_tokens == 0
+    assert round(usage.cost_usd, 5) == 0.027
 
 
 @pytest.mark.asyncio

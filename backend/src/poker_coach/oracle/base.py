@@ -76,12 +76,15 @@ class ToolCallComplete(BaseModel):
 
 class UsageComplete(BaseModel):
     type: Literal["usage_complete"] = "usage_complete"
-    input_tokens: int
+    input_tokens: int  # total billable input = uncached + cache_write + cache_read
     output_tokens: int
     reasoning_tokens: int
     total_tokens: int
     cost_usd: float
     pricing_snapshot: dict[str, Any]
+    # Anthropic prompt-cache breakdown; both zero on providers/sessions without cache.
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
 
 
 OracleErrorKind = Literal[

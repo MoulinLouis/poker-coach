@@ -21,3 +21,4 @@ below.
 - [2026-04-18: tool_choice + thinking — auto only, system prompt enforces](2026-04-18-anthropic-tool-choice-with-thinking.md)
 - [2026-04-18: Async SDK stream final-message methods must be awaited](2026-04-18-async-stream-await.md)
 - [2026-04-18: CardPicker is uncontrolled, no prop resync](2026-04-18-cardpicker-uncontrolled.md)
+- [2026-04-19: Anthropic prompt caching on system block](2026-04-19-anthropic-prompt-caching.md)

@@ -7,6 +7,14 @@ into the provider-agnostic OracleEvent sequence.
 The oracle takes a `stream_caller` callable rather than a client so
 tests can inject a fake that yields pre-constructed events. In
 production wire it via `real_anthropic_stream_caller(client)`.
+
+Prompt caching: the system prompt is sent as a single text block with
+`cache_control={"type":"ephemeral"}`, which caches the tools+system
+prefix (canonical order is tools -> system -> messages, so the marker
+on system covers both). Anthropic requires the cached prefix to exceed
+1024 tokens (2048 for Haiku) — if below, the API silently skips caching
+and reports cache_creation/cache_read as 0. See
+docs/decisions/2026-04-19-anthropic-prompt-caching.md for the canary.
 """
 
 from __future__ import annotations
@@ -76,7 +84,13 @@ class AnthropicOracle:
         request_kwargs: dict[str, Any] = {
             "model": spec.model_id,
             "max_tokens": max_tokens,
-            "system": effective_system,
+            "system": [
+                {
+                    "type": "text",
+                    "text": effective_system,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
             "messages": [{"role": "user", "content": rendered.rendered_prompt}],
             "tools": [anthropic_tool_spec()],
         }
@@ -148,26 +162,36 @@ class AnthropicOracle:
         yield ToolCallComplete(advice=advice, raw_tool_input=raw_input)
 
         usage = getattr(message, "usage", None)
-        input_tokens = int(getattr(usage, "input_tokens", 0) or 0)
+        # Anthropic's usage.input_tokens excludes cache-creation and cache-read
+        # tokens; those are separate fields. compute_cost applies the cache
+        # multipliers; the UsageComplete event reports a total for display.
+        uncached_input = int(getattr(usage, "input_tokens", 0) or 0)
+        cache_creation = int(getattr(usage, "cache_creation_input_tokens", 0) or 0)
+        cache_read = int(getattr(usage, "cache_read_input_tokens", 0) or 0)
         output_tokens = int(getattr(usage, "output_tokens", 0) or 0)
         # Anthropic bills thinking tokens as part of output_tokens; we surface
         # the thinking slice separately when available but still count it
         # against output for cost.
         reasoning_tokens = int(getattr(usage, "thinking_tokens", 0) or 0)
-        total_tokens = input_tokens + output_tokens
+        total_input = uncached_input + cache_creation + cache_read
+        total_tokens = total_input + output_tokens
         cost, snapshot = compute_cost(
-            input_tokens=input_tokens,
+            input_tokens=uncached_input,
             output_tokens=output_tokens,
             model_id=spec.model_id,
             pricing=self.pricing,
+            cache_creation_input_tokens=cache_creation,
+            cache_read_input_tokens=cache_read,
         )
         yield UsageComplete(
-            input_tokens=input_tokens,
+            input_tokens=total_input,
             output_tokens=output_tokens,
             reasoning_tokens=reasoning_tokens,
             total_tokens=total_tokens,
             cost_usd=cost,
             pricing_snapshot=snapshot,
+            cache_creation_input_tokens=cache_creation,
+            cache_read_input_tokens=cache_read,
         )
 
 

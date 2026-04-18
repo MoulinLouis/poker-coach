@@ -45,6 +45,8 @@ with canaries + linked commits. Skim the index before reinventing a fix.
 
 7. **`deck_snapshot` is rewritten by `/engine/reveal` to reflect user-supplied board cards.** Any code reading `deck_snapshot[4:9]` for anything other than replay reconstruction must read `state.board` instead. Treat `deck_snapshot` positions beyond `[0:4]` (hero + villain holes) as implementation detail of replay, not a reliable source of board cards.
 
+8. **Anthropic system prompt is cacheable; don't trim it.** `system=` is sent as `[{"type":"text","text":...,"cache_control":{"type":"ephemeral"}}]` to cache the tools+system prefix. Anthropic requires >= 1024 tokens (2048 on Haiku) or caching is a silent no-op. Current `SYSTEM_PROMPT` is ~1140 tokens — trimming it below ~1100 kills the cache. `compute_cost` bills cache-write at 1.25x and cache-read at 0.1x the base input rate; changing these multipliers must follow Anthropic's published rates.
+
 ## Engine invariants (don't break)
 
 Property tested in `backend/tests/engine/test_invariants.py`. All five must stay green:
