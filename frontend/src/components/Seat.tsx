@@ -13,10 +13,13 @@ export function Seat({
   showHole: boolean;
 }) {
   const stack = state.stacks[id];
-  const committed = state.committed[id];
   const isToAct = state.to_act === id;
   const isButton = state.button === id;
   const hole = id === "hero" ? state.hero_hole : state.villain_hole;
+  const stackBb = stack / state.bb;
+  const effectiveBb = state.effective_stack / state.bb;
+  const depthPct =
+    effectiveBb > 0 ? Math.max(0, Math.min(100, (stackBb / effectiveBb) * 100)) : 0;
 
   return (
     <div
@@ -30,14 +33,17 @@ export function Seat({
     >
       <div className="flex items-baseline gap-2 text-white">
         <span className="font-semibold tracking-wide">{label}</span>
-        {isButton && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/80 text-amber-950 font-bold">
-            BTN
-          </span>
-        )}
-        <span className="text-xs opacity-70 tabular-nums">
-          {(stack / state.bb).toFixed(1)} bb
+        <span
+          data-testid={`seat-${id}-position`}
+          className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+            isButton
+              ? "bg-amber-500/80 text-amber-950"
+              : "bg-white/15 text-white/80"
+          }`}
+        >
+          {isButton ? "BTN" : "BB"}
         </span>
+        <span className="text-xs opacity-70 tabular-nums">{stackBb.toFixed(1)} bb</span>
       </div>
       <div className="flex gap-1">
         {hole && showHole ? (
@@ -52,8 +58,14 @@ export function Seat({
           </>
         )}
       </div>
-      <div className="h-4 text-xs text-amber-300 tabular-nums">
-        {committed > 0 ? `bet ${(committed / state.bb).toFixed(1)} bb` : ""}
+      <div
+        data-testid={`seat-${id}-depth`}
+        className="h-1 w-full rounded-full bg-white/10 overflow-hidden"
+      >
+        <div
+          className="h-full bg-emerald-400/80 transition-[width] duration-300"
+          style={{ width: `${depthPct}%` }}
+        />
       </div>
     </div>
   );
