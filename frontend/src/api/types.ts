@@ -42,6 +42,8 @@ export interface GameState {
   history: Action[];
   rng_seed?: number | null;
   deck_snapshot?: string[] | null;
+  pending_reveal: "flop" | "turn" | "river" | "runout" | null;
+  reveals: string[][];
 }
 
 export interface EngineSnapshot {
