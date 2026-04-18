@@ -56,9 +56,17 @@ class AnthropicOracle:
     async def advise_stream(
         self, rendered: RenderedPrompt, spec: ModelSpec
     ) -> AsyncIterator[OracleEvent]:
+        # Anthropic requires max_tokens > thinking.budget_tokens (thinking
+        # tokens count against max_tokens). Give the tool-call output
+        # enough headroom beyond the thinking budget.
+        tool_headroom = 2048
+        max_tokens = self.max_output_tokens
+        if spec.thinking_budget is not None:
+            max_tokens = max(max_tokens, spec.thinking_budget + tool_headroom)
+
         request_kwargs: dict[str, Any] = {
             "model": spec.model_id,
-            "max_tokens": self.max_output_tokens,
+            "max_tokens": max_tokens,
             "messages": [{"role": "user", "content": rendered.rendered_prompt}],
             "tools": [anthropic_tool_spec()],
         }
