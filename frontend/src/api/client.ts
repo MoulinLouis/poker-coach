@@ -1,8 +1,13 @@
 import type {
   Action,
+  CostResponse,
+  DecisionDetail,
+  DecisionListRow,
   EngineSnapshot,
   GameState,
+  Pack,
   PresetsResponse,
+  PromptDetail,
   Seat,
 } from "./types";
 
@@ -75,4 +80,45 @@ export async function recordAction(input: {
   action: Action;
 }): Promise<{ id: number }> {
   return postJSON("/api/actions", input);
+}
+
+export async function fetchCost(sessionId?: string | null): Promise<CostResponse> {
+  const qs = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : "";
+  return getJSON<CostResponse>(`/api/cost${qs}`);
+}
+
+export async function listDecisions(params: {
+  limit?: number;
+  offset?: number;
+  session_id?: string | null;
+  model_id?: string | null;
+  prompt_version?: string | null;
+  status?: string | null;
+}): Promise<DecisionListRow[]> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v != null && v !== "") qs.set(k, String(v));
+  }
+  const query = qs.toString();
+  return getJSON<DecisionListRow[]>(`/api/decisions${query ? `?${query}` : ""}`);
+}
+
+export async function getDecisionDetail(decisionId: string): Promise<DecisionDetail> {
+  return getJSON<DecisionDetail>(`/api/decisions/${decisionId}/detail`);
+}
+
+export async function listPacks(): Promise<Pack[]> {
+  return getJSON<Pack[]>("/api/prompts");
+}
+
+export async function getPrompt(pack: string, version: string): Promise<PromptDetail> {
+  return getJSON<PromptDetail>(`/api/prompts/${pack}/${version}`);
+}
+
+export async function savePrompt(
+  pack: string,
+  version: string,
+  content: string,
+): Promise<{ pack: string; version: string; path: string }> {
+  return postJSON(`/api/prompts/${pack}`, { version, content });
 }

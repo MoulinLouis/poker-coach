@@ -68,3 +68,68 @@ export interface PresetsResponse {
   default: string;
   presets: PresetSummary[];
 }
+
+export interface CostBreakdownRow {
+  model_id: string;
+  reasoning_effort: string;
+  decision_count: number;
+  cost_usd: number;
+}
+
+export interface CostResponse {
+  session_usd: number;
+  all_time_usd: number;
+  by_model: CostBreakdownRow[];
+}
+
+export interface DecisionListRow {
+  decision_id: string;
+  created_at: string;
+  session_id: string;
+  hand_id: string | null;
+  model_id: string;
+  prompt_name: string;
+  prompt_version: string;
+  status: string;
+  parsed_advice: Advice | null;
+  cost_usd: number | null;
+  latency_ms: number | null;
+}
+
+export interface DecisionDetail extends DecisionListRow {
+  game_state: GameState;
+  template_hash: string;
+  template_raw: string;
+  rendered_prompt: string;
+  reasoning_text: string | null;
+  raw_tool_input: Record<string, unknown> | null;
+  reasoning_effort: string | null;
+  thinking_budget: number | null;
+  temperature: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  reasoning_tokens: number | null;
+  total_tokens: number | null;
+  pricing_snapshot: Record<string, unknown> | null;
+  error_message: string | null;
+  retry_of: string | null;
+}
+
+export interface PackVersion {
+  version: string;
+  description: string | null;
+}
+
+export interface Pack {
+  name: string;
+  versions: PackVersion[];
+}
+
+export interface PromptDetail {
+  pack: string;
+  version: string;
+  description: string | null;
+  declared_variables: string[];
+  template_raw: string;
+  template_hash: string;
+}
