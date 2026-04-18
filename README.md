@@ -2,38 +2,50 @@
 
 Local web-based heads-up No-Limit Hold'em coach powered by LLMs. Two modes:
 
-- **Live coach** — two humans play face to face; hero receives real-time coaching on every decision, villain plays without assistance.
-- **Spot analysis** — enter any heads-up spot manually and get the LLM's recommendation, reasoning, and confidence (side-by-side across multiple models).
+- **Live coach** — two humans play face to face; hero receives real-time
+  coaching on every decision, villain plays without assistance.
+- **Spot analysis** — enter any heads-up spot manually and compare up to
+  three models side-by-side.
 
 Not RTA. Not connected to any real poker room.
 
-## Status
+## Stack
 
-Phase 0 in progress — repo scaffolding and dev loop. See [`docs/plans/2026-04-18-poker-hu-llm-coach-design.md`](docs/plans/2026-04-18-poker-hu-llm-coach-design.md) for the full design and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the condensed reference.
-
-Phase progression:
-
-| Phase | Deliverable |
-|---|---|
-| 0 | Repo skeleton, CI, dev loop, Alembic baseline |
-| 1 | HU NLHE engine + phevaluator showdown |
-| 2 | Anthropic oracle + first prompt pack + log schema |
-| 3 | FastAPI + SSE + decision lifecycle + sweeper |
-| 4 | React Live Coach UI |
-| 5 | OpenAI Responses oracle + multi-model Compare |
-| 6 | History, Prompts editor, cost footer breakdowns |
+- Python 3.12 · FastAPI · SQLAlchemy + Alembic on SQLite · pytest + Hypothesis
+- React 18 · Vite · Tailwind 4 · vitest + Playwright
+- Oracle abstraction over **Anthropic Messages** and **OpenAI Responses**.
+  Default preset `gpt-5.3-codex-xhigh`; see
+  [`docs/decisions/2026-04-18-model-strategy.md`](docs/decisions/2026-04-18-model-strategy.md).
 
 ## Install and run
 
-To be filled in as Phase 0 completes. The target dev loop is:
+Prereqs: [`uv`](https://docs.astral.sh/uv/), Node 20+, `make`.
 
 ```sh
-make dev       # FastAPI :8000 + Vite :5173 (Vite proxies /api)
-make test      # pytest + vitest + playwright
-make lint      # ruff + mypy + eslint + tsc + prettier
+cp .env.example .env     # add ANTHROPIC_API_KEY and/or OPENAI_API_KEY
+make install             # uv sync + npm install
+make db-upgrade          # alembic upgrade head
+make dev                 # FastAPI :8000 + Vite :5173 (Vite proxies /api)
 ```
 
-Secrets live in `.env` (gitignored); see `.env.example`.
+Other make targets: `test`, `e2e`, `lint`, `fmt`. Full command reference in
+[`CLAUDE.md`](CLAUDE.md).
+
+Missing API keys don't crash startup — they raise `RuntimeError` lazily when
+a decision is dispatched for that provider.
+
+## Documentation
+
+Start with [`CLAUDE.md`](CLAUDE.md) for the session-level rules and
+load-bearing gotchas. Everything else is indexed from
+[`docs/README.md`](docs/README.md).
+
+| If you want to… | Open |
+|---|---|
+| Understand the architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Add a preset / prompt pack / route / component | [`docs/CODE_PATTERNS.md`](docs/CODE_PATTERNS.md) |
+| Know *why* a non-obvious decision was made | [`docs/decisions/`](docs/decisions/README.md) |
+| See the original design | [`docs/plans/old/2026-04-18-poker-hu-llm-coach-design.md`](docs/plans/old/2026-04-18-poker-hu-llm-coach-design.md) |
 
 ## License
 

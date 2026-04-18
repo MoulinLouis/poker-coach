@@ -1,10 +1,12 @@
+<!-- Last verified against code: 2026-04-18 -->
 # Architecture — orientation
 
 This file is **where to look**, not what to know. Design rationale lives in
-[`docs/plans/2026-04-18-poker-hu-llm-coach-design.md`](plans/2026-04-18-poker-hu-llm-coach-design.md).
-Non-obvious decisions live in [`docs/decisions/`](decisions/README.md).
-Session-level working notes live in [`CLAUDE.md`](../CLAUDE.md) at the repo
-root.
+[`plans/old/2026-04-18-poker-hu-llm-coach-design.md`](plans/old/2026-04-18-poker-hu-llm-coach-design.md).
+Non-obvious decisions live in [`decisions/`](decisions/README.md).
+Session-level working notes live in [`../CLAUDE.md`](../CLAUDE.md) at the repo
+root. Task-indexed recipes ("when adding X, read Y") live in
+[`CODE_PATTERNS.md`](CODE_PATTERNS.md). The doc map is [`README.md`](README.md).
 
 ## Topology
 
@@ -57,20 +59,8 @@ over Anthropic Messages and OpenAI Responses with a forced
 | Frontend unit | `frontend/src/components/*.test.tsx` | vitest + testing-library |
 | E2E | `frontend/e2e/*.spec.ts` | Playwright happy paths (no LLM) |
 
-## Commands
+## Commands, workflow, and "when adding X"
 
-```
-make install     # uv sync + npm install
-make dev         # uvicorn :8000 + vite :5173
-make test        # pytest + vitest
-make lint        # ruff + mypy + eslint + tsc
-make e2e         # playwright
-make db-upgrade  # alembic upgrade head
-```
-
-## Where to go from here
-
-- Adding a new model preset → `oracle/presets.py` + `config/pricing.yaml` + the right `thinking_mode` branch ([ADR](decisions/2026-04-18-anthropic-thinking-api-dispatch.md)).
-- Adding a new prompt pack → new dir under `prompts/`, declare variables in frontmatter; `prompts/context.py` may need to expose new projected vars — check the leak guard still holds.
-- Adding a new API endpoint → new module under `backend/src/poker_coach/api/routes/`, register in `app.py`, add pytest under `backend/tests/api/`.
-- Debugging unexplained SDK behavior → step 1 is `mcp__context7__query-docs`, step 2 is a 10-line script against the real API with `.env` credentials, step 3 is an ADR in `docs/decisions/`.
+Commands live in [`../CLAUDE.md`](../CLAUDE.md). Task recipes
+("when adding a preset / prompt pack / route / …") live in
+[`CODE_PATTERNS.md`](CODE_PATTERNS.md).
