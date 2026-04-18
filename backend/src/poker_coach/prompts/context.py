@@ -3,19 +3,30 @@
 Deliberately omits villain_hole and deck_snapshot so the prompt never
 leaks information the hero can't see during live play. Spot-analysis
 mode goes through this same projection.
+
+villain_profile is conditional: when callers pass it, we include it in
+the output dict (needed by coach/v2 which declares the variable).
+Leaving it out keeps backward compatibility with coach/v1 which has
+no such variable declared. The renderer rejects unexpected keys, so
+this conditional inclusion is load-bearing: do not flip it to always-on.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from poker_coach.engine.models import GameState
 from poker_coach.engine.rules import legal_actions
+
+VillainProfile = Literal["reg", "unknown"]
 
 
 def _bb(chips: int, bb: int) -> float:
     return round(chips / bb, 2)
 
 
-def state_to_coach_variables(state: GameState) -> dict[str, Any]:
+def state_to_coach_variables(
+    state: GameState,
+    villain_profile: VillainProfile | None = None,
+) -> dict[str, Any]:
     bb = state.bb
     history = [
         {
@@ -33,7 +44,7 @@ def state_to_coach_variables(state: GameState) -> dict[str, Any]:
         }
         for la in legal_actions(state)
     ]
-    return {
+    result: dict[str, Any] = {
         "street": state.street,
         "hero_hole": list(state.hero_hole),
         "board": list(state.board),
@@ -47,3 +58,6 @@ def state_to_coach_variables(state: GameState) -> dict[str, Any]:
         "history": history,
         "legal_actions": legal,
     }
+    if villain_profile is not None:
+        result["villain_profile"] = villain_profile
+    return result

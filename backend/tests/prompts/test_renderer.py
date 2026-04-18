@@ -114,3 +114,27 @@ def test_coach_v1_renders_against_sample_state() -> None:
     assert "As Kd" in rendered.rendered_prompt
     assert "submit_advice" in rendered.rendered_prompt
     assert "fold" in rendered.rendered_prompt  # in legal actions
+
+
+def test_coach_v2_renders_against_sample_state() -> None:
+    """Smoke test: coach v2 renders cleanly with villain_profile included."""
+    from poker_coach.engine.rules import start_hand
+    from poker_coach.prompts.context import state_to_coach_variables
+
+    state = start_hand(
+        effective_stack=10_000,
+        bb=100,
+        button="hero",
+        hero_hole=("As", "Kd"),
+        villain_hole=("Qc", "Qh"),
+    )
+    renderer = PromptRenderer(PROMPTS_ROOT)
+    rendered = renderer.render(
+        "coach",
+        "v2",
+        state_to_coach_variables(state, villain_profile="reg"),
+    )
+    assert "As Kd" in rendered.rendered_prompt
+    assert "reg" in rendered.rendered_prompt
+    # v2 no longer carries the strategic intro paragraph — it lives in system prompt.
+    assert "Your job: evaluate" not in rendered.rendered_prompt
