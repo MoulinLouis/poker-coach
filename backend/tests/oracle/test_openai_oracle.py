@@ -235,3 +235,58 @@ async def test_provider_exception_emits_oracle_error() -> None:
     emitted = await collect(oracle)
     assert isinstance(emitted[0], OracleError)
     assert emitted[0].kind == "provider_error"
+
+
+@pytest.mark.asyncio
+async def test_openai_oracle_passes_system_prompt_as_instructions() -> None:
+    from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
+
+    captured: dict[str, Any] = {}
+    function_call = FakeFunctionCall(
+        type="function_call",
+        name="submit_advice",
+        arguments='{"action":"fold","to_amount_bb":null,"reasoning":"x","confidence":"low"}',
+    )
+    response = FakeResponse(
+        output=[function_call],
+        usage=FakeUsage(input_tokens=10, output_tokens=10),
+    )
+    inner = fake_stream_caller([], response)
+
+    def capturing(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        return inner(**kwargs)
+
+    oracle = OpenAIOracle(capturing, sample_pricing())
+    async for _ in oracle.advise_stream(sample_rendered(), sample_spec()):
+        pass
+
+    assert captured["instructions"] == SYSTEM_PROMPT
+
+
+@pytest.mark.asyncio
+async def test_openai_oracle_uses_explicit_system_prompt_when_passed() -> None:
+    captured: dict[str, Any] = {}
+    function_call = FakeFunctionCall(
+        type="function_call",
+        name="submit_advice",
+        arguments='{"action":"fold","to_amount_bb":null,"reasoning":"x","confidence":"low"}',
+    )
+    response = FakeResponse(
+        output=[function_call],
+        usage=FakeUsage(input_tokens=10, output_tokens=10),
+    )
+    inner = fake_stream_caller([], response)
+
+    def capturing(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        return inner(**kwargs)
+
+    oracle = OpenAIOracle(capturing, sample_pricing())
+    custom = "CUSTOM SYSTEM PROMPT"
+    async for _ in oracle.advise_stream(
+        sample_rendered(), sample_spec(), system_prompt=custom
+    ):
+        pass
+
+    assert captured["instructions"] == custom

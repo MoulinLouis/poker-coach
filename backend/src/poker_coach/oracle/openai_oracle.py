@@ -36,6 +36,7 @@ from poker_coach.oracle.base import (
     UsageComplete,
 )
 from poker_coach.oracle.pricing import PricingSnapshot, compute_cost
+from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
 from poker_coach.oracle.tool_schema import openai_tool_spec
 from poker_coach.prompts.renderer import RenderedPrompt
 
@@ -61,10 +62,15 @@ class OpenAIOracle:
         self.pricing = pricing
 
     async def advise_stream(
-        self, rendered: RenderedPrompt, spec: ModelSpec
+        self,
+        rendered: RenderedPrompt,
+        spec: ModelSpec,
+        system_prompt: str | None = None,
     ) -> AsyncIterator[OracleEvent]:
+        effective_system = system_prompt if system_prompt is not None else SYSTEM_PROMPT
         kwargs: dict[str, Any] = {
             "model": spec.model_id,
+            "instructions": effective_system,
             "input": [{"role": "user", "content": rendered.rendered_prompt}],
             "tools": [openai_tool_spec()],
             "tool_choice": {"type": "function", "name": "submit_advice"},
