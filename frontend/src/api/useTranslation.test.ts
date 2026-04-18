@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "./client";
 import { useTranslation } from "./useTranslation";
@@ -67,6 +68,22 @@ describe("useTranslation", () => {
     await waitFor(() => expect(result.current.error).toBe("boom"));
     expect(result.current.lang).toBe("en");
     expect(result.current.frText).toBeNull();
+  });
+
+  it("still applies translation under StrictMode double-mount", async () => {
+    vi.spyOn(client, "translateText").mockResolvedValue({
+      translation: "bonjour",
+      cost_usd: 0.001,
+    });
+
+    const { result } = renderHook(() => useTranslation("hello"), {
+      wrapper: StrictMode,
+    });
+    act(() => result.current.toggle());
+
+    await waitFor(() => expect(result.current.lang).toBe("fr"));
+    expect(result.current.frText).toBe("bonjour");
+    expect(result.current.loading).toBe(false);
   });
 
   it("ignores clicks while a request is in flight", async () => {

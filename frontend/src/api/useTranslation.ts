@@ -24,13 +24,17 @@ export function useTranslation(text: string): TranslationState {
     if (error !== null) setError(null);
   }
 
+  // Set to true on every mount and flipped to false on unmount. StrictMode
+  // double-invokes effects in dev (mount → cleanup → mount), so we MUST
+  // re-set to true in the effect body — otherwise the first cleanup pass
+  // latches the ref at false and every subsequent .then() bails out.
   const mountedRef = useRef(true);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
       mountedRef.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const toggle = useCallback(() => {
     if (loading) return;
