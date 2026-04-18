@@ -61,13 +61,18 @@ class AnthropicOracle:
             "max_tokens": self.max_output_tokens,
             "messages": [{"role": "user", "content": rendered.rendered_prompt}],
             "tools": [anthropic_tool_spec()],
-            "tool_choice": {"type": "tool", "name": "submit_advice"},
         }
+        # Anthropic rejects tool_choice={"type": "tool"} / "any" when thinking
+        # is enabled. With a single tool + an explicit prompt instruction to
+        # call it, "auto" gets the tool call in practice without the 400.
         if spec.thinking_budget is not None:
             request_kwargs["thinking"] = {
                 "type": "enabled",
                 "budget_tokens": spec.thinking_budget,
             }
+            request_kwargs["tool_choice"] = {"type": "auto"}
+        else:
+            request_kwargs["tool_choice"] = {"type": "tool", "name": "submit_advice"}
         if spec.temperature is not None:
             request_kwargs["temperature"] = spec.temperature
 
