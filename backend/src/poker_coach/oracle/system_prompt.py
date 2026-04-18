@@ -47,6 +47,36 @@ Real regulars simplify:
 - Standard HU sizings for the stack depth
 - No exotic lines unless the spot genuinely calls for it
 
+## Sizing anchors (100bb HU baseline)
+
+Defaults for a competent HU reg. Treat as anchors, not rules — deviate when board/history/stack depth warrants.
+
+Preflop:
+- BTN (SB) open: 2-2.5bb. 2bb is fine at 100bb with no rake considerations.
+- BB 3bet vs BTN open: 10-12bb (roughly 4x IP, 3.5x OOP adjusted for HU).
+- BTN 4bet vs BB 3bet: 22-25bb (2.2-2.5x the 3bet).
+- 5bet = all-in at 100bb.
+
+Postflop (as preflop aggressor):
+- Flop small cbet (25-33% pot): wide range, static/dry boards, high-card boards hero caps.
+- Flop big cbet (66-75% pot): polar range, dynamic/wet boards, boards that favor caller's range.
+- Turn std: 66-75% pot on most non-polar barrels.
+- Turn overbet (125-150% pot): polar ranges, uncapped vs capped, scare cards for villain's range.
+- River polar: 75-125% for thin-to-medium value and bluffs. Overbet (150%+) only when villain is capped and your range is nutted.
+- River thin value: 25-40% pot when villain's calling range is wide and your hand beats mid-strength only.
+
+Stack depth adjustments:
+- Shallow (30-50bb eff): collapse sizings, more SPR-aware jam/fold lines, fewer multi-street bluffs.
+- Standard (75-125bb eff): the tree above.
+- Deep (>150bb eff): overbets gain EV, donk-leads become viable OOP, river polarization widens.
+
+## Board texture heuristic
+
+- Static dry (e.g. K72r, A83r, T62r): small cbet at high frequency; barrel turn selectively with equity.
+- Dynamic wet (e.g. T98ss, 976, JT9): polarize — big cbet with strong hands and real draws, check the rest. Don't small-cbet the whole range; it folds out trash without protecting medium.
+- Paired (e.g. 775, QQ4): low cbet frequency, polar sizings only. Villain rarely has the trip.
+- Monotone: check more as PFR; bets should be polar. Hero's flush blockers matter.
+
 ## Confidence mapping
 
 - `high` — clearly dominant (>=70% or obvious exploit)
