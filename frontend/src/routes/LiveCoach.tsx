@@ -4,6 +4,7 @@ import {
   createHand,
   createSession,
   engineApply,
+  engineReveal,
   engineStart,
   listPresets,
   recordAction,
@@ -12,6 +13,7 @@ import type { Action, EngineSnapshot, PresetSummary } from "../api/types";
 import { useAdviceStream } from "../api/useAdviceStream";
 import { ActionBar } from "../components/ActionBar";
 import { AdvicePanel } from "../components/AdvicePanel";
+import { BoardPicker } from "../components/BoardPicker";
 import { HandSummary } from "../components/HandSummary";
 import { PokerTable } from "../components/PokerTable";
 import { SetupPanel, type SetupValues } from "../components/SetupPanel";
@@ -122,6 +124,19 @@ export function LiveCoach() {
     [snapshot],
   );
 
+  const applyReveal = useCallback(
+    async (cards: string[]) => {
+      if (!snapshot) return;
+      try {
+        const next = await engineReveal(snapshot.state, cards);
+        setSnapshot(next);
+      } catch (err) {
+        setError(String(err));
+      }
+    },
+    [snapshot],
+  );
+
   const requestAdvice = useCallback(async () => {
     if (!snapshot || !session || !setup.presetId) return;
     if (snapshot.state.to_act !== "hero") {
@@ -173,6 +188,7 @@ export function LiveCoach() {
 
   const handComplete = useMemo(() => {
     if (!snapshot) return false;
+    if (snapshot.state.pending_reveal !== null) return false;
     return snapshot.state.street === "complete" || snapshot.state.street === "showdown";
   }, [snapshot]);
 
@@ -216,6 +232,18 @@ export function LiveCoach() {
 
       {snapshot && (
         <div className="flex gap-6 items-start">
+          {snapshot.state.pending_reveal !== null && (
+            <BoardPicker
+              street={snapshot.state.pending_reveal}
+              existingBoard={snapshot.state.board}
+              excludedCards={[
+                ...snapshot.state.hero_hole,
+                ...(snapshot.state.villain_hole ?? []),
+                ...snapshot.state.board,
+              ]}
+              onConfirm={applyReveal}
+            />
+          )}
           <div className="flex-1 flex flex-col gap-4 min-w-0">
             <PokerTable state={snapshot.state} />
             {!handComplete && snapshot.state.to_act && (
