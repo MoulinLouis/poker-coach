@@ -4,6 +4,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
+PROMPTS_ROOT = REPO_ROOT / "prompts"
+CONFIG_ROOT = REPO_ROOT / "config"
 
 
 class Settings(BaseSettings):
