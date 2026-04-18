@@ -22,6 +22,8 @@ API keys in `.env` at repo root: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`. Missing 
 ## Load-bearing gotchas
 
 **These bit me hard and aren't obvious from the code — check first.**
+Each one has a full ADR under [`docs/decisions/`](docs/decisions/README.md)
+with canaries + linked commits. Skim the index before reinventing a fix.
 
 1. **Async stream final-message methods must be `await`ed.** Both SDKs:
    - `message = await stream.get_final_message()` (Anthropic)

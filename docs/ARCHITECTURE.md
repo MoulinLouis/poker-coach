@@ -1,69 +1,76 @@
-# Architecture
+# Architecture — orientation
 
-Condensed, living reference. Source of truth for design rationale: [`docs/plans/2026-04-18-poker-hu-llm-coach-design.md`](plans/2026-04-18-poker-hu-llm-coach-design.md). This document is updated per-PR alongside the code it describes; do not let it rot.
+This file is **where to look**, not what to know. Design rationale lives in
+[`docs/plans/2026-04-18-poker-hu-llm-coach-design.md`](plans/2026-04-18-poker-hu-llm-coach-design.md).
+Non-obvious decisions live in [`docs/decisions/`](decisions/README.md).
+Session-level working notes live in [`CLAUDE.md`](../CLAUDE.md) at the repo
+root.
 
-## At a glance
+## Topology
 
-- **Product:** Local web-based heads-up No-Limit Hold'em coach powered by LLMs. Two modes: live coach during face-to-face play, and spot analysis for post-hoc review.
-- **Primary model:** `gpt-5.3-codex` via OpenAI Responses API with `reasoning_effort=xhigh`. Secondary: Claude Opus 4.7 (qualitative comparison) and Claude Haiku 4.5 (prompt exploration).
-- **Stack:** Python 3.12 / FastAPI / SQLAlchemy Core / SQLite on the backend; React 18 / Vite / TypeScript / TanStack Query on the frontend. One process per side, orchestrated by `make dev`.
-- **Transport:** HTTP + SSE. `POST /api/decisions` creates a row; `GET /api/decisions/{id}/stream` is where the oracle call actually fires. `@microsoft/fetch-event-source` on the frontend.
+Local web app. React 18 + Vite + Tailwind 4 frontend → FastAPI backend →
+SQLite for logging + filesystem for versioned prompts. Oracle abstraction
+over Anthropic Messages and OpenAI Responses with a forced
+`submit_advice` tool for structured output.
 
-## Repo layout
+## Where things live
+
+| Concern | Path | Notes |
+|---|---|---|
+| HU NLHE engine | `backend/src/poker_coach/engine/` | Immutable GameState; Hypothesis property tests |
+| Oracle abstraction | `backend/src/poker_coach/oracle/` | `base.py` = protocol + events, `anthropic_oracle.py` / `openai_oracle.py` = impls |
+| Model preset registry | `backend/src/poker_coach/oracle/presets.py` | One entry per UI selector option |
+| Prompt renderer | `backend/src/poker_coach/prompts/` | Jinja2 + frontmatter, `StrictUndefined` |
+| Prompt packs | `prompts/<pack>/<version>.md` | Git = history |
+| Pricing + cost calc | `backend/src/poker_coach/oracle/pricing.py` + `config/pricing.yaml` | Snapshot saved with every decision |
+| FastAPI app + routes | `backend/src/poker_coach/api/` | `app.py` is the factory; `routes/` is per-concern |
+| Log schema | `backend/src/poker_coach/db/tables.py` + `db/migrations/` | Alembic from commit 1 |
+| React app shell | `frontend/src/App.tsx` | 4-tab nav + CostFooter |
+| Live Coach | `frontend/src/routes/LiveCoach.tsx` + `components/` | PokerTable, ActionBar, AdvicePanel, CardPicker, SetupPanel, HandSummary |
+| SSE hook | `frontend/src/api/useAdviceStream.ts` | `@microsoft/fetch-event-source` |
+| E2E tests | `frontend/e2e/` | Playwright; webServer spawns both servers |
+
+## Decision lifecycle (one pass)
+
+1. Frontend renders Live Coach, user clicks "advise" on hero's turn.
+2. `POST /api/decisions` — backend validates inputs, renders prompt, writes an `in_flight` row, returns `decision_id`. **No oracle call yet.** ([ADR](decisions/2026-04-18-lazy-oracle-invocation.md))
+3. Frontend opens SSE via `GET /api/decisions/{id}/stream`. Backend atomically claims the row (409 on double-open), invokes the provider-appropriate oracle, forwards `OracleEvent`s as SSE frames.
+4. On terminal event, backend updates row with final status + parsed advice + tokens + cost.
+5. Frontend renders advice card. Hero's actual click posts to `POST /api/actions` referencing `decision_id`; divergence from advice is logged and rolled up into session agreement rate.
+
+## Component contracts
+
+- `Oracle.advise_stream(RenderedPrompt, ModelSpec) -> AsyncIterator[OracleEvent]` — provider-agnostic. Events: `ReasoningDelta`, `ReasoningComplete`, `ToolCallComplete`, `UsageComplete`, `OracleError`.
+- `apply_action(GameState, Action) -> GameState` — pure, raises `IllegalAction` on anything not in `legal_actions(state)`.
+- `PromptRenderer.render(pack, version, variables) -> RenderedPrompt` — validates declared vs supplied vs referenced variables; fails closed.
+
+## Testing map
+
+| Layer | Where | What it guards |
+|---|---|---|
+| Engine properties | `backend/tests/engine/test_invariants.py` | 5 invariants over Hypothesis-generated play |
+| Engine scenarios | `backend/tests/engine/test_rules.py` | Hand-picked edge cases (min-raise, all-in short, etc.) |
+| Oracle normalization | `backend/tests/oracle/test_{anthropic,openai}_oracle.py` | Fake streams → OracleEvent sequence |
+| Leak guard | `backend/tests/prompts/test_no_villain_leak.py` | Three-layer guarantee — do not skip |
+| Migration round-trip | `backend/tests/db/test_migrations.py` | Upgrade → downgrade → upgrade |
+| API lifecycle | `backend/tests/api/test_lifecycle.py` | Full create → stream → finalize, plus sweeper |
+| Frontend unit | `frontend/src/components/*.test.tsx` | vitest + testing-library |
+| E2E | `frontend/e2e/*.spec.ts` | Playwright happy paths (no LLM) |
+
+## Commands
 
 ```
-backend/            Python package (engine, oracle, prompts, api, db)
-frontend/           React app (Live Coach, Spot Analysis, History, Prompts, Settings)
-prompts/<pack>/     Versioned .md prompt templates (git = history)
-config/pricing.yaml Per-model pricing with snapshot_date + snapshot_source
-data/               Gitignored SQLite file
-docs/               ARCHITECTURE, PROMPTS, RESULTS, plans/
+make install     # uv sync + npm install
+make dev         # uvicorn :8000 + vite :5173
+make test        # pytest + vitest
+make lint        # ruff + mypy + eslint + tsc
+make e2e         # playwright
+make db-upgrade  # alembic upgrade head
 ```
 
-## Domain model (Section 2)
+## Where to go from here
 
-Immutable `GameState` snapshots. `apply_action(state, action) -> new_state`. Integer chips only (`bb=100` default); no floats. Both `rng_seed` and `deck_snapshot` populated for live coach hands — `deck_snapshot` is authoritative for replay. `legal_actions(state)` is a pure function the UI and the prompt both consume; `apply_action` raises on illegal input.
-
-**phevaluator** for showdown winner + display label. Never exposed to the prompt — hand-strength reasoning belongs to the LLM.
-
-HU specifics: SB is the button (preflop first, postflop last), no side pots, no multi-way. Uncalled-bet return handled on call resolution; standard NLHE min-raise reopening rule.
-
-## Oracle abstraction (Section 3)
-
-One `Oracle` protocol, two implementations (OpenAI Responses, Anthropic Messages). Returns an `AsyncIterator[OracleEvent]` — `ReasoningDelta`, `ReasoningComplete`, `ToolCallComplete`, `UsageComplete`, `OracleError`. Backend re-emits these as SSE frames.
-
-Single forced tool `submit_advice` with schema `{action, to_amount_bb?, reasoning, confidence}`. Shared Pydantic schema; a ~30-line normalizer emits provider-specific JSON variants. Schema failures log `status="invalid_response"`; legality failures log `status="illegal_action"`. Never silently substituted.
-
-`config/pricing.yaml` drives cost calculation. Reasoning/thinking tokens billed at output rate on both platforms. Each row carries its `pricing_snapshot` (rates + `snapshot_date` + `snapshot_source`) so historical costs survive future price changes.
-
-## Log schema (Section 4)
-
-Four tables: `sessions`, `hands`, `decisions`, `actual_actions`. `decisions` is the centerpiece — one row per LLM call, holding the full `game_state`, `template_raw`, `rendered_prompt`, model params, reasoning text, raw tool input, parsed advice, token usage, cost, `pricing_snapshot`, and `status`.
-
-Key statuses: `in_flight`, `ok`, `invalid_response`, `illegal_action`, `provider_error`, `cancelled`, `abandoned`, `timeout`.
-
-Decision lifecycle:
-
-1. `POST /api/decisions` writes `status=in_flight` and returns `decision_id` without calling the oracle.
-2. `GET /api/decisions/{id}/stream` atomically claims (`UPDATE … WHERE stream_opened_at IS NULL`; 0 rows → 409) and runs the oracle. This is where billing starts.
-3. Background sweeper: `abandoned` at 30s without stream open, `timeout` at 3min without completion.
-
-`actual_actions` is a separate table so agreement rate derives via JOIN and spot-analysis (no human action) is clean.
-
-Alembic from commit 1. Template bodies stored denormalized per row until ~100k decisions.
-
-## UI (Section 5)
-
-Live Coach is keyboard-first: `f c k b r a` for actions (bet and raise split intentionally), street-aware size presets (`1–4` preflop, `1–5` postflop), `space` for advice, `esc` to cancel, `n` for new hand. Override is silent; divergence shows as an ambient indicator and rolls up into a session-end agreement rate.
-
-Spot Analysis has a Compare mode powered by `useQueries` — fire N models in parallel, one column each.
-
-Streaming UX mirrors Claude.ai: instant "Thinking…" → first token replaces indicator → tool call lands the advice card with a brief highlight.
-
-## Testing (Section 6)
-
-Engine: Hypothesis property tests for chip conservation, street monotonicity, `to_act` consistency, illegal-action unreachability, and replay idempotency. Oracle: snapshot tests on provider schema emission + recorded-fixture replay. API: pytest-asyncio over the full lifecycle. Frontend: Vitest + one Playwright happy path.
-
-## Non-goals
-
-No bot play, no GTO benchmark, no websockets, no multi-table, no tournaments, no ICM, no auth, no auto-villain. Everything else in the design doc.
+- Adding a new model preset → `oracle/presets.py` + `config/pricing.yaml` + the right `thinking_mode` branch ([ADR](decisions/2026-04-18-anthropic-thinking-api-dispatch.md)).
+- Adding a new prompt pack → new dir under `prompts/`, declare variables in frontmatter; `prompts/context.py` may need to expose new projected vars — check the leak guard still holds.
+- Adding a new API endpoint → new module under `backend/src/poker_coach/api/routes/`, register in `app.py`, add pytest under `backend/tests/api/`.
+- Debugging unexplained SDK behavior → step 1 is `mcp__context7__query-docs`, step 2 is a 10-line script against the real API with `.env` credentials, step 3 is an ADR in `docs/decisions/`.
