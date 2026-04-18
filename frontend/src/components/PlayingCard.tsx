@@ -74,16 +74,14 @@ export function PlayingCard({
       <text x="30" y="56" textAnchor="middle" className={suit.textClass} fontSize="34">
         {suit.glyph}
       </text>
-      <text
-        x="54"
-        y="78"
-        textAnchor="end"
-        className={`${suit.textClass} font-bold`}
-        fontSize="14"
-        transform="rotate(180 54 74)"
-      >
-        {rank}
-      </text>
+      <g transform="rotate(180 30 42)">
+        <text x="6" y="18" className={`${suit.textClass} font-bold`} fontSize="14">
+          {rank}
+        </text>
+        <text x="6" y="30" className={suit.textClass} fontSize="12">
+          {suit.glyph}
+        </text>
+      </g>
     </svg>
   );
 }
