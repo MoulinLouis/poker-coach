@@ -76,6 +76,25 @@ def start_hand(
     )
 
 
+def initial_state(state: GameState) -> GameState:
+    """Reconstruct the pre-action starting state from a finished or in-progress state.
+
+    Uses the setup fields (effective_stack, bb, button, holes, deck) to replay
+    start_hand. Combined with folding apply_action over state.history, this
+    proves replay idempotency.
+    """
+    return start_hand(
+        effective_stack=state.effective_stack,
+        bb=state.bb,
+        button=state.button,
+        hero_hole=state.hero_hole,
+        villain_hole=state.villain_hole,
+        rng_seed=state.rng_seed,
+        deck_snapshot=state.deck_snapshot,
+        hand_id=state.hand_id,
+    )
+
+
 def legal_actions(state: GameState) -> list[LegalAction]:
     if state.street in ("showdown", "complete"):
         return []
