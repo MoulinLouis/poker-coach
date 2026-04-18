@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
 from poker_coach.engine.models import Action, GameState, LegalAction, Seat
-from poker_coach.engine.rules import IllegalAction, apply_action, legal_actions, start_hand
+from poker_coach.engine.rules import IllegalAction, apply_action, apply_reveal, legal_actions, start_hand
 
 router = APIRouter()
 
@@ -52,6 +52,20 @@ def start(body: StartHandRequest) -> EngineSnapshot:
         deck_snapshot=body.deck_snapshot,
     )
     return EngineSnapshot(state=state, legal_actions=legal_actions(state))
+
+
+class RevealRequest(BaseModel):
+    state: GameState
+    cards: list[str]
+
+
+@router.post("/engine/reveal", response_model=EngineSnapshot)
+def reveal(body: RevealRequest) -> EngineSnapshot:
+    try:
+        new_state = apply_reveal(body.state, body.cards)
+    except IllegalAction as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return EngineSnapshot(state=new_state, legal_actions=legal_actions(new_state))
 
 
 @router.post("/engine/apply", response_model=EngineSnapshot)

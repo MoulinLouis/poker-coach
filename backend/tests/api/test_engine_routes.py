@@ -70,6 +70,60 @@ def test_apply_advances_state(api_app: Any) -> None:
         assert body["state"]["last_aggressor"] == "hero"
 
 
+def test_reveal_flop_returns_updated_snapshot(api_app: Any) -> None:
+    with TestClient(api_app) as client:
+        start = client.post("/api/engine/start", json={
+            "effective_stack": 10_000, "bb": 100, "button": "hero",
+            "hero_hole": ["As","Kd"], "villain_hole": ["Qc","Qh"],
+        }).json()
+        s = client.post("/api/engine/apply", json={
+            "state": start["state"], "action": {"actor":"hero","type":"call"},
+        }).json()
+        s = client.post("/api/engine/apply", json={
+            "state": s["state"], "action": {"actor":"villain","type":"check"},
+        }).json()
+        assert s["state"]["pending_reveal"] == "flop"
+
+        r = client.post("/api/engine/reveal", json={
+            "state": s["state"], "cards": ["2c","3d","5s"],
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert body["state"]["pending_reveal"] is None
+        assert body["state"]["board"] == ["2c","3d","5s"]
+        assert len(body["legal_actions"]) > 0
+
+
+def test_reveal_rejects_wrong_length(api_app: Any) -> None:
+    with TestClient(api_app) as client:
+        start = client.post("/api/engine/start", json={
+            "effective_stack": 10_000, "bb": 100, "button": "hero",
+            "hero_hole": ["As","Kd"], "villain_hole": ["Qc","Qh"],
+        }).json()
+        s = client.post("/api/engine/apply", json={
+            "state": start["state"], "action": {"actor":"hero","type":"call"},
+        }).json()
+        s = client.post("/api/engine/apply", json={
+            "state": s["state"], "action": {"actor":"villain","type":"check"},
+        }).json()
+        r = client.post("/api/engine/reveal", json={
+            "state": s["state"], "cards": ["2c","3d"],
+        })
+        assert r.status_code == 400
+
+
+def test_reveal_rejects_when_no_pending(api_app: Any) -> None:
+    with TestClient(api_app) as client:
+        start = client.post("/api/engine/start", json={
+            "effective_stack": 10_000, "bb": 100, "button": "hero",
+            "hero_hole": ["As","Kd"], "villain_hole": ["Qc","Qh"],
+        }).json()
+        r = client.post("/api/engine/reveal", json={
+            "state": start["state"], "cards": ["2c","3d","5s"],
+        })
+        assert r.status_code == 400
+
+
 def test_presets_list(api_app: Any) -> None:
     with TestClient(api_app) as client:
         resp = client.get("/api/presets")
