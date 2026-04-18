@@ -20,6 +20,7 @@ from sqlalchemy import Engine
 from poker_coach.api.deps import OracleFactory
 from poker_coach.api.routes import (
     actions,
+    cost,
     decisions,
     hands,
     health,
@@ -29,6 +30,9 @@ from poker_coach.api.routes import (
 )
 from poker_coach.api.routes import (
     engine as engine_routes,
+)
+from poker_coach.api.routes import (
+    prompts as prompt_routes,
 )
 from poker_coach.api.sweeper import run_sweeper
 from poker_coach.db.engine import default_engine
@@ -91,4 +95,6 @@ def create_app(
     app.include_router(stream.router, prefix="/api")
     app.include_router(engine_routes.router, prefix="/api")
     app.include_router(presets.router, prefix="/api")
+    app.include_router(cost.router, prefix="/api")
+    app.include_router(prompt_routes.router, prefix="/api")
     return app
