@@ -284,9 +284,7 @@ async def test_openai_oracle_uses_explicit_system_prompt_when_passed() -> None:
 
     oracle = OpenAIOracle(capturing, sample_pricing())
     custom = "CUSTOM SYSTEM PROMPT"
-    async for _ in oracle.advise_stream(
-        sample_rendered(), sample_spec(), system_prompt=custom
-    ):
+    async for _ in oracle.advise_stream(sample_rendered(), sample_spec(), system_prompt=custom):
         pass
 
     assert captured["instructions"] == custom

@@ -172,9 +172,7 @@ async def test_anthropic_oracle_uses_default_system_prompt() -> None:
     captured: dict[str, Any] = {}
     message = FakeMessage(
         content=[
-            tool_use_block(
-                {"action": "fold", "reasoning": "Too weak.", "confidence": "medium"}
-            )
+            tool_use_block({"action": "fold", "reasoning": "Too weak.", "confidence": "medium"})
         ],
         usage=FakeUsage(input_tokens=10, output_tokens=10),
     )
@@ -196,9 +194,7 @@ async def test_anthropic_oracle_uses_explicit_system_prompt_when_passed() -> Non
     captured: dict[str, Any] = {}
     message = FakeMessage(
         content=[
-            tool_use_block(
-                {"action": "fold", "reasoning": "Too weak.", "confidence": "medium"}
-            )
+            tool_use_block({"action": "fold", "reasoning": "Too weak.", "confidence": "medium"})
         ],
         usage=FakeUsage(input_tokens=10, output_tokens=10),
     )

@@ -90,9 +90,7 @@ def create_decision(
         raise HTTPException(status_code=400, detail=f"prompt render failed: {exc}") from exc
 
     system_prompt_snapshot = SYSTEM_PROMPT
-    system_prompt_hash_snapshot = hashlib.sha256(
-        system_prompt_snapshot.encode("utf-8")
-    ).hexdigest()
+    system_prompt_hash_snapshot = hashlib.sha256(system_prompt_snapshot.encode("utf-8")).hexdigest()
 
     with engine.begin() as conn:
         session_row = conn.execute(
