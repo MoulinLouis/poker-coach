@@ -3,10 +3,7 @@ from __future__ import annotations
 import uuid
 
 from .deck import (
-    deal_flop,
     deal_hero_hole,
-    deal_river,
-    deal_turn,
     deal_villain_hole,
     seeded_shuffle,
 )
@@ -96,6 +93,8 @@ def initial_state(state: GameState) -> GameState:
 
 
 def legal_actions(state: GameState) -> list[LegalAction]:
+    if state.pending_reveal is not None:
+        return []
     if state.street in ("showdown", "complete"):
         return []
     actor = state.to_act
@@ -148,56 +147,38 @@ def _is_aggressive(action_type: str, all_in_to: int, opp_committed: int) -> bool
 
 def _apply_street_transition(state: GameState) -> GameState:
     """Settle the street: move committed into pot, reset per-street fields,
-    advance to the next street, deal community cards as needed.
+    advance to the next street, set pending_reveal for user card input.
     """
     new_committed = {"hero": 0, "villain": 0}
     new_pot = state.pot + sum(state.committed.values())
 
-    # Determine next street
     street_order = ["preflop", "flop", "turn", "river", "showdown"]
     idx = street_order.index(state.street)
     next_street = street_order[idx + 1] if idx + 1 < len(street_order) else "complete"
 
-    # Deal board cards from the deck if one is attached
-    new_board = list(state.board)
-    if state.deck_snapshot is not None:
-        if next_street == "flop" and len(new_board) == 0:
-            new_board = deal_flop(state.deck_snapshot)
-        elif next_street == "turn" and len(new_board) == 3:
-            new_board = [*new_board, deal_turn(state.deck_snapshot)]
-        elif next_street == "river" and len(new_board) == 4:
-            new_board = [*new_board, deal_river(state.deck_snapshot)]
-
-    # If either player is all-in at the end of a betting round, we skip to showdown.
     both_have_chips = state.stacks["hero"] > 0 and state.stacks["villain"] > 0
-    if not both_have_chips and next_street not in ("showdown", "complete"):
-        # Fast-forward: deal remaining streets then go to showdown
-        if state.deck_snapshot is not None:
-            if len(new_board) < 3:
-                new_board = deal_flop(state.deck_snapshot)
-            if len(new_board) < 4:
-                new_board = [*new_board, deal_turn(state.deck_snapshot)]
-            if len(new_board) < 5:
-                new_board = [*new_board, deal_river(state.deck_snapshot)]
-        next_street = "showdown"
 
-    if next_street in ("showdown", "complete"):
-        to_act: Seat | None = None
-    else:
-        # Postflop: BB (non-button) acts first.
-        to_act = other_seat(state.button)
+    pending_reveal: str | None = None
+    if next_street in ("flop", "turn", "river"):
+        pending_reveal = next_street
+    if not both_have_chips and next_street not in ("showdown", "complete"):
+        next_street = "showdown"
+        if len(state.board) < 5:
+            pending_reveal = "runout"
+        else:
+            pending_reveal = None
 
     return state.model_copy(
         update={
             "street": next_street,
-            "board": new_board,
             "committed": new_committed,
             "pot": new_pot,
-            "to_act": to_act,
+            "to_act": None,
             "last_aggressor": None,
             "last_raise_size": state.bb,
             "raises_open": True,
             "acted_this_street": frozenset(),
+            "pending_reveal": pending_reveal,
         }
     )
 
@@ -285,9 +266,33 @@ def apply_reveal(state: GameState, cards: list[str]) -> GameState:
     })
 
 
+def replay(state: GameState) -> GameState:
+    """Reconstruct `state` by replaying its history and reveals from the initial setup.
+
+    Replaces the old `reduce(apply_action, history, initial_state)` form, which
+    no longer converges because apply_action halts at pending_reveal.
+    """
+    s = initial_state(state)
+    reveal_cursor = 0
+    for action in state.history:
+        s = apply_action(s, action)
+        while s.pending_reveal is not None:
+            if reveal_cursor >= len(state.reveals):
+                raise AssertionError("history has pending reveal but no matching entry in state.reveals")
+            s = apply_reveal(s, state.reveals[reveal_cursor])
+            reveal_cursor += 1
+    if reveal_cursor != len(state.reveals):
+        raise AssertionError(
+            f"unused reveals: consumed {reveal_cursor}, state has {len(state.reveals)}"
+        )
+    return s
+
+
 def apply_action(state: GameState, action: Action) -> GameState:
     if state.street in ("showdown", "complete"):
         raise IllegalAction(f"hand already at {state.street}")
+    if state.pending_reveal is not None:
+        raise IllegalAction(f"pending reveal ({state.pending_reveal}) must be resolved first")
     if state.to_act is None or action.actor != state.to_act:
         raise IllegalAction(f"not {action.actor}'s turn (to_act={state.to_act})")
 

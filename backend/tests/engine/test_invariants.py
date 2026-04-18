@@ -1,5 +1,3 @@
-from functools import reduce
-
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
@@ -7,12 +5,16 @@ from poker_coach.engine.models import Action, GameState, Seat
 from poker_coach.engine.rules import (
     IllegalAction,
     apply_action,
+    apply_reveal,
     initial_state,
     legal_actions,
+    replay,
     start_hand,
 )
 
 STREET_ORDER = ["preflop", "flop", "turn", "river", "showdown", "complete"]
+_RUNOUT_POOL = ["2c","3d","5s","6h","7c","8d","9h","Tc","Jd","Qs","Kh","Ac","2s","3h","4d","5c","6d","7c",
+                "8s","9d","Th","Jh","Qd","Kc","Ah","2h","4c","5h","6c","7s","8h","Ts","Js","Qc","Ks","Ad"]
 
 
 def _initial_total_chips(state: GameState) -> int:
@@ -35,6 +37,23 @@ def _pick_action(draw: st.DrawFn, state: GameState) -> Action:
     return Action(actor=actor, type=la.type)
 
 
+def _safe_runout_cards(state: GameState, n: int) -> list[str]:
+    """Pick n distinct cards not already in state.hero_hole / villain_hole / board."""
+    excluded: set[str] = set(state.hero_hole)
+    if state.villain_hole is not None:
+        excluded.update(state.villain_hole)
+    excluded.update(state.board)
+    picked: list[str] = []
+    for card in _RUNOUT_POOL:
+        if len(picked) == n:
+            break
+        if card not in excluded and card not in picked:
+            picked.append(card)
+    if len(picked) < n:
+        raise AssertionError("runout pool exhausted; add more cards")
+    return picked
+
+
 @st.composite
 def played_hand(draw: st.DrawFn) -> list[GameState]:
     """Strategy: play a full hand using only legal actions, returning the
@@ -43,7 +62,7 @@ def played_hand(draw: st.DrawFn) -> list[GameState]:
     effective_stack = draw(st.integers(min_value=200, max_value=50_000))
     bb = draw(st.sampled_from([100, 200, 1_000]))
     if effective_stack <= bb:
-        effective_stack = bb + bb  # guarantee start_hand's guard passes
+        effective_stack = bb + bb
     button: Seat = draw(st.sampled_from(["hero", "villain"]))
     rng_seed = draw(st.integers(min_value=0, max_value=2**30))
 
@@ -54,10 +73,16 @@ def played_hand(draw: st.DrawFn) -> list[GameState]:
         rng_seed=rng_seed,
     )
     visited = [state]
-    # Safety cap: a HU hand realistically visits <40 decisions.
     for _ in range(100):
-        if state.street in ("showdown", "complete"):
+        if state.street in ("showdown", "complete") and state.pending_reveal is None:
             break
+        if state.pending_reveal is not None:
+            need = 5 - len(state.board) if state.pending_reveal == "runout" else {
+                "flop": 3, "turn": 1, "river": 1,
+            }[state.pending_reveal]
+            state = apply_reveal(state, _safe_runout_cards(state, need))
+            visited.append(state)
+            continue
         action = _pick_action(draw, state)
         state = apply_action(state, action)
         visited.append(state)
@@ -94,8 +119,9 @@ def test_street_monotonicity(states: list[GameState]) -> None:
 @given(states=played_hand())
 def test_to_act_consistency(states: list[GameState]) -> None:
     for state in states:
-        if state.street in ("showdown", "complete"):
+        if state.street in ("showdown", "complete") or state.pending_reveal is not None:
             assert state.to_act is None
+            assert legal_actions(state) == []
         else:
             assert state.to_act is not None
             assert legal_actions(state), f"no legal actions for {state.to_act} at {state.street}"
@@ -105,12 +131,11 @@ def test_to_act_consistency(states: list[GameState]) -> None:
 def test_illegal_action_unreachable(states: list[GameState]) -> None:
     """Any action not in legal_actions must raise IllegalAction."""
     for state in states:
-        if state.street in ("showdown", "complete"):
+        if state.street in ("showdown", "complete") or state.pending_reveal is not None:
             continue
         legal_types = {la.type for la in legal_actions(state)}
         all_types = {"fold", "check", "call", "bet", "raise", "allin"}
         for illegal_type in all_types - legal_types:
-            # Don't bother constructing exotic amounts; the type check fires first.
             try:
                 apply_action(
                     state,
@@ -124,5 +149,15 @@ def test_illegal_action_unreachable(states: list[GameState]) -> None:
 @given(states=played_hand())
 def test_replay_idempotency(states: list[GameState]) -> None:
     final = states[-1]
-    replay = reduce(apply_action, final.history, initial_state(final))
-    assert replay == final
+    assert replay(final) == final
+
+
+@given(states=played_hand())
+def test_deck_snapshot_matches_board(states: list[GameState]) -> None:
+    for state in states:
+        if state.deck_snapshot is None:
+            continue
+        board_len = len(state.board)
+        assert state.deck_snapshot[4 : 4 + board_len] == state.board, (
+            f"deck_snapshot[4:{4+board_len}] != state.board at {state.street}"
+        )

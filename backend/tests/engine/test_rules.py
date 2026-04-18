@@ -86,9 +86,13 @@ class TestPreflop:
         assert s.to_act == "villain"
         s = apply_action(s, Action(actor="villain", type="check"))
         assert s.street == "flop"
-        assert len(s.board) == 3
+        assert s.pending_reveal == "flop"
+        assert s.board == []
         assert s.pot == 200
         assert s.committed == {"hero": 0, "villain": 0}
+        assert s.to_act is None
+        s = apply_reveal(s, ["2c", "3d", "5s"])
+        assert len(s.board) == 3
         assert s.to_act == "villain"  # non-button acts first postflop
 
     def test_open_raise_call_to_flop(self) -> None:
@@ -139,11 +143,19 @@ class TestPreflop:
 
 
 class TestPostflop:
+    _FLOP_CARDS = ["2c", "3d", "5s"]
+    _TURN_CARD = "6c"
+    _RIVER_CARD = "8c"
+
     def _to_flop(self) -> GameState:
         s = fresh_hand()
         s = apply_action(s, Action(actor="hero", type="call"))
         s = apply_action(s, Action(actor="villain", type="check"))
         assert s.street == "flop"
+        assert s.pending_reveal == "flop"
+        s = apply_reveal(s, self._FLOP_CARDS)
+        assert s.pending_reveal is None
+        assert s.board == self._FLOP_CARDS
         return s
 
     def test_check_check_advances_street(self) -> None:
@@ -151,6 +163,8 @@ class TestPostflop:
         s = apply_action(s, Action(actor="villain", type="check"))
         s = apply_action(s, Action(actor="hero", type="check"))
         assert s.street == "turn"
+        assert s.pending_reveal == "turn"
+        s = apply_reveal(s, [self._TURN_CARD])
         assert len(s.board) == 4
 
     def test_bet_call_advances_street(self) -> None:
@@ -158,6 +172,7 @@ class TestPostflop:
         s = apply_action(s, Action(actor="villain", type="bet", to_amount=200))
         s = apply_action(s, Action(actor="hero", type="call"))
         assert s.street == "turn"
+        assert s.pending_reveal == "turn"
         assert s.pot == 600
         assert s.committed == {"hero": 0, "villain": 0}
 
@@ -166,6 +181,7 @@ class TestPostflop:
         s = apply_action(s, Action(actor="villain", type="bet", to_amount=200))
         s = apply_action(s, Action(actor="hero", type="fold"))
         assert s.street == "complete"
+        assert s.pending_reveal is None
 
     def test_bet_raise_call(self) -> None:
         s = self._to_flop()
@@ -173,6 +189,7 @@ class TestPostflop:
         s = apply_action(s, Action(actor="hero", type="raise", to_amount=600))
         s = apply_action(s, Action(actor="villain", type="call"))
         assert s.street == "turn"
+        assert s.pending_reveal == "turn"
         assert s.pot == 1_400
 
     def test_min_bet_is_one_bb(self) -> None:
@@ -207,7 +224,12 @@ class TestAllIn:
         assert s.pot == 2_000
         assert s.stacks == {"hero": 0, "villain": 0}
         assert s.street == "showdown"
+        assert s.pending_reveal == "runout"
+        assert s.board == []  # no auto-deal
+        # Reveal full runout (5 cards not in holes {5h,9s,2c,6c})
+        s = apply_reveal(s, ["Ah", "Kh", "Qd", "3d", "4h"])
         assert len(s.board) == 5
+        assert s.pending_reveal is None
 
     def test_allin_both_equal_stacks(self) -> None:
         s = start_hand(effective_stack=500, bb=100, button="villain", rng_seed=5)
@@ -218,6 +240,11 @@ class TestAllIn:
         assert s.pot == 1_000
         assert s.stacks == {"hero": 0, "villain": 0}
         assert s.street == "showdown"
+        assert s.pending_reveal == "runout"
+        # Reveal full runout (5 cards not in holes {4c,6d,4h,Jd})
+        s = apply_reveal(s, ["Ah", "Kh", "Qh", "2s", "3s"])
+        assert len(s.board) == 5
+        assert s.pending_reveal is None
 
 
 class TestApplyReveal:
