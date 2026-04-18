@@ -63,6 +63,10 @@ export async function engineApply(state: GameState, action: Action): Promise<Eng
   return postJSON("/api/engine/apply", { state, action });
 }
 
+export async function engineReveal(state: GameState, cards: string[]): Promise<EngineSnapshot> {
+  return postJSON("/api/engine/reveal", { state, cards });
+}
+
 export async function createDecision(input: {
   session_id: string;
   hand_id?: string | null;
