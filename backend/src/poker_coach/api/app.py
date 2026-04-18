@@ -18,7 +18,18 @@ from fastapi import FastAPI
 from sqlalchemy import Engine
 
 from poker_coach.api.deps import OracleFactory
-from poker_coach.api.routes import actions, decisions, hands, health, sessions, stream
+from poker_coach.api.routes import (
+    actions,
+    decisions,
+    hands,
+    health,
+    presets,
+    sessions,
+    stream,
+)
+from poker_coach.api.routes import (
+    engine as engine_routes,
+)
 from poker_coach.api.sweeper import run_sweeper
 from poker_coach.db.engine import default_engine
 from poker_coach.oracle.pricing import PricingSnapshot, default_pricing
@@ -78,4 +89,6 @@ def create_app(
     app.include_router(decisions.router, prefix="/api")
     app.include_router(actions.router, prefix="/api")
     app.include_router(stream.router, prefix="/api")
+    app.include_router(engine_routes.router, prefix="/api")
+    app.include_router(presets.router, prefix="/api")
     return app
