@@ -1,0 +1,95 @@
+"""Oracle protocol and event types — provider-agnostic interface.
+
+Each provider implementation streams a normalized OracleEvent sequence.
+The backend re-emits these as SSE frames to the frontend. Reasoning
+streams first; the tool call lands as ToolCallComplete; UsageComplete
+is the final event on a successful run.
+"""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from typing import Any, Literal, Protocol
+
+from pydantic import BaseModel, ConfigDict
+
+from poker_coach.engine.models import ActionType
+from poker_coach.prompts.renderer import RenderedPrompt
+
+ProviderName = Literal["openai", "anthropic"]
+ReasoningEffort = Literal["minimal", "low", "medium", "high", "xhigh"]
+Confidence = Literal["low", "medium", "high"]
+
+
+class Advice(BaseModel):
+    """Parsed output of the submit_advice tool call."""
+
+    model_config = ConfigDict(frozen=True)
+
+    action: ActionType
+    to_amount_bb: float | None = None
+    reasoning: str
+    confidence: Confidence
+
+
+class ModelSpec(BaseModel):
+    """A (provider, model, effort) preset selected from the UI."""
+
+    model_config = ConfigDict(frozen=True)
+
+    selector_id: str
+    provider: ProviderName
+    model_id: str
+    reasoning_effort: ReasoningEffort | None = None
+    thinking_budget: int | None = None
+    temperature: float | None = None
+
+
+class ReasoningDelta(BaseModel):
+    type: Literal["reasoning_delta"] = "reasoning_delta"
+    text: str
+
+
+class ReasoningComplete(BaseModel):
+    type: Literal["reasoning_complete"] = "reasoning_complete"
+    full_text: str
+
+
+class ToolCallComplete(BaseModel):
+    type: Literal["tool_call_complete"] = "tool_call_complete"
+    advice: Advice
+    raw_tool_input: dict[str, Any]
+
+
+class UsageComplete(BaseModel):
+    type: Literal["usage_complete"] = "usage_complete"
+    input_tokens: int
+    output_tokens: int
+    reasoning_tokens: int
+    total_tokens: int
+    cost_usd: float
+    pricing_snapshot: dict[str, Any]
+
+
+OracleErrorKind = Literal[
+    "provider_error",
+    "invalid_schema",
+    "illegal_action",
+    "internal",
+]
+
+
+class OracleError(BaseModel):
+    type: Literal["oracle_error"] = "oracle_error"
+    kind: OracleErrorKind
+    message: str
+    raw_tool_input: dict[str, Any] | None = None
+
+
+OracleEvent = ReasoningDelta | ReasoningComplete | ToolCallComplete | UsageComplete | OracleError
+
+
+class Oracle(Protocol):
+    def advise_stream(
+        self, rendered: RenderedPrompt, spec: ModelSpec
+    ) -> AsyncIterator[OracleEvent]: ...

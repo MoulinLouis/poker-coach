@@ -1,0 +1,29 @@
+# Per-model pricing in USD per million tokens.
+# Reasoning / thinking tokens are billed at the output rate on both
+# providers — callers must include them in output_tokens before
+# calling compute_cost.
+#
+# snapshot_date: ISO date the rates were valid.
+# snapshot_source: where the rates came from. "manual_config" means
+# hand-entered and not sourced from a specific API docs revision —
+# refine to e.g. "anthropic_api_docs_2026-04-18" when confirmed.
+
+snapshot_date: "2026-04-18"
+snapshot_source: "manual_config"
+
+models:
+  gpt-5.3-codex:
+    input_per_mtok: 1.75
+    output_per_mtok: 14.00
+
+  gpt-5.4:
+    input_per_mtok: 1.25
+    output_per_mtok: 10.00
+
+  claude-opus-4-7:
+    input_per_mtok: 15.00
+    output_per_mtok: 75.00
+
+  claude-haiku-4-5-20251001:
+    input_per_mtok: 1.00
+    output_per_mtok: 5.00
