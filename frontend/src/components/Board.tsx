@@ -6,7 +6,7 @@ export function Board({ cards }: { cards: string[] }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center">
           {cards[i] ? (
-            <div className="animate-in fade-in zoom-in-95 duration-300">
+            <div className="anim-zoom-in">
               <PlayingCard code={cards[i]} size="lg" />
             </div>
           ) : (
