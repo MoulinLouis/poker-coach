@@ -37,3 +37,13 @@ def get_pricing(request: Request) -> PricingSnapshot:
 
 def get_prompts_root(request: Request) -> Any:
     return request.app.state.prompts_root
+
+
+def get_anthropic_client(request: Request) -> Any:
+    client = getattr(request.app.state, "anthropic_client", None)
+    if client is None:
+        raise RuntimeError(
+            "anthropic_client not configured on app.state; "
+            "production wiring should create one at startup."
+        )
+    return client

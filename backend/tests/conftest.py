@@ -61,16 +61,30 @@ def sample_pricing() -> PricingSnapshot:
     )
 
 
+class _DummyAnthropicMessages:
+    async def create(self, **kwargs: Any) -> Any:
+        raise RuntimeError("dummy anthropic client should not be invoked")
+
+
+class _DummyAnthropicClient:
+    messages = _DummyAnthropicMessages()
+
+
 @pytest.fixture
 def test_app_builder(
     migrated_engine: Engine,
     sample_pricing: PricingSnapshot,
-) -> Callable[[OracleFactory | None], Any]:
-    def _build(factory: OracleFactory | None = None) -> Any:
+) -> Callable[..., Any]:
+    def _build(
+        factory: OracleFactory | None = None,
+        *,
+        anthropic_client: Any | None = None,
+    ) -> Any:
         return create_app(
             engine=migrated_engine,
             oracle_factory=factory or _DummyOracleFactory(),
             pricing=sample_pricing,
+            anthropic_client=anthropic_client or _DummyAnthropicClient(),
             sweeper_interval_seconds=0,  # disabled; tests drive sweep_once directly
         )
 
@@ -78,5 +92,5 @@ def test_app_builder(
 
 
 @pytest.fixture
-def api_app(test_app_builder: Callable[[OracleFactory | None], Any]) -> Iterator[Any]:
+def api_app(test_app_builder: Callable[..., Any]) -> Iterator[Any]:
     yield test_app_builder(None)

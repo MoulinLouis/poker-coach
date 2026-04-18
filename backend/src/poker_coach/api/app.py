@@ -27,6 +27,7 @@ from poker_coach.api.routes import (
     presets,
     sessions,
     stream,
+    translate,
 )
 from poker_coach.api.routes import (
     engine as engine_routes,
@@ -46,6 +47,7 @@ def create_app(
     oracle_factory: OracleFactory | None = None,
     pricing: PricingSnapshot | None = None,
     prompts_root: Path | None = None,
+    anthropic_client: Any | None = None,
     sweeper_interval_seconds: float = 30.0,
     abandoned_threshold_seconds: float = 30.0,
     timeout_threshold_seconds: float = 180.0,
@@ -65,6 +67,12 @@ def create_app(
                 "wiring should build a DefaultOracleFactory."
             )
         app.state.oracle_factory = oracle_factory
+        if anthropic_client is None:
+            from anthropic import AsyncAnthropic
+
+            app.state.anthropic_client = AsyncAnthropic()
+        else:
+            app.state.anthropic_client = anthropic_client
 
         sweeper_task: asyncio.Task[Any] | None = None
         if sweeper_interval_seconds > 0:
@@ -97,4 +105,5 @@ def create_app(
     app.include_router(presets.router, prefix="/api")
     app.include_router(cost.router, prefix="/api")
     app.include_router(prompt_routes.router, prefix="/api")
+    app.include_router(translate.router, prefix="/api")
     return app
