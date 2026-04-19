@@ -29,20 +29,23 @@ MODEL_PRESETS: dict[str, ModelSpec] = {
         reasoning_effort="high",
         temperature=1.0,
     ),
-    "claude-sonnet-4-6-medium": ModelSpec(
-        selector_id="claude-sonnet-4-6-medium",
+    # Sonnet 4.6 runs *without* thinking: observed cost at
+    # thinking_budget=4096 was ~$0.028/call (output dominated by thinking
+    # tokens billed at output rate). Dropping thinking cuts output ~95%
+    # and unlocks forced tool_choice for reliability. The enriched
+    # system prompt carries enough strategic frame that Sonnet in one
+    # forward pass matches the thinking version on routine spots;
+    # borderline spots may degrade but the cost/latency delta is large
+    # enough to justify it as the standard Claude option.
+    "claude-sonnet-4-6-fast": ModelSpec(
+        selector_id="claude-sonnet-4-6-fast",
         provider="anthropic",
         model_id="claude-sonnet-4-6",
-        thinking_mode="enabled",
-        thinking_budget=4096,
-        temperature=1.0,
     ),
-    # Haiku intentionally runs *without* thinking: Anthropic forbids
-    # tool_choice forcing when thinking is enabled, and Haiku with
-    # tool_choice=auto is flaky about actually calling the tool (it
-    # prefers to answer in text). No thinking → forced tool_choice →
-    # reliable structured output. Haiku's role is fast/cheap prompt
-    # exploration, not deep reasoning.
+    # Haiku also runs without thinking. Anthropic forbids tool_choice
+    # forcing when thinking is enabled, and Haiku with tool_choice=auto
+    # is flaky about actually calling the tool. No thinking → forced
+    # tool_choice → reliable structured output.
     "claude-haiku-4-5-min": ModelSpec(
         selector_id="claude-haiku-4-5-min",
         provider="anthropic",

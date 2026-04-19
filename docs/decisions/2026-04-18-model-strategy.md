@@ -14,7 +14,7 @@ The research use case (many decisions, prompt iteration) is cost-sensitive. Payi
 
 ## Canary
 
-`MODEL_PRESETS` in `backend/src/poker_coach/oracle/presets.py` should carry exactly these four selector_ids: `gpt-5.3-codex-xhigh`, `gpt-5.4-medium`, `claude-opus-4-7-deep`, `claude-sonnet-4-6-medium`, `claude-haiku-4-5-min`. `DEFAULT_PRESET_ID == "gpt-5.3-codex-xhigh"`. If you change the default, update this ADR.
+`MODEL_PRESETS` in `backend/src/poker_coach/oracle/presets.py` should carry exactly these five selector_ids: `gpt-5.3-codex-xhigh`, `gpt-5.4-medium`, `claude-opus-4-7-deep`, `claude-sonnet-4-6-fast`, `claude-haiku-4-5-min`. `DEFAULT_PRESET_ID == "gpt-5.3-codex-xhigh"`. If you change the default, update this ADR.
 
 ## Implementing commits
 
