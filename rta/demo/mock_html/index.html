@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mock HU Poker Table</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="table">
+  <div class="seat villain">
+    <div class="nameplate">Villain <span class="stack" id="villain-stack">10000</span></div>
+    <div class="cards">
+      <div class="card back"></div>
+      <div class="card back"></div>
+    </div>
+    <div class="bet" id="villain-bet">0</div>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="pot" id="pot">0</div>
+  <div class="seat hero">
+    <div class="cards">
+      <div class="card" id="hero-card-1">As</div>
+      <div class="card" id="hero-card-2">Kd</div>
+    </div>
+    <div class="bet" id="hero-bet">0</div>
+    <div class="nameplate">Hero <span class="stack" id="hero-stack">10000</span></div>
+    <div class="button-marker" id="button-marker">D</div>
+    <div class="action-bar" id="action-bar">
+      <button id="btn-fold">Fold</button>
+      <button id="btn-check-call">Check</button>
+      <button id="btn-bet-raise">Bet 100</button>
+    </div>
+    <div class="hero-action-highlight" id="hero-action-highlight"></div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

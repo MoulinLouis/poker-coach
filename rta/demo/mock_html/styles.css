@@ -1,0 +1,18 @@
+body { margin: 0; background: #1a3a2a; font-family: monospace; color: #eee; }
+.table { position: relative; width: 1280px; height: 720px; margin: 0 auto; }
+.seat { position: absolute; width: 400px; left: 440px; text-align: center; }
+.villain { top: 40px; }
+.hero { bottom: 40px; }
+.nameplate { font-size: 18px; padding: 4px 8px; background: #222; border-radius: 4px; display: inline-block; }
+.stack { color: #ffd700; font-weight: bold; margin-left: 8px; }
+.cards { display: flex; justify-content: center; gap: 8px; margin: 8px 0; }
+.card { width: 60px; height: 80px; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; border-radius: 6px; }
+.card.back { background: repeating-linear-gradient(45deg,#800,#800 6px,#a00 6px,#a00 12px); color: transparent; }
+.board { position: absolute; top: 300px; left: 440px; width: 400px; display: flex; gap: 8px; justify-content: center; }
+.pot { position: absolute; top: 240px; left: 560px; width: 160px; text-align: center; background: #000; padding: 4px 8px; border-radius: 4px; color: #ffd700; font-weight: bold; font-size: 20px; }
+.bet { margin: 6px auto; background: #000; color: #ffd700; display: inline-block; padding: 2px 8px; border-radius: 4px; min-width: 40px; }
+.button-marker { position: absolute; right: -40px; top: 40px; width: 30px; height: 30px; background: #fff; color: #000; border-radius: 50%; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+.action-bar { margin-top: 8px; display: flex; gap: 8px; justify-content: center; }
+.action-bar button { padding: 8px 16px; font-size: 16px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.hero-action-highlight { height: 6px; background: transparent; margin-top: 6px; }
+.hero-action-highlight.active { background: #0f0; }
