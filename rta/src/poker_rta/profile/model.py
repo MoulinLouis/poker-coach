@@ -85,6 +85,7 @@ class PlatformProfile(BaseModel):
     ocr: OCRPreprocess
     capture_fps: float = Field(default=5.0, gt=0.0, le=30.0)
     your_turn_highlight_threshold: float = Field(default=0.90, ge=0.0, le=1.0)
+    overlay_position: tuple[int, int] | None = None
 
     @field_validator("rois")
     @classmethod

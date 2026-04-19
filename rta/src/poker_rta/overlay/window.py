@@ -11,7 +11,8 @@ from __future__ import annotations
 import time
 from typing import Any, Literal
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtGui import QKeySequence, QMouseEvent, QShortcut
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from poker_rta.overlay.confidence import render_line
@@ -66,6 +67,8 @@ class AdviceOverlay(QWidget):
         self.resize(420, 180)
         self._status: str = "ok"
         self._last_advice_at: float | None = None
+        self._drag_pos: QPoint | None = None
+        QShortcut(QKeySequence("Ctrl+Space"), self, self._toggle_visible)
 
     def show_advice(self, advice: dict[str, Any]) -> None:
         lines = [
@@ -122,3 +125,36 @@ class AdviceOverlay(QWidget):
 
     def current_status(self) -> str:
         return self._status
+
+    # ------------------------------------------------------------------
+    # Draggable window
+    # ------------------------------------------------------------------
+
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
+        if event is not None and event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
+        if (
+            event is not None
+            and event.buttons() & Qt.MouseButton.LeftButton
+            and self._drag_pos is not None
+        ):
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
+        if event is not None and event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = None
+        super().mouseReleaseEvent(event)
+
+    # ------------------------------------------------------------------
+    # Visibility toggle + position query
+    # ------------------------------------------------------------------
+
+    def _toggle_visible(self) -> None:
+        self.setVisible(not self.isVisible())
+
+    def current_position(self) -> tuple[int, int]:
+        return (self.x(), self.y())
