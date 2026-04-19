@@ -38,7 +38,7 @@ from poker_coach.oracle.base import (
     ToolCallComplete,
     UsageComplete,
 )
-from poker_coach.oracle.presets import MODEL_PRESETS
+from poker_coach.oracle.presets import PRESETS_BY_MODEL
 from poker_coach.prompts.renderer import RenderedPrompt
 
 logger = logging.getLogger(__name__)
@@ -61,10 +61,7 @@ class _StreamState:
 
 
 def _find_preset_for(model_id: str, provider: str) -> ModelSpec | None:
-    for spec in MODEL_PRESETS.values():
-        if spec.model_id == model_id and spec.provider == provider:
-            return spec
-    return None
+    return PRESETS_BY_MODEL.get((model_id, provider))
 
 
 def _finalize(engine: Engine, decision_id: str, state: _StreamState, started_at: datetime) -> None:
