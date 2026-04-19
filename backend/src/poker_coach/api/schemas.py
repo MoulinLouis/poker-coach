@@ -13,6 +13,17 @@ from pydantic import BaseModel, ConfigDict
 from poker_coach.engine.models import Action, GameState
 from poker_coach.prompts.context import VillainProfile
 
+DecisionStatus = Literal[
+    "in_flight",
+    "ok",
+    "invalid_response",
+    "illegal_action",
+    "provider_error",
+    "cancelled",
+    "abandoned",
+    "timeout",
+]
+
 
 class CreateSessionRequest(BaseModel):
     mode: Literal["live", "spot"]
@@ -63,6 +74,43 @@ class DecisionSummary(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     decision_id: str
-    status: str
+    status: DecisionStatus
     parsed_advice: dict[str, Any] | None
     cost_usd: float | None
+
+
+class DecisionListRow(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    decision_id: str
+    created_at: str
+    session_id: str
+    hand_id: str | None
+    model_id: str
+    prompt_name: str
+    prompt_version: str
+    villain_profile: str
+    status: DecisionStatus
+    parsed_advice: dict[str, Any] | None
+    cost_usd: float | None
+    latency_ms: int | None
+
+
+class DecisionDetail(DecisionListRow):
+    game_state: dict[str, Any]
+    template_hash: str
+    template_raw: str
+    rendered_prompt: str
+    system_prompt_hash: str | None
+    reasoning_text: str | None
+    raw_tool_input: dict[str, Any] | None
+    reasoning_effort: str | None
+    thinking_budget: int | None
+    temperature: float | None
+    input_tokens: int | None
+    output_tokens: int | None
+    reasoning_tokens: int | None
+    total_tokens: int | None
+    pricing_snapshot: dict[str, Any] | None
+    error_message: str | None
+    retry_of: str | None
