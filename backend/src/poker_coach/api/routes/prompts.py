@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
+import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -131,14 +132,20 @@ def save_prompt(
             detail=f"{body.version} already exists; bump to a new version",
         )
 
-    # Validate the content round-trips through the renderer before committing
-    # it to the final path. Write, load, swap on success or delete on error.
-    target.write_text(body.content, encoding="utf-8")
+    # Write to a temp path first so a concurrent reader never sees a partial
+    # or invalid file at the target path. Rename is atomic on POSIX.
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_text(body.content, encoding="utf-8")
     try:
-        PromptRenderer(prompts_root).load(pack, body.version)
+        with tempfile.TemporaryDirectory() as td:
+            td_path = Path(td)
+            (td_path / pack).mkdir(parents=True)
+            (td_path / pack / f"{body.version}.md").write_text(body.content, encoding="utf-8")
+            PromptRenderer(td_path).load(pack, body.version)
     except Exception as exc:
-        target.unlink(missing_ok=True)
+        tmp.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail=f"template did not validate: {exc}") from exc
+    tmp.rename(target)
     return SavePromptResponse(
         pack=pack, version=body.version, path=str(target.relative_to(prompts_root.parent))
     )
