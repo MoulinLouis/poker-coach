@@ -14,6 +14,9 @@ export function AdvicePanel({
   presetLabel: string;
   onFollow?: () => void;
 }) {
+  const reasoningTranslation = useTranslation(stream.reasoning || "");
+  const adviceTranslation = useTranslation(stream.advice?.reasoning || "");
+
   return (
     <aside
       data-testid="advice-panel"
@@ -48,9 +51,13 @@ export function AdvicePanel({
         </div>
       )}
 
-      {stream.reasoning && <ThinkingBlock stream={stream} />}
+      {stream.reasoning && (
+        <ThinkingBlock stream={stream} translation={reasoningTranslation} />
+      )}
 
-      {stream.advice && <AdviceCard advice={stream.advice} onFollow={onFollow} />}
+      {stream.advice && (
+        <AdviceCard advice={stream.advice} translation={adviceTranslation} onFollow={onFollow} />
+      )}
 
       {stream.costUsd != null && (
         <div className="text-[10px] text-stone-500 tabular-nums">
@@ -70,11 +77,13 @@ export function AdvicePanel({
   );
 }
 
-function ThinkingBlock({ stream }: { stream: StreamState }) {
-  // Auto-collapse once the stream reaches a terminal state. Before that
-  // (thinking/streaming), keep expanded so the user can watch it live.
-  // User can override with the toggle; override sticks until the next
-  // decision (when status returns to idle via reset).
+function ThinkingBlock({
+  stream,
+  translation,
+}: {
+  stream: StreamState;
+  translation: TranslationState;
+}) {
   const [userOverride, setUserOverride] = useState<boolean | null>(null);
   const prevStatusRef = useRef(stream.status);
 
@@ -89,7 +98,6 @@ function ThinkingBlock({ stream }: { stream: StreamState }) {
   const collapsed = userOverride !== null ? userOverride : isTerminal;
   const live = stream.status === "streaming" || stream.status === "thinking";
 
-  const translation = useTranslation(stream.reasoning);
   const displayedReasoning =
     translation.lang === "fr" && translation.frText !== null
       ? translation.frText
@@ -148,14 +156,21 @@ function LangToggle({
   );
 }
 
-function AdviceCard({ advice, onFollow }: { advice: Advice; onFollow?: () => void }) {
+function AdviceCard({
+  advice,
+  translation,
+  onFollow,
+}: {
+  advice: Advice;
+  translation: TranslationState;
+  onFollow?: () => void;
+}) {
   const confidenceStyle = {
     high: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
     medium: "bg-amber-500/20 text-amber-300 border-amber-500/40",
     low: "bg-stone-500/20 text-stone-300 border-stone-500/40",
   }[advice.confidence];
 
-  const translation = useTranslation(advice.reasoning);
   const displayedReasoning =
     translation.lang === "fr" && translation.frText !== null
       ? translation.frText
