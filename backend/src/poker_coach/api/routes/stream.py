@@ -58,8 +58,6 @@ class _StreamState:
     usage_fields: dict[str, Any] = field(default_factory=dict)
 
 
-
-
 def _finalize(engine: Engine, decision_id: str, state: _StreamState, started_at: datetime) -> None:
     latency_ms = int((datetime.now(UTC) - started_at).total_seconds() * 1000)
     values: dict[str, Any] = {

@@ -11,7 +11,6 @@ import {
 } from "../api/client";
 import type { Action, EngineSnapshot, PresetSummary } from "../api/types";
 import { useAdviceStream } from "../api/useAdviceStream";
-import { parseHole } from "../utils/cards";
 import { ActionBar } from "../components/ActionBar";
 import { AdvicePanel } from "../components/AdvicePanel";
 import { BoardPicker } from "../components/BoardPicker";
@@ -19,6 +18,7 @@ import { HandSummary } from "../components/HandSummary";
 import { PokerTable } from "../components/PokerTable";
 import { SetupPanel, type SetupValues } from "../components/SetupPanel";
 import { useHotkeys } from "../hooks/useHotkeys";
+import { parseHole } from "../utils/cards";
 
 interface SessionState {
   sessionId: string;

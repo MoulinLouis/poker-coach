@@ -9,20 +9,42 @@ from __future__ import annotations
 
 import logging
 import re
-import tempfile
 from pathlib import Path
 
+import frontmatter
 from fastapi import APIRouter, Depends, HTTPException
+from jinja2 import Environment, StrictUndefined
+from jinja2 import meta as jinja_meta
 from pydantic import BaseModel, ConfigDict
 
 from poker_coach.api.deps import get_prompts_root
-from poker_coach.prompts.renderer import PromptRenderer
+from poker_coach.prompts.renderer import PromptMetadataError, PromptRenderer, PromptVariableError
 
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 _VERSION_RE = re.compile(r"^v\d+$")
+_JINJA_ENV = Environment(undefined=StrictUndefined, keep_trailing_newline=True, autoescape=False)
+
+
+def _validate_prompt_content(content: str, pack: str, version: str) -> None:
+    """Parse and validate prompt content without touching the filesystem."""
+    parsed = frontmatter.loads(content)
+    if parsed.metadata.get("name") != pack:
+        raise PromptMetadataError(
+            f"frontmatter name {parsed.metadata.get('name')!r} does not match pack {pack!r}"
+        )
+    if parsed.metadata.get("version") != version:
+        raise PromptMetadataError(
+            f"frontmatter version {parsed.metadata.get('version')!r} does not match {version!r}"
+        )
+    declared_vars = parsed.metadata.get("variables") or []
+    if not (isinstance(declared_vars, list) and all(isinstance(v, str) for v in declared_vars)):
+        raise PromptMetadataError("`variables` must be a list of strings")
+    referenced = jinja_meta.find_undeclared_variables(_JINJA_ENV.parse(parsed.content))
+    undeclared = referenced - set(declared_vars)
+    if undeclared:
+        raise PromptVariableError(f"template references undeclared variables: {sorted(undeclared)}")
 
 
 class PackVersion(BaseModel):
@@ -76,8 +98,9 @@ def _iter_packs(root: Path) -> list[Pack]:
                 tmpl = renderer.load(pack_dir.name, version)
                 versions.append(PackVersion(version=version, description=tmpl.description))
             except Exception:
-                # Malformed frontmatter — still surface the version, no desc.
-                logger.exception("failed to load prompt %s/%s", pack_dir.name, version)
+                logger.warning(
+                    "malformed template %s/%s at %s", pack_dir.name, version, md, exc_info=True
+                )
                 versions.append(PackVersion(version=version, description=None))
         packs.append(Pack(name=pack_dir.name, versions=versions))
     return packs
@@ -132,19 +155,14 @@ def save_prompt(
             detail=f"{body.version} already exists; bump to a new version",
         )
 
-    # Write to a temp path first so a concurrent reader never sees a partial
-    # or invalid file at the target path. Rename is atomic on POSIX.
-    tmp = target.with_suffix(target.suffix + ".tmp")
-    tmp.write_text(body.content, encoding="utf-8")
+    # Validate before touching the filesystem, then write atomically via
+    # tmp → rename so no concurrent reader ever sees an invalid file.
     try:
-        with tempfile.TemporaryDirectory() as td:
-            td_path = Path(td)
-            (td_path / pack).mkdir(parents=True)
-            (td_path / pack / f"{body.version}.md").write_text(body.content, encoding="utf-8")
-            PromptRenderer(td_path).load(pack, body.version)
-    except Exception as exc:
-        tmp.unlink(missing_ok=True)
+        _validate_prompt_content(body.content, pack, body.version)
+    except (PromptMetadataError, PromptVariableError) as exc:
         raise HTTPException(status_code=400, detail=f"template did not validate: {exc}") from exc
+    tmp = target.with_suffix(".md.tmp")
+    tmp.write_text(body.content, encoding="utf-8")
     tmp.rename(target)
     return SavePromptResponse(
         pack=pack, version=body.version, path=str(target.relative_to(prompts_root.parent))

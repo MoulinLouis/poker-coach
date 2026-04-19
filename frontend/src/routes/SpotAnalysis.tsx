@@ -168,64 +168,83 @@ export function SpotAnalysis() {
   };
 
   return (
-    <div style={{ maxWidth: 1200 }}>
-      <h1 style={{ margin: "0 0 12px" }}>Spot Analysis</h1>
+    <div className="max-w-[1200px]">
+      <h1 className="mb-3 text-2xl font-semibold text-stone-100">Spot Analysis</h1>
 
-      <section style={{ padding: 12, border: "1px solid #ddd" }}>
-        <strong>Spot</strong>
-        <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-          <label>
-            Hero hole <input value={heroHole} onChange={(e) => setHeroHole(e.target.value)} style={{ width: 70 }} />
+      <section className="p-3 rounded-lg ring-1 ring-white/5 bg-stone-900">
+        <strong className="text-sm font-semibold text-stone-200">Spot</strong>
+        <div className="flex gap-2 mt-2 flex-wrap items-center">
+          <label className="flex items-center gap-1 text-sm text-stone-300">
+            Hero hole{" "}
+            <input
+              value={heroHole}
+              onChange={(e) => setHeroHole(e.target.value)}
+              className="w-[70px] bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
+            />
           </label>
-          <label>
-            Villain hole <input value={villainHole} onChange={(e) => setVillainHole(e.target.value)} style={{ width: 70 }} />
+          <label className="flex items-center gap-1 text-sm text-stone-300">
+            Villain hole{" "}
+            <input
+              value={villainHole}
+              onChange={(e) => setVillainHole(e.target.value)}
+              className="w-[70px] bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
+            />
           </label>
-          <label>
+          <label className="flex items-center gap-1 text-sm text-stone-300">
             Effective stack{" "}
             <input
               type="number"
               value={effectiveStack}
               onChange={(e) => setEffectiveStack(parseInt(e.target.value || "0", 10))}
-              style={{ width: 100 }}
+              className="w-[100px] bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
             />
           </label>
-          <label>
+          <label className="flex items-center gap-1 text-sm text-stone-300">
             Button{" "}
-            <select value={button} onChange={(e) => setButton(e.target.value as Seat)}>
+            <select
+              value={button}
+              onChange={(e) => setButton(e.target.value as Seat)}
+              className="bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
+            >
               <option value="hero">hero</option>
               <option value="villain">villain</option>
             </select>
           </label>
-          <label>
+          <label className="flex items-center gap-1 text-sm text-stone-300">
             Villain profile{" "}
             <select
               value={villainProfile}
               onChange={(e) => setVillainProfile(e.target.value as VillainProfile)}
+              className="bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
             >
               <option value="unknown">unknown</option>
               <option value="reg">reg</option>
             </select>
           </label>
-          <button onClick={start} data-testid="spot-start">Start</button>
+          <button
+            onClick={start}
+            data-testid="spot-start"
+            className="px-3 py-1 rounded bg-amber-500 text-stone-950 font-semibold text-sm hover:bg-amber-400 transition"
+          >
+            Start
+          </button>
         </div>
       </section>
 
-      <section style={{ marginTop: 12, padding: 12, border: "1px solid #ddd" }}>
-        <strong>Models to compare (up to 3)</strong>
-        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <section className="mt-3 p-3 rounded-lg ring-1 ring-white/5 bg-stone-900">
+        <strong className="text-sm font-semibold text-stone-200">Models to compare (up to 3)</strong>
+        <div className="mt-2 flex gap-2 flex-wrap">
           {presets.map((p) => {
             const on = selected.includes(p.selector_id);
             return (
               <button
                 key={p.selector_id}
                 onClick={() => toggleSelected(p.selector_id)}
-                style={{
-                  padding: "4px 8px",
-                  background: on ? "#333" : "#fff",
-                  color: on ? "#fff" : "#333",
-                  border: "1px solid #888",
-                  cursor: "pointer",
-                }}
+                className={`px-2 py-1 rounded text-xs ring-1 transition cursor-pointer ${
+                  on
+                    ? "bg-stone-700 text-stone-100 ring-stone-500"
+                    : "bg-stone-800 text-stone-400 ring-white/10 hover:text-stone-200"
+                }`}
               >
                 {p.selector_id}
               </button>
@@ -234,27 +253,31 @@ export function SpotAnalysis() {
         </div>
       </section>
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p className="mt-2 text-red-400 text-sm">{error}</p>}
 
       {snapshot && (
         <section
           data-testid="spot-state"
-          style={{ marginTop: 12, padding: 12, border: "1px solid #ddd", lineHeight: 1.4 }}
+          className="mt-3 p-3 rounded-lg ring-1 ring-white/5 bg-stone-900 leading-relaxed text-sm text-stone-300"
         >
           <div>
-            <strong>Street:</strong> {snapshot.state.street} · <strong>To act:</strong>{" "}
-            {snapshot.state.to_act ?? "(none)"} · <strong>Pot:</strong>{" "}
+            <strong className="text-stone-200">Street:</strong> {snapshot.state.street} ·{" "}
+            <strong className="text-stone-200">To act:</strong>{" "}
+            {snapshot.state.to_act ?? "(none)"} ·{" "}
+            <strong className="text-stone-200">Pot:</strong>{" "}
             {bb(snapshot.state, snapshot.state.pot)}bb
           </div>
           <div>
-            <strong>Hero:</strong> {snapshot.state.hero_hole.join(" ")} · stack{" "}
+            <strong className="text-stone-200">Hero:</strong>{" "}
+            {snapshot.state.hero_hole.join(" ")} · stack{" "}
             {bb(snapshot.state, snapshot.state.stacks.hero)}bb
           </div>
           <div>
-            <strong>Villain:</strong> stack {bb(snapshot.state, snapshot.state.stacks.villain)}bb
+            <strong className="text-stone-200">Villain:</strong> stack{" "}
+            {bb(snapshot.state, snapshot.state.stacks.villain)}bb
           </div>
           <div>
-            <strong>Board:</strong>{" "}
+            <strong className="text-stone-200">Board:</strong>{" "}
             {snapshot.state.board.length ? snapshot.state.board.join(" ") : "(none)"}
           </div>
           {snapshot.state.to_act && (
@@ -271,7 +294,7 @@ export function SpotAnalysis() {
             <button
               onClick={compare}
               data-testid="spot-compare"
-              style={{ marginTop: 8 }}
+              className="mt-2 px-3 py-1 rounded bg-amber-500 text-stone-950 font-semibold text-sm hover:bg-amber-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
               disabled={columns.some(
                 (c) => c.stream.status === "streaming" || c.stream.status === "thinking",
               )}
@@ -285,45 +308,44 @@ export function SpotAnalysis() {
       {columns.some((c) => c.stream.status !== "idle") && (
         <section
           data-testid="spot-columns"
-          style={{
-            marginTop: 12,
-            display: "grid",
-            gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`,
-            gap: 8,
-          }}
+          className="mt-3 grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
         >
           {columns.map((c) => (
-            <div key={c.presetId} style={{ padding: 12, border: "1px solid #ddd" }}>
-              <strong>{c.presetId}</strong>
-              {c.stream.status === "thinking" && <p><em>Thinking…</em></p>}
+            <div
+              key={c.presetId}
+              className="p-3 rounded-lg ring-1 ring-white/5 bg-stone-900"
+            >
+              <strong className="text-sm font-semibold text-stone-200">{c.presetId}</strong>
+              {c.stream.status === "thinking" && (
+                <p className="text-sm text-stone-400 italic mt-1">Thinking…</p>
+              )}
               {c.stream.reasoning && (
-                <pre style={{ whiteSpace: "pre-wrap", fontSize: 13, color: "#444" }}>
+                <pre className="whitespace-pre-wrap text-[13px] text-stone-500 mt-1 overflow-auto max-h-40">
                   {c.stream.reasoning}
                 </pre>
               )}
               {c.stream.advice && (
-                <div style={{ marginTop: 8, padding: 8, background: "#f6f6f6" }}>
-                  <div>
+                <div className="mt-2 p-2 bg-stone-800 rounded">
+                  <div className="text-sm text-stone-200">
                     <strong>{c.stream.advice.action}</strong>
                     {c.stream.advice.to_amount_bb != null
                       ? ` ${c.stream.advice.to_amount_bb}bb`
                       : ""}{" "}
                     · conf {c.stream.advice.confidence}
                   </div>
-                  <div style={{ fontSize: 12, marginTop: 4 }}>
+                  <div className="text-xs text-stone-400 mt-1">
                     {c.stream.advice.reasoning}
                   </div>
                 </div>
               )}
               {c.stream.costUsd != null && (
-                <div style={{ fontSize: 11, color: "#666", marginTop: 4 }}>
+                <div className="text-[11px] text-stone-500 mt-1 tabular-nums">
                   ${c.stream.costUsd.toFixed(4)}
                 </div>
               )}
               {c.stream.errorMessage && (
-                <div style={{ color: "crimson", fontSize: 12 }}>
-                  {c.stream.errorMessage}
-                </div>
+                <div className="text-red-400 text-xs mt-1">{c.stream.errorMessage}</div>
               )}
             </div>
           ))}
@@ -349,12 +371,12 @@ function ActionRow({
   onAction: (action: Action) => void | Promise<void>;
 }) {
   return (
-    <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+    <div className="mt-2 flex gap-1.5 flex-wrap">
       {legal.map((la) => {
         const needsSize = la.type === "bet" || la.type === "raise";
         const value = form[la.type] ?? "";
         return (
-          <span key={la.type} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <span key={la.type} className="inline-flex items-center gap-1">
             {needsSize && (
               <input
                 placeholder={`${la.min_to != null ? (la.min_to / bbValue).toFixed(1) : ""}–${
@@ -362,7 +384,7 @@ function ActionRow({
                 } bb`}
                 value={value}
                 onChange={(e) => setForm({ ...form, [la.type]: e.target.value })}
-                style={{ width: 80 }}
+                className="w-20 bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-xs"
               />
             )}
             <button
@@ -377,6 +399,7 @@ function ActionRow({
                 }
                 onAction({ actor, type: la.type as ActionType, to_amount: amt });
               }}
+              className="px-2 py-0.5 rounded bg-stone-700 text-stone-200 text-xs ring-1 ring-white/10 hover:bg-stone-600 transition"
             >
               {actor} {la.type}
             </button>
