@@ -1,14 +1,9 @@
 import { useMemo, useState } from "react";
+import { SUIT_META, type Suit } from "../utils/cards";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"] as const;
-const SUITS = ["s", "h", "d", "c"] as const;
-const SUIT_LABEL: Record<(typeof SUITS)[number], { glyph: string; color: string }> = {
-  s: { glyph: "♠", color: "text-stone-200" },
-  h: { glyph: "♥", color: "text-red-400" },
-  d: { glyph: "♦", color: "text-red-400" },
-  c: { glyph: "♣", color: "text-stone-200" },
-};
+const SUITS: Suit[] = ["s", "h", "d", "c"];
 
 type SlotId = "h1" | "h2" | "v1" | "v2";
 
@@ -263,15 +258,15 @@ function SuitRow({
   usedCards,
   onPick,
 }: {
-  suit: (typeof SUITS)[number];
+  suit: Suit;
   usedCards: Set<string>;
   onPick: (code: string) => void;
 }) {
-  const meta = SUIT_LABEL[suit];
+  const meta = SUIT_META[suit];
   return (
     <>
       <div
-        className={`flex items-center justify-center text-lg pr-1 ${meta.color}`}
+        className={`flex items-center justify-center text-lg pr-1 ${meta.colorClass}`}
         aria-hidden
       >
         {meta.glyph}

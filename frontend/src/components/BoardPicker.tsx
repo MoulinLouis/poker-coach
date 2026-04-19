@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import { SUIT_META, type Suit } from "../utils/cards";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKS = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"] as const;
-const SUITS = ["s","h","d","c"] as const;
+const SUITS: Suit[] = ["s", "h", "d", "c"];
 
 const HEADERS: Record<string, string> = {
   flop: "Révèle le flop",
@@ -143,15 +144,14 @@ function SuitRow({
   used,
   onPick,
 }: {
-  suit: (typeof SUITS)[number];
+  suit: Suit;
   used: Set<string>;
   onPick: (code: string) => void;
 }) {
-  const glyph = suit === "s" ? "♠" : suit === "h" ? "♥" : suit === "d" ? "♦" : "♣";
-  const color = suit === "h" || suit === "d" ? "text-red-400" : "text-stone-200";
+  const { glyph, colorClass } = SUIT_META[suit];
   return (
     <>
-      <div className={`flex items-center justify-center text-lg pr-1 ${color}`} aria-hidden>
+      <div className={`flex items-center justify-center text-lg pr-1 ${colorClass}`} aria-hidden>
         {glyph}
       </div>
       {RANKS.map((rank) => {

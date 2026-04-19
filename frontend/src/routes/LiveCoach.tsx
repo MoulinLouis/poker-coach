@@ -18,15 +18,11 @@ import { HandSummary } from "../components/HandSummary";
 import { PokerTable } from "../components/PokerTable";
 import { SetupPanel, type SetupValues } from "../components/SetupPanel";
 import { useHotkeys } from "../hooks/useHotkeys";
+import { parseHole } from "../utils/cards";
 
 interface SessionState {
   sessionId: string;
   handId: string | null;
-}
-
-function parseHole(raw: string): [string, string] | null {
-  if (raw.length !== 4) return null;
-  return [raw.slice(0, 2), raw.slice(2, 4)];
 }
 
 function divergesFromAdvice(

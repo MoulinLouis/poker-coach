@@ -1,10 +1,10 @@
-type Suit = "s" | "h" | "d" | "c";
+import { SUIT_META, type Suit } from "../utils/cards";
 
-const SUITS: Record<Suit, { glyph: string; name: string; textClass: string }> = {
-  s: { glyph: "♠", name: "spades", textClass: "fill-[color:var(--color-card-black)]" },
-  h: { glyph: "♥", name: "hearts", textClass: "fill-[color:var(--color-card-red)]" },
-  d: { glyph: "♦", name: "diamonds", textClass: "fill-[color:var(--color-card-red)]" },
-  c: { glyph: "♣", name: "clubs", textClass: "fill-[color:var(--color-card-black)]" },
+const SUIT_NAMES: Record<Suit, string> = {
+  s: "spades",
+  h: "hearts",
+  d: "diamonds",
+  c: "clubs",
 };
 
 const RANK_NAMES: Record<string, string> = {
@@ -40,12 +40,12 @@ export function PlayingCard({
   }
 
   const rank = code[0];
-  const suit = SUITS[code[1] as Suit];
+  const suit = SUIT_META[code[1] as Suit];
   if (!suit) {
     return <div data-invalid="true" className={`${sizeClass} rounded-md bg-red-900`} />;
   }
   const rankName = RANK_NAMES[rank] ?? rank;
-  const label = `${rankName} of ${suit.name}`;
+  const label = `${rankName} of ${SUIT_NAMES[code[1] as Suit]}`;
 
   return (
     <svg
