@@ -6,15 +6,50 @@ from poker_coach.engine.rules import (
     IllegalAction,
     apply_action,
     apply_reveal,
-    initial_state,
     legal_actions,
     replay,
     start_hand,
 )
 
 STREET_ORDER = ["preflop", "flop", "turn", "river", "showdown", "complete"]
-_RUNOUT_POOL = ["2c","3d","5s","6h","7c","8d","9h","Tc","Jd","Qs","Kh","Ac","2s","3h","4d","5c","6d","7c",
-                "8s","9d","Th","Jh","Qd","Kc","Ah","2h","4c","5h","6c","7s","8h","Ts","Js","Qc","Ks","Ad"]
+_RUNOUT_POOL = [
+    "2c",
+    "3d",
+    "5s",
+    "6h",
+    "7c",
+    "8d",
+    "9h",
+    "Tc",
+    "Jd",
+    "Qs",
+    "Kh",
+    "Ac",
+    "2s",
+    "3h",
+    "4d",
+    "5c",
+    "6d",
+    "7c",
+    "8s",
+    "9d",
+    "Th",
+    "Jh",
+    "Qd",
+    "Kc",
+    "Ah",
+    "2h",
+    "4c",
+    "5h",
+    "6c",
+    "7s",
+    "8h",
+    "Ts",
+    "Js",
+    "Qc",
+    "Ks",
+    "Ad",
+]
 
 
 def _initial_total_chips(state: GameState) -> int:
@@ -77,9 +112,15 @@ def played_hand(draw: st.DrawFn) -> list[GameState]:
         if state.street in ("showdown", "complete") and state.pending_reveal is None:
             break
         if state.pending_reveal is not None:
-            need = 5 - len(state.board) if state.pending_reveal == "runout" else {
-                "flop": 3, "turn": 1, "river": 1,
-            }[state.pending_reveal]
+            need = (
+                5 - len(state.board)
+                if state.pending_reveal == "runout"
+                else {
+                    "flop": 3,
+                    "turn": 1,
+                    "river": 1,
+                }[state.pending_reveal]
+            )
             state = apply_reveal(state, _safe_runout_cards(state, need))
             visited.append(state)
             continue
@@ -159,5 +200,5 @@ def test_deck_snapshot_matches_board(states: list[GameState]) -> None:
             continue
         board_len = len(state.board)
         assert state.deck_snapshot[4 : 4 + board_len] == state.board, (
-            f"deck_snapshot[4:{4+board_len}] != state.board at {state.street}"
+            f"deck_snapshot[4:{4 + board_len}] != state.board at {state.street}"
         )

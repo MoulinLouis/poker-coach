@@ -163,10 +163,7 @@ def _apply_street_transition(state: GameState) -> GameState:
         pending_reveal = next_street
     if not both_have_chips and next_street not in ("showdown", "complete"):
         next_street = "showdown"
-        if len(state.board) < 5:
-            pending_reveal = "runout"
-        else:
-            pending_reveal = None
+        pending_reveal = "runout" if len(state.board) < 5 else None
 
     return state.model_copy(
         update={
@@ -257,13 +254,15 @@ def apply_reveal(state: GameState, cards: list[str]) -> GameState:
     else:
         to_act = other_seat(state.button)
 
-    return state.model_copy(update={
-        "board": new_board,
-        "reveals": new_reveals,
-        "pending_reveal": None,
-        "deck_snapshot": new_deck,
-        "to_act": to_act,
-    })
+    return state.model_copy(
+        update={
+            "board": new_board,
+            "reveals": new_reveals,
+            "pending_reveal": None,
+            "deck_snapshot": new_deck,
+            "to_act": to_act,
+        }
+    )
 
 
 def replay(state: GameState) -> GameState:
@@ -278,7 +277,9 @@ def replay(state: GameState) -> GameState:
         s = apply_action(s, action)
         while s.pending_reveal is not None:
             if reveal_cursor >= len(state.reveals):
-                raise AssertionError("history has pending reveal but no matching entry in state.reveals")
+                raise AssertionError(
+                    "history has pending reveal but no matching entry in state.reveals"
+                )
             s = apply_reveal(s, state.reveals[reveal_cursor])
             reveal_cursor += 1
     if reveal_cursor != len(state.reveals):

@@ -13,7 +13,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
 from poker_coach.engine.models import Action, GameState, LegalAction, Seat
-from poker_coach.engine.rules import IllegalAction, apply_action, apply_reveal, legal_actions, start_hand
+from poker_coach.engine.rules import (
+    IllegalAction,
+    apply_action,
+    apply_reveal,
+    legal_actions,
+    start_hand,
+)
 
 router = APIRouter()
 
