@@ -16,6 +16,12 @@ from typing import Any
 import httpx
 
 
+@dataclass(frozen=True)
+class EngineSnapshot:
+    state: dict[str, Any]
+    legal_actions: list[dict[str, Any]]
+
+
 @dataclass
 class CoachClient:
     base_url: str
@@ -68,6 +74,50 @@ class CoachClient:
         )
         r.raise_for_status()
         return str(r.json()["hand_id"])
+
+    async def engine_start(
+        self,
+        *,
+        effective_stack: int,
+        bb: int,
+        button: str,
+        hero_hole: tuple[str, str] | None = None,
+    ) -> EngineSnapshot:
+        body: dict[str, Any] = {"effective_stack": effective_stack, "bb": bb, "button": button}
+        if hero_hole is not None:
+            body["hero_hole"] = list(hero_hole)
+        r = await self._required().post("/api/engine/start", json=body)
+        r.raise_for_status()
+        d = r.json()
+        return EngineSnapshot(state=d["state"], legal_actions=d["legal_actions"])
+
+    async def engine_apply(
+        self,
+        *,
+        state: dict[str, Any],
+        action: dict[str, Any],
+    ) -> EngineSnapshot:
+        r = await self._required().post(
+            "/api/engine/apply", json={"state": state, "action": action}
+        )
+        if r.status_code == 400:
+            raise ValueError(r.json().get("detail", "engine rejected"))
+        r.raise_for_status()
+        d = r.json()
+        return EngineSnapshot(state=d["state"], legal_actions=d["legal_actions"])
+
+    async def engine_reveal(
+        self,
+        *,
+        state: dict[str, Any],
+        cards: list[str],
+    ) -> EngineSnapshot:
+        r = await self._required().post("/api/engine/reveal", json={"state": state, "cards": cards})
+        if r.status_code == 400:
+            raise ValueError(r.json().get("detail", "engine rejected"))
+        r.raise_for_status()
+        d = r.json()
+        return EngineSnapshot(state=d["state"], legal_actions=d["legal_actions"])
 
     async def create_decision(
         self,
