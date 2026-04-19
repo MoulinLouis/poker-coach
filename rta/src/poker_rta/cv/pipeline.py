@@ -4,7 +4,7 @@ poker-relevant fact we can see. No state, no memory — that's the tracker's job
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -28,6 +28,7 @@ class FrameObservation:
     hero_is_button: bool
     hero_to_act: bool
     visible_buttons: frozenset[str]
+    confidence: dict[str, float] = field(default_factory=dict)
 
 
 def _read_cards(
