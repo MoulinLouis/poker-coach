@@ -14,6 +14,19 @@ export function AdvicePanel({
   presetLabel: string;
   onFollow?: () => void;
 }) {
+  const reasoningTranslation = useTranslation(stream.reasoning ?? "");
+  const adviceTranslation = useTranslation(stream.advice?.reasoning ?? "");
+
+  const displayedReasoning =
+    reasoningTranslation.lang === "fr" && reasoningTranslation.frText !== null
+      ? reasoningTranslation.frText
+      : stream.reasoning ?? "";
+
+  const displayedAdviceReasoning =
+    adviceTranslation.lang === "fr" && adviceTranslation.frText !== null
+      ? adviceTranslation.frText
+      : stream.advice?.reasoning ?? "";
+
   return (
     <aside
       data-testid="advice-panel"
@@ -48,9 +61,22 @@ export function AdvicePanel({
         </div>
       )}
 
-      {stream.reasoning && <ThinkingBlock stream={stream} />}
+      {stream.reasoning && (
+        <ThinkingBlock
+          stream={stream}
+          displayedReasoning={displayedReasoning}
+          translation={reasoningTranslation}
+        />
+      )}
 
-      {stream.advice && <AdviceCard advice={stream.advice} onFollow={onFollow} />}
+      {stream.advice && (
+        <AdviceCard
+          advice={stream.advice}
+          displayedReasoning={displayedAdviceReasoning}
+          translation={adviceTranslation}
+          onFollow={onFollow}
+        />
+      )}
 
       {stream.costUsd != null && (
         <div className="text-[10px] text-stone-500 tabular-nums">
@@ -70,7 +96,15 @@ export function AdvicePanel({
   );
 }
 
-function ThinkingBlock({ stream }: { stream: StreamState }) {
+function ThinkingBlock({
+  stream,
+  displayedReasoning,
+  translation,
+}: {
+  stream: StreamState;
+  displayedReasoning: string;
+  translation: TranslationState;
+}) {
   // Auto-collapse once the stream reaches a terminal state. Before that
   // (thinking/streaming), keep expanded so the user can watch it live.
   // User can override with the toggle; override sticks until the next
@@ -89,12 +123,6 @@ function ThinkingBlock({ stream }: { stream: StreamState }) {
   const collapsed = userOverride !== null ? userOverride : isTerminal;
   const live = stream.status === "streaming" || stream.status === "thinking";
 
-  const translation = useTranslation(stream.reasoning);
-  const displayedReasoning =
-    translation.lang === "fr" && translation.frText !== null
-      ? translation.frText
-      : stream.reasoning;
-
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between gap-2">
@@ -108,7 +136,7 @@ function ThinkingBlock({ stream }: { stream: StreamState }) {
           <span>Thinking</span>
           {live && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
           <span className="opacity-50 normal-case tracking-normal">
-            {stream.reasoning.length} chars
+            {stream.reasoning!.length} chars
           </span>
         </button>
         <LangToggle state={translation} disabled={!isTerminal} />
@@ -148,18 +176,22 @@ function LangToggle({
   );
 }
 
-function AdviceCard({ advice, onFollow }: { advice: Advice; onFollow?: () => void }) {
+function AdviceCard({
+  advice,
+  displayedReasoning,
+  translation,
+  onFollow,
+}: {
+  advice: Advice;
+  displayedReasoning: string;
+  translation: TranslationState;
+  onFollow?: () => void;
+}) {
   const confidenceStyle = {
     high: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
     medium: "bg-amber-500/20 text-amber-300 border-amber-500/40",
     low: "bg-stone-500/20 text-stone-300 border-stone-500/40",
   }[advice.confidence];
-
-  const translation = useTranslation(advice.reasoning);
-  const displayedReasoning =
-    translation.lang === "fr" && translation.frText !== null
-      ? translation.frText
-      : advice.reasoning;
 
   return (
     <div
