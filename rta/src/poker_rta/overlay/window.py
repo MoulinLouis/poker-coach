@@ -13,6 +13,8 @@ from typing import Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+from poker_rta.overlay.state_panel import StateMirrorPanel
+
 _MAX_REASONING_CHARS = 600
 
 
@@ -38,11 +40,13 @@ class AdviceOverlay(QWidget):
             " border-radius: 6px; font-family: monospace; font-size: 12px;"
         )
         self._reasoning_text: str = ""
+        self._state_panel = StateMirrorPanel()
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._label)
         layout.addWidget(self._reasoning)
-        self.resize(420, 140)
+        layout.addWidget(self._state_panel)
+        self.resize(420, 180)
 
     def show_advice(self, advice: dict[str, Any]) -> None:
         lines = [
@@ -69,3 +73,6 @@ class AdviceOverlay(QWidget):
 
     def current_reasoning(self) -> str:
         return self._reasoning_text
+
+    def update_state(self, state: dict[str, Any] | None) -> None:
+        self._state_panel.update_state(state)
