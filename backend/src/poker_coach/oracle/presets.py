@@ -56,3 +56,7 @@ MODEL_PRESETS: dict[str, ModelSpec] = {
 }
 
 DEFAULT_PRESET_ID = "gpt-5.3-codex-xhigh"
+
+PRESETS_BY_MODEL: dict[tuple[str, str], ModelSpec] = {
+    (spec.model_id, spec.provider): spec for spec in MODEL_PRESETS.values()
+}

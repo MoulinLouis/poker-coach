@@ -30,14 +30,13 @@ from poker_coach.api.deps import (
 )
 from poker_coach.db.tables import decisions
 from poker_coach.oracle.base import (
-    ModelSpec,
     OracleError,
     ReasoningComplete,
     ReasoningDelta,
     ToolCallComplete,
     UsageComplete,
 )
-from poker_coach.oracle.presets import MODEL_PRESETS
+from poker_coach.oracle.presets import PRESETS_BY_MODEL
 from poker_coach.prompts.renderer import RenderedPrompt
 
 logger = logging.getLogger(__name__)
@@ -59,11 +58,6 @@ class _StreamState:
     usage_fields: dict[str, Any] = field(default_factory=dict)
 
 
-def _find_preset_for(model_id: str, provider: str) -> ModelSpec | None:
-    for spec in MODEL_PRESETS.values():
-        if spec.model_id == model_id and spec.provider == provider:
-            return spec
-    return None
 
 
 def _finalize(engine: Engine, decision_id: str, state: _StreamState, started_at: datetime) -> None:
@@ -132,7 +126,7 @@ async def stream_decision(
             ).where(decisions.c.decision_id == decision_id)
         ).one()
 
-    spec = _find_preset_for(model_id=row.model_id, provider=row.provider)
+    spec = PRESETS_BY_MODEL.get((row.model_id, row.provider))
     if spec is None:
         raise HTTPException(
             status_code=500,
