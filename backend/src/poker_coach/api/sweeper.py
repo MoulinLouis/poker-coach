@@ -14,11 +14,14 @@ Two thresholds in a single pass:
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import Engine, and_, update
 
 from poker_coach.db.tables import decisions
+
+logger = logging.getLogger(__name__)
 
 
 def sweep_once(
@@ -80,5 +83,5 @@ async def run_sweeper(
             # Sweeper failing should not take down the server. Swallow and
             # retry on the next tick; production would surface this to
             # telemetry, but for local MVP a missed tick is harmless.
-            pass
+            logger.exception("sweeper tick failed")
         await asyncio.sleep(interval_seconds)
