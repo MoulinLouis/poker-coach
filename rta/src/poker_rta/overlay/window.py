@@ -8,7 +8,8 @@ research demo.
 
 from __future__ import annotations
 
-from typing import Any
+import time
+from typing import Any, Literal
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
@@ -17,6 +18,13 @@ from poker_rta.overlay.confidence import render_line
 from poker_rta.overlay.state_panel import StateMirrorPanel
 
 _MAX_REASONING_CHARS = 600
+
+_STATUS_COLORS: dict[str, str] = {
+    "ok": "#0f0",
+    "stale": "#555",
+    "degraded": "#fa0",
+    "error": "#f44",
+}
 
 
 class AdviceOverlay(QWidget):
@@ -56,6 +64,8 @@ class AdviceOverlay(QWidget):
         layout.addWidget(self._confidence)
         layout.addWidget(self._state_panel)
         self.resize(420, 180)
+        self._status: str = "ok"
+        self._last_advice_at: float | None = None
 
     def show_advice(self, advice: dict[str, Any]) -> None:
         lines = [
@@ -89,3 +99,26 @@ class AdviceOverlay(QWidget):
 
     def update_state(self, state: dict[str, Any] | None) -> None:
         self._state_panel.update_state(state)
+
+    def set_status(
+        self,
+        status: Literal["ok", "stale", "degraded", "error"],
+        message: str | None = None,
+    ) -> None:
+        self._status = status
+        color = _STATUS_COLORS[status]
+        self.setStyleSheet(f"border: 2px solid {color};")
+
+    def mark_advice_time(self) -> None:
+        self._last_advice_at = time.monotonic()
+
+    def tick_staleness(self, stale_after_s: float = 30.0) -> None:
+        if (
+            self._status == "ok"
+            and self._last_advice_at is not None
+            and time.monotonic() - self._last_advice_at > stale_after_s
+        ):
+            self.set_status("stale")
+
+    def current_status(self) -> str:
+        return self._status
