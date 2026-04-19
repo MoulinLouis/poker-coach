@@ -164,6 +164,26 @@ export function LiveCoach() {
     }
   }, [resetStream, session, setup.presetId, snapshot, startStream]);
 
+  const adviceToAction = useCallback((): Action | null => {
+    const advice = streamState.advice;
+    if (!advice || !snapshot) return null;
+    const legal = snapshot.legal_actions.find((l) => l.type === advice.action);
+    if (!legal) return null;
+    const bb = snapshot.state.bb;
+    let to_amount: number | null = null;
+    if (advice.action === "bet" || advice.action === "raise") {
+      if (advice.to_amount_bb == null || legal.min_to == null || legal.max_to == null) {
+        return null;
+      }
+      const desired = Math.round(advice.to_amount_bb * bb);
+      to_amount = Math.max(legal.min_to, Math.min(legal.max_to, desired));
+    } else if (advice.action === "allin") {
+      if (legal.max_to == null) return null;
+      to_amount = legal.max_to;
+    }
+    return { actor: "hero", type: advice.action, to_amount };
+  }, [snapshot, streamState.advice]);
+
   const heroAction = useCallback(
     async (action: Action) => {
       if (!snapshot) return;
@@ -193,6 +213,21 @@ export function LiveCoach() {
     if (snapshot.state.pending_reveal !== null) return false;
     return snapshot.state.street === "complete" || snapshot.state.street === "showdown";
   }, [snapshot]);
+
+  const followAdvice = useCallback(() => {
+    const action = adviceToAction();
+    if (!action) {
+      setError("cannot follow: advice action is not a current legal action");
+      return;
+    }
+    void heroAction(action);
+  }, [adviceToAction, heroAction]);
+
+  const canFollow =
+    snapshot?.state.to_act === "hero" &&
+    !handComplete &&
+    streamState.advice != null &&
+    adviceToAction() != null;
 
   useHotkeys([
     { key: "n", handler: () => void newHand() },
@@ -278,6 +313,7 @@ export function LiveCoach() {
             stream={streamState}
             diverged={currentDiverged}
             presetLabel={setup.presetId}
+            onFollow={canFollow ? followAdvice : undefined}
           />
         </div>
       )}

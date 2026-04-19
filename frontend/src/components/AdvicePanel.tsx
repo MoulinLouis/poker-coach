@@ -7,10 +7,12 @@ export function AdvicePanel({
   stream,
   diverged,
   presetLabel,
+  onFollow,
 }: {
   stream: StreamState;
   diverged: boolean;
   presetLabel: string;
+  onFollow?: () => void;
 }) {
   return (
     <aside
@@ -48,7 +50,7 @@ export function AdvicePanel({
 
       {stream.reasoning && <ThinkingBlock stream={stream} />}
 
-      {stream.advice && <AdviceCard advice={stream.advice} />}
+      {stream.advice && <AdviceCard advice={stream.advice} onFollow={onFollow} />}
 
       {stream.costUsd != null && (
         <div className="text-[10px] text-stone-500 tabular-nums">
@@ -146,7 +148,7 @@ function LangToggle({
   );
 }
 
-function AdviceCard({ advice }: { advice: Advice }) {
+function AdviceCard({ advice, onFollow }: { advice: Advice; onFollow?: () => void }) {
   const confidenceStyle = {
     high: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
     medium: "bg-amber-500/20 text-amber-300 border-amber-500/40",
@@ -183,6 +185,20 @@ function AdviceCard({ advice }: { advice: Advice }) {
         </div>
       </div>
       <p className="text-sm opacity-90 leading-relaxed">{displayedReasoning}</p>
+      {onFollow && (
+        <button
+          type="button"
+          data-testid="follow-advice"
+          onClick={onFollow}
+          className="mt-3 w-full h-10 rounded-lg font-semibold bg-amber-500 hover:bg-amber-400 text-stone-900 shadow transition active:scale-[0.98] flex items-center justify-center gap-2"
+        >
+          <span>Follow</span>
+          <span className="opacity-75 text-sm capitalize tabular-nums">
+            {advice.action}
+            {advice.to_amount_bb != null ? ` to ${advice.to_amount_bb}bb` : ""}
+          </span>
+        </button>
+      )}
     </div>
   );
 }
