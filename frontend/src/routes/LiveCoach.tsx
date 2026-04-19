@@ -11,6 +11,7 @@ import {
 } from "../api/client";
 import type { Action, EngineSnapshot, PresetSummary } from "../api/types";
 import { useAdviceStream } from "../api/useAdviceStream";
+import { parseHole } from "../utils/cards";
 import { ActionBar } from "../components/ActionBar";
 import { AdvicePanel } from "../components/AdvicePanel";
 import { BoardPicker } from "../components/BoardPicker";
@@ -22,11 +23,6 @@ import { useHotkeys } from "../hooks/useHotkeys";
 interface SessionState {
   sessionId: string;
   handId: string | null;
-}
-
-function parseHole(raw: string): [string, string] | null {
-  if (raw.length !== 4) return null;
-  return [raw.slice(0, 2), raw.slice(2, 4)];
 }
 
 function divergesFromAdvice(

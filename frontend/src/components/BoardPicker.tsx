@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import { SUITS, type Suit } from "../utils/cards";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKS = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"] as const;
-const SUITS = ["s","h","d","c"] as const;
+const SUIT_KEYS = ["s","h","d","c"] as const satisfies readonly Suit[];
 
 const HEADERS: Record<string, string> = {
   flop: "Révèle le flop",
@@ -50,7 +51,7 @@ export function BoardPicker({
 
   const dealRandom = () => {
     const pool: string[] = [];
-    for (const r of RANKS) for (const s of SUITS) pool.push(r + s);
+    for (const r of RANKS) for (const s of SUIT_KEYS) pool.push(r + s);
     const available = pool.filter((c) => !used.has(c));
     for (let i = available.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -111,7 +112,7 @@ export function BoardPicker({
           className="grid gap-1 bg-stone-950 rounded-lg p-2 ring-1 ring-white/5"
           style={{ gridTemplateColumns: `auto repeat(${RANKS.length}, minmax(0, 1fr))` }}
         >
-          {SUITS.map((suit) => (
+          {SUIT_KEYS.map((suit) => (
             <SuitRow key={suit} suit={suit} used={used} onPick={pickCard} />
           ))}
         </div>
@@ -143,12 +144,11 @@ function SuitRow({
   used,
   onPick,
 }: {
-  suit: (typeof SUITS)[number];
+  suit: Suit;
   used: Set<string>;
   onPick: (code: string) => void;
 }) {
-  const glyph = suit === "s" ? "♠" : suit === "h" ? "♥" : suit === "d" ? "♦" : "♣";
-  const color = suit === "h" || suit === "d" ? "text-red-400" : "text-stone-200";
+  const { glyph, color } = SUITS[suit];
   return (
     <>
       <div className={`flex items-center justify-center text-lg pr-1 ${color}`} aria-hidden>

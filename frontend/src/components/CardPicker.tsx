@@ -1,14 +1,9 @@
 import { useMemo, useState } from "react";
+import { SUITS, type Suit } from "../utils/cards";
 import { PlayingCard } from "./PlayingCard";
 
 const RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"] as const;
-const SUITS = ["s", "h", "d", "c"] as const;
-const SUIT_LABEL: Record<(typeof SUITS)[number], { glyph: string; color: string }> = {
-  s: { glyph: "♠", color: "text-stone-200" },
-  h: { glyph: "♥", color: "text-red-400" },
-  d: { glyph: "♦", color: "text-red-400" },
-  c: { glyph: "♣", color: "text-stone-200" },
-};
+const SUIT_KEYS = ["s", "h", "d", "c"] as const satisfies readonly Suit[];
 
 type SlotId = "h1" | "h2" | "v1" | "v2";
 
@@ -109,7 +104,7 @@ export function CardPicker({
   const dealRandom = () => {
     const taken = new Set(usedCards);
     const pool: string[] = [];
-    for (const r of RANKS) for (const s of SUITS) pool.push(r + s);
+    for (const r of RANKS) for (const s of SUIT_KEYS) pool.push(r + s);
     const available = pool.filter((c) => !taken.has(c));
     for (let i = available.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -187,7 +182,7 @@ export function CardPicker({
           className="grid gap-1 bg-stone-950 rounded-lg p-2 ring-1 ring-white/5 anim-fade-up"
           style={{ gridTemplateColumns: `auto repeat(${RANKS.length}, minmax(0, 1fr))` }}
         >
-          {SUITS.map((suit) => (
+          {SUIT_KEYS.map((suit) => (
             <SuitRow
               key={suit}
               suit={suit}
@@ -263,11 +258,11 @@ function SuitRow({
   usedCards,
   onPick,
 }: {
-  suit: (typeof SUITS)[number];
+  suit: Suit;
   usedCards: Set<string>;
   onPick: (code: string) => void;
 }) {
-  const meta = SUIT_LABEL[suit];
+  const meta = SUITS[suit];
   return (
     <>
       <div

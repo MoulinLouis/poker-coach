@@ -1,11 +1,4 @@
-type Suit = "s" | "h" | "d" | "c";
-
-const SUITS: Record<Suit, { glyph: string; name: string; textClass: string }> = {
-  s: { glyph: "♠", name: "spades", textClass: "fill-[color:var(--color-card-black)]" },
-  h: { glyph: "♥", name: "hearts", textClass: "fill-[color:var(--color-card-red)]" },
-  d: { glyph: "♦", name: "diamonds", textClass: "fill-[color:var(--color-card-red)]" },
-  c: { glyph: "♣", name: "clubs", textClass: "fill-[color:var(--color-card-black)]" },
-};
+import { SUITS, type Suit } from "../utils/cards";
 
 const RANK_NAMES: Record<string, string> = {
   A: "ace",
