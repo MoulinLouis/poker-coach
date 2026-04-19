@@ -7,6 +7,7 @@ can stage and review.
 
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from pydantic import BaseModel, ConfigDict
 from poker_coach.api.deps import get_prompts_root
 from poker_coach.prompts.renderer import PromptRenderer
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 _VERSION_RE = re.compile(r"^v\d+$")
@@ -72,7 +74,9 @@ def _iter_packs(root: Path) -> list[Pack]:
                 tmpl = renderer.load(pack_dir.name, version)
                 versions.append(PackVersion(version=version, description=tmpl.description))
             except Exception:
-                # Malformed frontmatter — still surface the version, no desc.
+                logger.warning(
+                    "malformed template %s/%s at %s", pack_dir.name, version, md, exc_info=True
+                )
                 versions.append(PackVersion(version=version, description=None))
         packs.append(Pack(name=pack_dir.name, versions=versions))
     return packs

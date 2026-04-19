@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -39,6 +40,8 @@ from poker_coach.oracle.base import (
 )
 from poker_coach.oracle.presets import MODEL_PRESETS
 from poker_coach.prompts.renderer import RenderedPrompt
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -203,7 +206,7 @@ async def stream_decision(
         except Exception as exc:
             state.final_status = "provider_error"
             state.error_message = f"{type(exc).__name__}: {exc}"
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(ConnectionError, asyncio.CancelledError):
                 yield _sse(
                     "oracle_error",
                     {"kind": "provider_error", "message": state.error_message},
