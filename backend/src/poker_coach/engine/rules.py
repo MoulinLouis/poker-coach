@@ -20,6 +20,16 @@ class IllegalAction(ValueError):
     """Raised when apply_action receives an action not in legal_actions(state)."""
 
 
+_STREET_ORDER: tuple[str, ...] = (
+    "preflop",
+    "flop",
+    "turn",
+    "river",
+    "showdown",
+    "complete",
+)
+
+
 def start_hand(
     *,
     effective_stack: int,
@@ -152,9 +162,8 @@ def _apply_street_transition(state: GameState) -> GameState:
     new_committed = {"hero": 0, "villain": 0}
     new_pot = state.pot + sum(state.committed.values())
 
-    street_order = ["preflop", "flop", "turn", "river", "showdown"]
-    idx = street_order.index(state.street)
-    next_street = street_order[idx + 1] if idx + 1 < len(street_order) else "complete"
+    idx = _STREET_ORDER.index(state.street)
+    next_street = _STREET_ORDER[idx + 1] if idx + 1 < len(_STREET_ORDER) else "complete"
 
     both_have_chips = state.stacks["hero"] > 0 and state.stacks["villain"] > 0
 
@@ -163,10 +172,7 @@ def _apply_street_transition(state: GameState) -> GameState:
         pending_reveal = next_street
     if not both_have_chips and next_street not in ("showdown", "complete"):
         next_street = "showdown"
-        if len(state.board) < 5:
-            pending_reveal = "runout"
-        else:
-            pending_reveal = None
+        pending_reveal = "runout" if len(state.board) < 5 else None
 
     return state.model_copy(
         update={
@@ -257,13 +263,15 @@ def apply_reveal(state: GameState, cards: list[str]) -> GameState:
     else:
         to_act = other_seat(state.button)
 
-    return state.model_copy(update={
-        "board": new_board,
-        "reveals": new_reveals,
-        "pending_reveal": None,
-        "deck_snapshot": new_deck,
-        "to_act": to_act,
-    })
+    return state.model_copy(
+        update={
+            "board": new_board,
+            "reveals": new_reveals,
+            "pending_reveal": None,
+            "deck_snapshot": new_deck,
+            "to_act": to_act,
+        }
+    )
 
 
 def replay(state: GameState) -> GameState:
@@ -278,7 +286,9 @@ def replay(state: GameState) -> GameState:
         s = apply_action(s, action)
         while s.pending_reveal is not None:
             if reveal_cursor >= len(state.reveals):
-                raise AssertionError("history has pending reveal but no matching entry in state.reveals")
+                raise AssertionError(
+                    "history has pending reveal but no matching entry in state.reveals"
+                )
             s = apply_reveal(s, state.reveals[reveal_cursor])
             reveal_cursor += 1
     if reveal_cursor != len(state.reveals):
