@@ -3,6 +3,7 @@ from hypothesis import strategies as st
 
 from poker_coach.engine.models import Action, GameState, Seat
 from poker_coach.engine.rules import (
+    _STREET_ORDER,
     IllegalAction,
     apply_action,
     apply_reveal,
@@ -11,7 +12,7 @@ from poker_coach.engine.rules import (
     start_hand,
 )
 
-STREET_ORDER = ["preflop", "flop", "turn", "river", "showdown", "complete"]
+STREET_ORDER = [*_STREET_ORDER, "complete"]
 _RUNOUT_POOL = [
     "2c",
     "3d",

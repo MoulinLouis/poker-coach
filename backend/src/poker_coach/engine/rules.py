@@ -152,9 +152,8 @@ def _apply_street_transition(state: GameState) -> GameState:
     new_committed = {"hero": 0, "villain": 0}
     new_pot = state.pot + sum(state.committed.values())
 
-    street_order = ["preflop", "flop", "turn", "river", "showdown"]
-    idx = street_order.index(state.street)
-    next_street = street_order[idx + 1] if idx + 1 < len(street_order) else "complete"
+    idx = _STREET_ORDER.index(state.street)
+    next_street = _STREET_ORDER[idx + 1] if idx + 1 < len(_STREET_ORDER) else "complete"
 
     both_have_chips = state.stacks["hero"] > 0 and state.stacks["villain"] > 0
 
@@ -179,6 +178,8 @@ def _apply_street_transition(state: GameState) -> GameState:
         }
     )
 
+
+_STREET_ORDER: tuple[str, ...] = ("preflop", "flop", "turn", "river", "showdown")
 
 _PENDING_EXPECTED_LEN = {
     "flop": 3,
