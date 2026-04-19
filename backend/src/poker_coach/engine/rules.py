@@ -376,7 +376,8 @@ def apply_action(state: GameState, action: Action) -> GameState:
                 raise IllegalAction(f"{action.type} requires to_amount")
             to_amount = action.to_amount
             la = legal_by_type[action.type]
-            assert la.min_to is not None and la.max_to is not None
+            if la.min_to is None or la.max_to is None:
+                raise IllegalAction("legal_actions invariant violated: min_to/max_to missing")
             if not (la.min_to <= to_amount <= la.max_to):
                 raise IllegalAction(
                     f"{action.type} to {to_amount} outside [{la.min_to}, {la.max_to}]"
