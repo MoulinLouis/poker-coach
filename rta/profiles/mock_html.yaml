@@ -1,0 +1,34 @@
+name: mock_html
+version: "1.0"
+description: Bundled HTML mock for reproducible RTA demo.
+window:
+  title_contains: "Mock HU Poker Table"
+capture_fps: 5.0
+your_turn_highlight_threshold: 0.85
+card_templates_dir: templates/mock_html/cards
+button_templates:
+  fold: templates/mock_html/buttons/fold.png
+  check: templates/mock_html/buttons/check.png
+  call: templates/mock_html/buttons/call.png
+  bet: templates/mock_html/buttons/bet.png
+  raise: templates/mock_html/buttons/raise.png
+ocr:
+  grayscale: true
+  threshold: 140
+  invert: false
+  scale: 2.0
+rois:
+  hero_card_1: { x: 572, y: 560, width: 60, height: 80 }
+  hero_card_2: { x: 640, y: 560, width: 60, height: 80 }
+  board_1:     { x: 464, y: 300, width: 60, height: 80 }
+  board_2:     { x: 532, y: 300, width: 60, height: 80 }
+  board_3:     { x: 600, y: 300, width: 60, height: 80 }
+  board_4:     { x: 668, y: 300, width: 60, height: 80 }
+  board_5:     { x: 736, y: 300, width: 60, height: 80 }
+  pot:         { x: 560, y: 240, width: 160, height: 30 }
+  hero_stack:  { x: 540, y: 690, width: 200, height: 24 }
+  villain_stack: { x: 540, y: 40,  width: 200, height: 24 }
+  hero_bet:    { x: 580, y: 646, width: 120, height: 26 }
+  villain_bet: { x: 580, y: 170, width: 120, height: 26 }
+  button_marker: { x: 844, y: 80, width: 30, height: 30 }
+  hero_action_highlight: { x: 540, y: 700, width: 200, height: 6 }
