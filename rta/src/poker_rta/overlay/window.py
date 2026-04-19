@@ -13,6 +13,8 @@ from typing import Any
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+_MAX_REASONING_CHARS = 600
+
 
 class AdviceOverlay(QWidget):
     def __init__(self) -> None:
@@ -28,9 +30,18 @@ class AdviceOverlay(QWidget):
             "color: #fff; background: rgba(0,0,0,180); padding: 12px;"
             " border-radius: 8px; font-family: monospace; font-size: 18px;"
         )
+        self._reasoning = QLabel("")
+        self._reasoning.setWordWrap(True)
+        self._reasoning.setMaximumHeight(180)
+        self._reasoning.setStyleSheet(
+            "color: #adf; background: rgba(0,0,0,140); padding: 8px;"
+            " border-radius: 6px; font-family: monospace; font-size: 12px;"
+        )
+        self._reasoning_text: str = ""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._label)
+        layout.addWidget(self._reasoning)
         self.resize(420, 140)
 
     def show_advice(self, advice: dict[str, Any]) -> None:
@@ -44,3 +55,17 @@ class AdviceOverlay(QWidget):
 
     def current_text(self) -> str:
         return self._label.text()
+
+    def clear_reasoning(self) -> None:
+        self._reasoning_text = ""
+        self._reasoning.setText("")
+
+    def append_reasoning_delta(self, delta: str) -> None:
+        combined = self._reasoning_text + delta
+        if len(combined) > _MAX_REASONING_CHARS:
+            combined = "\u2026" + combined[-_MAX_REASONING_CHARS:]
+        self._reasoning_text = combined
+        self._reasoning.setText(self._reasoning_text)
+
+    def current_reasoning(self) -> str:
+        return self._reasoning_text
