@@ -17,6 +17,7 @@ import type {
   VillainProfile,
 } from "../api/types";
 import { useAdviceStream, type StreamState } from "../api/useAdviceStream";
+import { parseHole } from "../utils/cards";
 
 interface ColumnState {
   presetId: string;
@@ -92,11 +93,8 @@ export function SpotAnalysis() {
   const start = useCallback(async () => {
     setError(null);
     columns.forEach((c) => c.reset());
-    const hero = heroHole.length === 4 ? ([heroHole.slice(0, 2), heroHole.slice(2, 4)] as [string, string]) : null;
-    const villain =
-      villainHole.length === 4
-        ? ([villainHole.slice(0, 2), villainHole.slice(2, 4)] as [string, string])
-        : null;
+    const hero = parseHole(heroHole);
+    const villain = parseHole(villainHole);
     if (!hero || !villain) {
       setError("hole cards must be 4 chars, e.g. AsKd");
       return;

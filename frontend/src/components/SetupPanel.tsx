@@ -1,4 +1,5 @@
 import type { PresetSummary, Seat, VillainProfile } from "../api/types";
+import { parseHole } from "../utils/cards";
 import { CardPicker } from "./CardPicker";
 
 export interface SetupValues {
@@ -8,11 +9,6 @@ export interface SetupValues {
   button: Seat;
   presetId: string;
   villainProfile: VillainProfile;
-}
-
-function parseHole(code: string): [string, string] | null {
-  if (code.length !== 4) return null;
-  return [code.slice(0, 2), code.slice(2, 4)];
 }
 
 export function SetupPanel({
