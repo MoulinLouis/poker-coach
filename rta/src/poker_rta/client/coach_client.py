@@ -9,11 +9,27 @@ All calls are async (httpx). The lifecycle mirrors backend's lazy pattern:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Any
+from typing import Any, NamedTuple
 
 import httpx
+
+
+class SSEEvent(NamedTuple):
+    type: str
+    payload: dict[str, Any]
+
+
+@dataclass
+class StreamedAdvice:
+    parsed_advice: dict[str, Any] | None = None
+    reasoning_text: str | None = None
+    reasoning_stream: list[str] = field(default_factory=list)
+    usage: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -143,3 +159,35 @@ class CoachClient:
         )
         r.raise_for_status()
         return str(r.json()["decision_id"])
+
+    async def stream_decision_events(self, decision_id: str) -> AsyncIterator[SSEEvent]:
+        client = self._required()
+        async with client.stream("GET", f"/api/decisions/{decision_id}/stream") as resp:
+            resp.raise_for_status()
+            event_name: str | None = None
+            async for raw_line in resp.aiter_lines():
+                if not raw_line:
+                    event_name = None
+                    continue
+                if raw_line.startswith("event:"):
+                    event_name = raw_line[6:].strip()
+                elif raw_line.startswith("data:") and event_name is not None:
+                    data_str = raw_line[5:].strip()
+                    payload: dict[str, Any] = json.loads(data_str) if data_str else {}
+                    yield SSEEvent(type=event_name, payload=payload)
+                    event_name = None
+
+    async def stream_decision(self, decision_id: str) -> StreamedAdvice:
+        result = StreamedAdvice()
+        async for event in self.stream_decision_events(decision_id):
+            if event.type == "reasoning_delta":
+                result.reasoning_stream.append(event.payload.get("text", ""))
+            elif event.type == "reasoning_complete":
+                result.reasoning_text = event.payload.get("text")
+            elif event.type == "tool_call_complete":
+                result.parsed_advice = event.payload.get("parsed")
+            elif event.type == "usage_complete":
+                result.usage = dict(event.payload)
+            elif event.type == "error":
+                result.error = event.payload.get("message")
+        return result
