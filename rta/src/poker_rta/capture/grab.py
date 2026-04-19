@@ -48,4 +48,10 @@ def grab_window(selector: WindowSelector) -> np.ndarray:
     """
     if selector.bbox is not None:
         return grab_bbox(selector.bbox)
-    raise NotImplementedError("title-based window lookup ships in Task 3.2")
+    from poker_rta.capture.window import resolve_title_to_bbox
+
+    assert selector.title_contains is not None  # mutually exclusive invariant
+    bbox = resolve_title_to_bbox(selector.title_contains)
+    if bbox is None:
+        raise LookupError(f"window with title containing {selector.title_contains!r} not found")
+    return grab_bbox(bbox)
