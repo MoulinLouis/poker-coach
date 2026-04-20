@@ -1,0 +1,28 @@
+## Spot
+- Street: flop
+- Hero's hole cards: As Kd
+- Board: Ah 7c 2d
+- Button (small blind): hero
+- Pot (settled prior streets): 6.0 bb
+- Effective stack (starting): 100.0 bb
+- Hero stack behind: 97.0 bb
+- Villain stack behind: 97.0 bb
+- Hero committed this street: 0.0 bb
+- Villain committed this street: 0.0 bb
+
+## Villain profile
+unknown
+
+## Action history (this hand)
+- hero: raise to 3.0 bb
+- villain: call
+- villain: check
+
+
+## Legal actions for hero right now
+- `check`
+- `bet` (to amount in [1.0, 97.0] bb)
+- `allin` (to amount in [97.0, 97.0] bb)
+
+
+Call `submit_advice` now.

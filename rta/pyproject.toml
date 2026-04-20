@@ -1,0 +1,68 @@
+[project]
+name = "poker_rta"
+version = "0.0.0"
+description = "Research-grade poker RTA demo — visual recognition coach harness"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pydantic>=2.9",
+    "pyyaml>=6.0",
+    "httpx>=0.27",
+    "httpx-sse>=0.4",
+    "mss>=9.0",
+    "opencv-python-headless>=4.10",
+    "numpy>=2.0",
+    "Pillow>=10.4",
+    "easyocr>=1.7",
+    "PyQt6>=6.7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "hypothesis>=6.115",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "types-PyYAML>=6.0",
+    "respx>=0.21",
+    "poker_coach",
+    "httpx>=0.27",
+]
+
+[tool.uv.sources]
+poker_coach = { path = "../backend" }
+
+[project.scripts]
+poker_rta = "poker_rta.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/poker_rta"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["mss", "mss.*", "cv2", "easyocr", "PyQt6", "PyQt6.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "slow: tests that load heavy ML models (easyocr, etc.)",
+]
