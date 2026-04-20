@@ -48,6 +48,7 @@ class RunnerContext:
     coach_hand_id: str | None = None
     last_fired_state_id: str | None = None
     last_hand_id: str | None = None
+    last_advice_snapshot: dict[str, Any] | None = None
 
 
 def _state_id(state: dict[str, Any]) -> str:
@@ -98,6 +99,11 @@ async def run_once(
         bb=deps.bb,
         starting_stack=deps.starting_stack,
     )
+    # Before the new stream clobbers the overlay, snapshot the previous
+    # completed advice so the runner can surface it for debug/replay.
+    if deps.overlay.has_cached_advice():
+        ctx.last_advice_snapshot = deps.overlay.cached_advice()
+    deps.overlay.begin_new_decision()
     deps.overlay.clear_reasoning()
     decision_id = await deps.coach.create_decision(
         session_id=ctx.coach_session_id,

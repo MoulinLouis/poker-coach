@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from typing import Any, Literal
 
-from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtCore import QPoint, Qt, QTimer
 from PyQt6.QtGui import QKeySequence, QMouseEvent, QShortcut
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
@@ -71,8 +71,12 @@ class AdviceOverlay(QWidget):
         self._status: str = "ok"
         self._last_advice_at: float | None = None
         self._drag_pos: QPoint | None = None
+        # Replay cache — populated on show_advice, cleared on begin_new_decision
+        self._cached_advice: dict[str, Any] | None = None
+        self._cached_reasoning: str = ""
         QShortcut(QKeySequence("Ctrl+Space"), self, self._toggle_visible)
         QShortcut(QKeySequence("Ctrl+H"), self, self._history_panel.toggle)
+        QShortcut(QKeySequence("Ctrl+R"), self, self.replay_last)
 
     def show_advice(self, advice: dict[str, Any]) -> None:
         lines = [
@@ -82,6 +86,9 @@ class AdviceOverlay(QWidget):
         if advice.get("rationale"):
             lines.append(str(advice["rationale"]))
         self._label.setText("\n".join(lines))
+        # Snapshot the finished advice so Ctrl+R can restore it later.
+        self._cached_advice = dict(advice)
+        self._cached_reasoning = self._reasoning_text
 
     def current_text(self) -> str:
         return self._label.text()
@@ -89,6 +96,43 @@ class AdviceOverlay(QWidget):
     def clear_reasoning(self) -> None:
         self._reasoning_text = ""
         self._reasoning.setText("")
+
+    def begin_new_decision(self) -> None:
+        """New decision about to stream — drop the replay cache so a
+        mid-stream Ctrl+R doesn't resurrect the previous hand's advice.
+        The `_label` and reasoning panel text stay as-is until the new
+        stream fills them; only the cache is purged."""
+        self._cached_advice = None
+        self._cached_reasoning = ""
+
+    def has_cached_advice(self) -> bool:
+        return self._cached_advice is not None
+
+    def cached_advice(self) -> dict[str, Any] | None:
+        if self._cached_advice is None:
+            return None
+        return dict(self._cached_advice)
+
+    def replay_last(self) -> None:
+        """Restore the most recently completed advice to the panels.
+        No-op when no advice has been shown yet in this decision
+        window (cache was cleared by `begin_new_decision`)."""
+        if self._cached_advice is None:
+            return
+        # Avoid show_advice's cache-write path by temporarily stashing
+        # reasoning_text — show_advice re-reads it into the cache.
+        restored_reasoning = self._cached_reasoning
+        self.show_advice(self._cached_advice)
+        self._reasoning_text = restored_reasoning
+        self._reasoning.setText(restored_reasoning)
+        self._flash_replay_indicator()
+
+    def _flash_replay_indicator(self) -> None:
+        """Flash a grey border for 300ms to signal a replay happened,
+        then restore the status-colored border."""
+        previous_status = self._status
+        self.setStyleSheet("border: 2px solid #888;")
+        QTimer.singleShot(300, lambda: self.set_status(previous_status))  # type: ignore[arg-type]
 
     def append_reasoning_delta(self, delta: str) -> None:
         combined = self._reasoning_text + delta
