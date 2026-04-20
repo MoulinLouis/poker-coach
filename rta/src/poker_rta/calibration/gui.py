@@ -22,6 +22,7 @@ from PyQt6.QtGui import (
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
+    QDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -37,9 +38,15 @@ from PyQt6.QtWidgets import (
 
 from poker_rta.calibration.painter import CalibrationDoc, emit_profile
 from poker_rta.calibration.preview import ROIPreview, extract_preview
+from poker_rta.calibration.scripted_frames import (
+    format_validation_report_html,
+    load_scripted_corpus,
+    run_scripted_validation,
+)
+from poker_rta.cv.cards import CardClassifier
 from poker_rta.overlay.confidence import render_line
 from poker_rta.profile.io import save_profile
-from poker_rta.profile.model import REQUIRED_ROIS
+from poker_rta.profile.model import REQUIRED_ROIS, PlatformProfile
 
 
 class CaptureCanvas(QLabel):
@@ -199,12 +206,17 @@ class CalibrationWindow(QMainWindow):
         preview_btn = QPushButton("Refresh preview")
         preview_btn.clicked.connect(self._refresh_preview)
 
+        self._test_btn = QPushButton("Test calibration")
+        self._test_btn.clicked.connect(self._run_test_calibration)
+        self._test_btn.setEnabled(False)
+
         controls = QHBoxLayout()
         controls.addWidget(QLabel("Label:"))
         controls.addWidget(self._label_input, 2)
         controls.addWidget(self._preset, 1)
         controls.addWidget(save_btn)
         controls.addWidget(preview_btn)
+        controls.addWidget(self._test_btn)
 
         # Preview panel in a scroll area on the right side
         self._preview_panel = PreviewPanel()
@@ -230,6 +242,36 @@ class CalibrationWindow(QMainWindow):
     def _refresh_preview(self) -> None:
         """Repopulate the preview panel from the current ROI definitions."""
         self._preview_panel.refresh(self._pixmap, dict(self._doc.rois))
+        # Unlock the Test-calibration button once every required ROI is drawn.
+        self._test_btn.setEnabled(self._doc.rois.keys() >= REQUIRED_ROIS)
+
+    def _run_test_calibration(self) -> None:
+        """Run the scripted-hand validation against the current profile
+        draft and show results in a modal. Today's corpus lives under
+        `tests/fixtures/recordings/mock_script/`."""
+        corpus_dir = Path(__file__).resolve().parents[3] / "tests/fixtures/recordings/mock_script"
+        try:
+            frames = load_scripted_corpus(corpus_dir)
+            profile = PlatformProfile.model_validate(emit_profile(self._doc))
+            templates_dir = Path(profile.card_templates_dir)
+            if not templates_dir.exists():
+                self._status_bar().showMessage(f"card templates missing at {templates_dir}", 5000)
+                return
+            classifier = CardClassifier(templates_dir=templates_dir)
+            rows = run_scripted_validation(frames, profile, classifier)
+        except Exception as exc:  # pragma: no cover - surfaced to user
+            self._status_bar().showMessage(f"calibration test failed: {exc}", 5000)
+            return
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Calibration test results")
+        layout = QVBoxLayout(dialog)
+        report = QLabel(format_validation_report_html(rows))
+        report.setTextFormat(Qt.TextFormat.RichText)
+        layout.addWidget(report)
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)
+        layout.addWidget(close_btn)
+        dialog.exec()
 
     def _status_bar(self) -> QStatusBar:
         bar = self.statusBar()

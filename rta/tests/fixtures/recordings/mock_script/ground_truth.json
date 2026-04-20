@@ -1,9 +1,42 @@
 [
   {
+    "description": "preflop — hero SB/BTN to act",
     "hero_cards": ["As", "Kd"],
     "board": [],
     "pot_chips": 300,
     "hero_stack_chips": 9850,
     "villain_stack_chips": 9700
+  },
+  {
+    "description": "flop — villain OOP checks first",
+    "hero_cards": ["As", "Kd"],
+    "board": ["Ah", "7c", "2d"],
+    "pot_chips": 600,
+    "hero_stack_chips": 9700,
+    "villain_stack_chips": 9700
+  },
+  {
+    "description": "flop — villain bets 300 into 600",
+    "hero_cards": ["As", "Kd"],
+    "board": ["Ah", "7c", "2d"],
+    "pot_chips": 900,
+    "hero_stack_chips": 9700,
+    "villain_stack_chips": 9400
+  },
+  {
+    "description": "turn — villain checks",
+    "hero_cards": ["As", "Kd"],
+    "board": ["Ah", "7c", "2d", "5s"],
+    "pot_chips": 1200,
+    "hero_stack_chips": 9400,
+    "villain_stack_chips": 9400
+  },
+  {
+    "description": "river — villain overbets 1800 into 1200",
+    "hero_cards": ["As", "Kd"],
+    "board": ["Ah", "7c", "2d", "5s", "9h"],
+    "pot_chips": 3000,
+    "hero_stack_chips": 9400,
+    "villain_stack_chips": 7600
   }
 ]
