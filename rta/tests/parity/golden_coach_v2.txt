@@ -9,6 +9,7 @@
 - Villain stack behind: 97.0 bb
 - Hero committed this street: 0.0 bb
 - Villain committed this street: 0.0 bb
+- Stack depth: standard (SPR 16.7)
 
 ## Villain profile
 unknown

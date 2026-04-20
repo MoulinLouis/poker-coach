@@ -44,17 +44,30 @@ def state_to_coach_variables(
         }
         for la in legal_actions(state)
     ]
+    pot_bb = _bb(state.pot, bb)
+    effective_bb = _bb(state.effective_stack, bb)
+    # SPR uses live pot; guard against the preflop pre-action pot being ~0
+    # so the ratio stays a meaningful scalar rather than exploding.
+    spr_bb = round(effective_bb / max(pot_bb, 0.5), 1)
+    if effective_bb < 50:
+        stack_depth_bucket = "shallow"
+    elif effective_bb > 150:
+        stack_depth_bucket = "deep"
+    else:
+        stack_depth_bucket = "standard"
     result: dict[str, Any] = {
         "street": state.street,
         "hero_hole": list(state.hero_hole),
         "board": list(state.board),
         "button": state.button,
-        "pot_bb": _bb(state.pot, bb),
-        "effective_bb": _bb(state.effective_stack, bb),
+        "pot_bb": pot_bb,
+        "effective_bb": effective_bb,
         "hero_stack_bb": _bb(state.stacks["hero"], bb),
         "villain_stack_bb": _bb(state.stacks["villain"], bb),
         "hero_committed_bb": _bb(state.committed["hero"], bb),
         "villain_committed_bb": _bb(state.committed["villain"], bb),
+        "stack_depth_bucket": stack_depth_bucket,
+        "spr_bb": spr_bb,
         "history": history,
         "legal_actions": legal,
     }
