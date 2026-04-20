@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi.testclient import TestClient
+from poker_coach.analytics import VillainStats
 from poker_coach.engine.models import GameState
 from poker_coach.prompts.context import state_to_coach_variables
 from poker_coach.prompts.renderer import PromptRenderer
@@ -25,7 +26,11 @@ def _render(state: dict[str, Any]) -> str:
     result = renderer.render(
         pack="coach",
         version="v2",
-        variables=state_to_coach_variables(gs, villain_profile="unknown"),
+        variables=state_to_coach_variables(
+            gs,
+            villain_profile="unknown",
+            villain_stats=VillainStats.zero().as_prompt_payload(),
+        ),
     )
     return result.rendered_prompt
 

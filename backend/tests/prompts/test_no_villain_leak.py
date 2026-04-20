@@ -16,10 +16,13 @@ oracle sees. These tests enforce that at three layers:
 
 import pytest
 
+from poker_coach.analytics import VillainStats
 from poker_coach.engine.rules import start_hand
 from poker_coach.prompts.context import state_to_coach_variables
 from poker_coach.prompts.renderer import PromptRenderer
 from poker_coach.settings import PROMPTS_ROOT
+
+_STATS_ZERO = VillainStats.zero().as_prompt_payload()
 
 # Fields that MUST NOT reach the prompt.
 FORBIDDEN_KEYS = {"villain_hole", "deck_snapshot", "rng_seed"}
@@ -43,6 +46,7 @@ def test_coach_variables_omit_forbidden_keys(version: str) -> None:
     variables = state_to_coach_variables(
         state,
         villain_profile="unknown" if version == "v2" else None,
+        villain_stats=_STATS_ZERO if version == "v2" else None,
     )
     leaked = FORBIDDEN_KEYS & set(variables.keys())
     assert leaked == set(), f"leaked keys for {version}: {leaked}"
@@ -67,6 +71,7 @@ def test_rendered_coach_prompt_does_not_contain_villain_cards(version: str) -> N
     variables = state_to_coach_variables(
         state,
         villain_profile="unknown" if version == "v2" else None,
+        villain_stats=_STATS_ZERO if version == "v2" else None,
     )
     rendered = renderer.render("coach", version, variables)
 
@@ -90,6 +95,7 @@ def test_rendered_prompt_also_excludes_deck_snapshot(version: str) -> None:
     variables = state_to_coach_variables(
         state,
         villain_profile="unknown" if version == "v2" else None,
+        villain_stats=_STATS_ZERO if version == "v2" else None,
     )
     rendered = renderer.render("coach", version, variables)
 

@@ -118,6 +118,7 @@ def test_coach_v1_renders_against_sample_state() -> None:
 
 def test_coach_v2_renders_against_sample_state() -> None:
     """Smoke test: coach v2 renders cleanly with villain_profile included."""
+    from poker_coach.analytics import VillainStats
     from poker_coach.engine.rules import start_hand
     from poker_coach.prompts.context import state_to_coach_variables
 
@@ -132,7 +133,11 @@ def test_coach_v2_renders_against_sample_state() -> None:
     rendered = renderer.render(
         "coach",
         "v2",
-        state_to_coach_variables(state, villain_profile="reg"),
+        state_to_coach_variables(
+            state,
+            villain_profile="reg",
+            villain_stats=VillainStats.zero().as_prompt_payload(),
+        ),
     )
     assert "As Kd" in rendered.rendered_prompt
     assert "reg" in rendered.rendered_prompt

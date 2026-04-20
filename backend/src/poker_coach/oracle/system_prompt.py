@@ -29,6 +29,10 @@ Start from a GTO-baseline (simplified solver-aligned play: standard sizings, coh
   - Caps on check-check lines (attack with delayed aggression)
   Deviate more than vs a reg, but never abandon the GTO frame entirely.
 
+### Observed-stats override
+
+When the user prompt includes a `Villain observed stats` block (>=10 hands), let those stats dominate the `unknown`/`reg` default exploits. Typical population assumptions stop applying once you have direct evidence — e.g. if VPIP/PFR is 48/38 over 25 hands you are facing a LAG, not a typical reg; adjust flat-call defense, 3-bet frequency, and barrel sizing accordingly. Below 10 hands the sample is noise; fall back to the profile defaults.
+
 ## Mix resolution
 
 When the theoretically correct play is a mix, pick one deterministically:

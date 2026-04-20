@@ -13,6 +13,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Engine, desc, insert, select
 
+from poker_coach.analytics import compute_villain_stats
 from poker_coach.api.deps import get_engine, get_prompts_root
 from poker_coach.api.schemas import (
     CreateDecisionRequest,
@@ -46,9 +47,14 @@ def create_decision(
 
     renderer = PromptRenderer(prompts_root)
     try:
+        villain_stats_payload: dict[str, object] | None = None
+        if body.prompt_version == "v2":
+            stats = compute_villain_stats(engine, body.session_id, limit=50)
+            villain_stats_payload = stats.as_prompt_payload()
         variables = state_to_coach_variables(
             body.game_state,
             villain_profile=body.villain_profile if body.prompt_version == "v2" else None,
+            villain_stats=villain_stats_payload,
         )
         rendered = renderer.render(body.prompt_name, body.prompt_version, variables)
     except FileNotFoundError as exc:

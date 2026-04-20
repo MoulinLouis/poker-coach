@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 
+from poker_coach.analytics import VillainStats
 from poker_coach.engine.rules import start_hand
 from poker_coach.prompts.context import state_to_coach_variables
 from poker_coach.prompts.renderer import PromptRenderer
@@ -87,7 +88,11 @@ def test_coach_v2_renders_bucket_token(effective_stack: int, token: str) -> None
         villain_hole=("Qc", "Qh"),
     )
     renderer = PromptRenderer(PROMPTS_ROOT)
-    variables = state_to_coach_variables(state, villain_profile="unknown")
+    variables = state_to_coach_variables(
+        state,
+        villain_profile="unknown",
+        villain_stats=VillainStats.zero().as_prompt_payload(),
+    )
     rendered = renderer.render("coach", "v2", variables)
     assert f"Stack depth: {token}" in rendered.rendered_prompt
     assert "SPR" in rendered.rendered_prompt
