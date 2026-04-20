@@ -43,10 +43,16 @@ from poker_rta.calibration.scripted_frames import (
     load_scripted_corpus,
     run_scripted_validation,
 )
+from poker_rta.calibration.template_capture import (
+    capture_template,
+    is_valid_card_code,
+)
 from poker_rta.cv.cards import CardClassifier
 from poker_rta.overlay.confidence import render_line
 from poker_rta.profile.io import save_profile
 from poker_rta.profile.model import REQUIRED_ROIS, PlatformProfile
+
+_CARD_ROI_PREFIXES = ("hero_card_", "board_")
 
 
 class CaptureCanvas(QLabel):
@@ -126,15 +132,25 @@ class PreviewPanel(QWidget):
         self._layout = QVBoxLayout(self)
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._rows: list[QWidget] = []
+        # Populated by `refresh` so the Save buttons know where to write.
+        self._templates_dir: Path | None = None
+        # Invoked when a template is captured so the outer window can
+        # reload its classifier + re-run previews.
+        self._on_capture: object = None
 
     def refresh(
         self,
         pixmap: QPixmap,
         rois: dict[str, tuple[int, int, int, int]],
         interpret: object = None,
+        *,
+        templates_dir: Path | None = None,
+        on_capture: object = None,
     ) -> None:
         """Rebuild the panel from the current ROI definitions."""
         interp = interpret if callable(interpret) else _null_interpret
+        self._templates_dir = templates_dir
+        self._on_capture = on_capture
 
         # Remove old rows
         for row in self._rows:
@@ -175,8 +191,55 @@ class PreviewPanel(QWidget):
             info_label.setTextFormat(Qt.TextFormat.RichText)
             row_layout.addWidget(info_label, 1)
 
+            if name.startswith(_CARD_ROI_PREFIXES) and self._templates_dir is not None:
+                self._attach_capture_controls(row_layout, name, image, roi_tuple)
+
             self._layout.addWidget(row)
             self._rows.append(row)
+
+    def _attach_capture_controls(
+        self,
+        row_layout: QHBoxLayout,
+        name: str,
+        image: np.ndarray,
+        roi_tuple: tuple[int, int, int, int],
+    ) -> None:
+        """Inline `e.g. As` input + Save button that writes a template
+        via `capture_template` and fires `_on_capture` so the outer
+        window can reload its classifier."""
+        code_input = QLineEdit()
+        code_input.setPlaceholderText("e.g. As")
+        code_input.setFixedWidth(52)
+        row_layout.addWidget(code_input)
+
+        save_btn = QPushButton("Save")
+        row_layout.addWidget(save_btn)
+
+        def on_click() -> None:
+            code = code_input.text().strip()
+            templates_dir = self._templates_dir
+            if templates_dir is None:
+                return
+            if not is_valid_card_code(code):
+                code_input.setStyleSheet("background: #f88;")
+                return
+            x, y, w, h = roi_tuple
+            crop = image[y : y + h, x : x + w]
+            try:
+                capture_template(code, crop, templates_dir)
+            except FileExistsError:
+                # Require explicit overwrite; user reruns with a different
+                # code or cleans up by hand. Flash red and bail.
+                code_input.setStyleSheet("background: #fa8;")
+                return
+            except ValueError:
+                code_input.setStyleSheet("background: #f88;")
+                return
+            code_input.setStyleSheet("background: #8f8;")
+            if callable(self._on_capture):
+                self._on_capture()
+
+        save_btn.clicked.connect(on_click)
 
 
 class CalibrationWindow(QMainWindow):
@@ -241,7 +304,13 @@ class CalibrationWindow(QMainWindow):
 
     def _refresh_preview(self) -> None:
         """Repopulate the preview panel from the current ROI definitions."""
-        self._preview_panel.refresh(self._pixmap, dict(self._doc.rois))
+        templates_dir = Path(self._doc.card_templates_dir)
+        self._preview_panel.refresh(
+            self._pixmap,
+            dict(self._doc.rois),
+            templates_dir=templates_dir,
+            on_capture=self._refresh_preview,
+        )
         # Unlock the Test-calibration button once every required ROI is drawn.
         self._test_btn.setEnabled(self._doc.rois.keys() >= REQUIRED_ROIS)
 

@@ -25,12 +25,23 @@ class CardClassifier:
     _templates: dict[str, np.ndarray] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        self._load_from_disk()
+        if not self._templates:
+            raise FileNotFoundError(f"no card templates found in {self.templates_dir}")
+
+    def _load_from_disk(self) -> None:
+        self._templates.clear()
         for path in self.templates_dir.glob("*.png"):
             tpl = cv2.imread(str(path), cv2.IMREAD_COLOR)
             if tpl is None:
                 continue
             self._templates[path.stem] = tpl
 
+    def reload(self) -> None:
+        """Re-read templates from disk so a freshly captured template
+        is picked up without reconstructing the classifier. Raises
+        FileNotFoundError if the directory becomes empty."""
+        self._load_from_disk()
         if not self._templates:
             raise FileNotFoundError(f"no card templates found in {self.templates_dir}")
 
