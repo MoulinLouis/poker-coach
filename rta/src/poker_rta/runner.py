@@ -47,6 +47,7 @@ class RunnerContext:
     coach_session_id: str | None = None
     coach_hand_id: str | None = None
     last_fired_state_id: str | None = None
+    last_hand_id: str | None = None
 
 
 def _state_id(state: dict[str, Any]) -> str:
@@ -68,6 +69,12 @@ async def run_once(
         deps.overlay.set_status("degraded", "no engine state")
         return
     deps.overlay.update_state(state)
+
+    hand_id = state.get("hand_id")
+    if hand_id is not None and hand_id != ctx.last_hand_id:
+        # New hand detected — drop the cross-hand noise before streaming.
+        deps.overlay.clear_history()
+        ctx.last_hand_id = hand_id
 
     sid = _state_id(state)
     gate = should_fire_decision(
@@ -101,9 +108,19 @@ async def run_once(
         if event.type == "reasoning_delta":
             deps.overlay.append_reasoning_delta(event.payload.get("text", ""))
         elif event.type == "tool_call_complete":
-            deps.overlay.show_advice(event.payload.get("advice", {}))
+            advice = event.payload.get("advice", {})
+            deps.overlay.show_advice(advice)
             deps.overlay.mark_advice_time()
             deps.overlay.set_status("ok")
+            deps.overlay.push_advice_record(
+                {
+                    "street": state.get("street"),
+                    "action": advice.get("action"),
+                    "to_bb": advice.get("to_bb"),
+                    "confidence": advice.get("confidence"),
+                    "reasoning": advice.get("rationale") or advice.get("reasoning") or "",
+                }
+            )
         elif event.type == "oracle_error":
             deps.overlay.set_status("error", event.payload.get("message", "oracle error"))
     ctx.last_fired_state_id = sid
