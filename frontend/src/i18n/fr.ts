@@ -7,4 +7,18 @@ export const fr: Dict = {
     history: "Historique",
     prompts: "Invites",
   },
+  setup: {
+    kicker: "Nouvelle main",
+    title: "Configuration",
+    newHand: "Nouvelle main",
+    effectiveStack: "Tapis effectif",
+    chipsUnit: "jetons",
+    button: "Bouton",
+    hero: "Héros",
+    villain: "Vilain",
+    oracleModel: "Oracle · Modèle",
+    villainProfile: "Vilain · Profil",
+    profileReg: "Reg",
+    profileUnknown: "Inc.",
+  },
 };

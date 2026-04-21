@@ -1,6 +1,7 @@
 import type { PresetSummary, Seat, VillainProfile } from "../api/types";
 import { parseHole } from "../utils/cards";
 import { CardPicker } from "./CardPicker";
+import { useLocale } from "../i18n";
 
 export interface SetupValues {
   heroHole: string;
@@ -26,6 +27,7 @@ export function SetupPanel({
 }) {
   const hero = parseHole(values.heroHole);
   const villain = parseHole(values.villainHole);
+  const { t } = useLocale();
 
   return (
     <section
@@ -42,10 +44,10 @@ export function SetupPanel({
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
         <div className="flex flex-col">
           <span className="font-mono text-[9px] tracking-[0.35em] sm:tracking-[0.4em] uppercase text-[color:var(--color-parchment-dim)]">
-            New spot
+            {t("setup.kicker")}
           </span>
           <span className="text-lg sm:text-xl font-semibold tracking-tight text-[color:var(--color-bone)]">
-            Setup
+            {t("setup.title")}
           </span>
         </div>
         <button
@@ -65,7 +67,7 @@ export function SetupPanel({
             N
           </kbd>
           <span className="font-semibold text-sm tracking-tight">
-            New hand
+            {t("setup.newHand")}
           </span>
           <span className="text-base leading-none group-hover:translate-x-0.5 transition-transform">
             →
@@ -78,7 +80,7 @@ export function SetupPanel({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5 lg:gap-6 items-start">
         {/* left column — fields */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Field label="Effective stack" unit="chips">
+          <Field label={t("setup.effectiveStack")} unit={t("setup.chipsUnit")}>
             <input
               type="number"
               value={values.effectiveStack}
@@ -92,7 +94,7 @@ export function SetupPanel({
               }}
             />
           </Field>
-          <Field label="Button">
+          <Field label={t("setup.button")}>
             <select
               value={values.button}
               onChange={(e) => onChange({ button: e.target.value as Seat })}
@@ -102,11 +104,11 @@ export function SetupPanel({
                 background: "rgba(10,7,6,0.45)",
               }}
             >
-              <option value="hero">Hero</option>
-              <option value="villain">Villain</option>
+              <option value="hero">{t("setup.hero")}</option>
+              <option value="villain">{t("setup.villain")}</option>
             </select>
           </Field>
-          <Field label="Oracle · Model">
+          <Field label={t("setup.oracleModel")}>
             <select
               value={values.presetId}
               onChange={(e) => onChange({ presetId: e.target.value })}
@@ -123,7 +125,7 @@ export function SetupPanel({
               ))}
             </select>
           </Field>
-          <Field label="Villain · Profile">
+          <Field label={t("setup.villainProfile")}>
             <div
               className="flex p-1 rounded-md"
               style={{
@@ -149,7 +151,7 @@ export function SetupPanel({
                   }}
                   onClick={() => onChange({ villainProfile: p })}
                 >
-                  {p === "reg" ? "Reg" : "Unk."}
+                  {p === "reg" ? t("setup.profileReg") : t("setup.profileUnknown")}
                 </button>
               ))}
             </div>
