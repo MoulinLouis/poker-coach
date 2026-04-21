@@ -87,15 +87,21 @@ def _tally_hand(
     # preflop ends when a player calls a raise. We track `last_raise`.
     seen_preflop_raise = False
     preflop_closed = False
+    actors_acted: set[str] = set()
     for act in trace:
         if not preflop_closed:
             preflop_actions.append(act)
+            actors_acted.add(act["actor"])
             if act["type"] in ("bet", "raise", "allin"):
                 seen_preflop_raise = True
             elif act["type"] == "call" and seen_preflop_raise:
                 preflop_closed = True
             elif act["type"] == "fold":
                 preflop_closed = True  # hand ends preflop
+            elif act["type"] == "check" and not seen_preflop_raise and len(actors_acted) == 2:
+                # BB's check after BTN-limp: both players have acted voluntarily
+                # and no raise is outstanding → preflop is over.
+                preflop_closed = True
         else:
             postflop_actions.append(act)
 
