@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AdvicePanel } from "./AdvicePanel";
 import type { StreamState } from "../api/useAdviceStream";
-import type { Advice } from "../api/types";
+import type { Advice, StrategyEntry } from "../api/types";
 
 function streamWithAdvice(advice: Advice): StreamState {
   return {
@@ -81,5 +81,38 @@ describe("AdvicePanel — follow button", () => {
     const btn = screen.getByTestId("follow-advice");
     expect(btn.textContent).toContain("fold");
     expect(btn.textContent).not.toContain("bb");
+  });
+
+  it("renders StrategyBars when advice.strategy is populated", () => {
+    const strategy: StrategyEntry[] = [
+      { action: "bet", to_amount_bb: 3, frequency: 0.6 },
+      { action: "check", to_amount_bb: null, frequency: 0.4 },
+    ];
+    const adviceWithMix: Advice = {
+      ...raiseAdvice,
+      strategy,
+    };
+    render(
+      <AdvicePanel
+        stream={streamWithAdvice(adviceWithMix)}
+        diverged={false}
+        presetLabel="test"
+        onFollow={() => undefined}
+      />,
+    );
+    expect(screen.getByTestId("strategy-bars")).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^strategy-row-/)).toHaveLength(2);
+  });
+
+  it("does not render StrategyBars when advice.strategy is absent", () => {
+    render(
+      <AdvicePanel
+        stream={streamWithAdvice(raiseAdvice)}
+        diverged={false}
+        presetLabel="test"
+        onFollow={() => undefined}
+      />,
+    );
+    expect(screen.queryByTestId("strategy-bars")).toBeNull();
   });
 });

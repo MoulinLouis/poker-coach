@@ -4,6 +4,7 @@ import type { StreamState } from "../api/useAdviceStream";
 import { type TranslationState, useAdviceTranslation } from "../api/useAdviceTranslation";
 import { formatUsd, useLocale } from "../i18n";
 import type { DictKey } from "../i18n";
+import { StrategyBars } from "./StrategyBars";
 
 export function AdvicePanel({
   stream,
@@ -355,6 +356,12 @@ function AdviceCard({
             </span>
           )}
         </div>
+
+        {advice.strategy && advice.strategy.length > 0 && (
+          <div className="mb-3">
+            <StrategyBars strategy={advice.strategy} />
+          </div>
+        )}
 
         <p className="text-[13px] leading-[1.6] text-[color:var(--color-bone-soft)]">
           {displayedReasoning}
