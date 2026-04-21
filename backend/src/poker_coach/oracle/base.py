@@ -21,6 +21,21 @@ ReasoningEffort = Literal["minimal", "low", "medium", "high", "xhigh"]
 Confidence = Literal["low", "medium", "high"]
 
 
+class StrategyEntry(BaseModel):
+    """One entry in a mixed strategy output.
+
+    Multiple entries with the same `action` but different `to_amount_bb`
+    are allowed (polarized sizings). `to_amount_bb` is `None` for
+    fold / check / call / allin.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    action: ActionType
+    to_amount_bb: float | None = None
+    frequency: float
+
+
 class Advice(BaseModel):
     """Parsed output of the submit_advice tool call."""
 
@@ -30,6 +45,7 @@ class Advice(BaseModel):
     to_amount_bb: float | None = None
     reasoning: str
     confidence: Confidence
+    strategy: list[StrategyEntry] | None = None
 
 
 ThinkingMode = Literal["enabled", "adaptive"]
