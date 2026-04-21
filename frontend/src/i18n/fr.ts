@@ -7,6 +7,9 @@ export const fr: Dict = {
     history: "Historique",
     prompts: "Invites",
   },
+  app: {
+    tagline: "Tête-à-tête · No Limit",
+  },
   setup: {
     kicker: "Nouvelle main",
     title: "Configuration",
@@ -31,6 +34,8 @@ export const fr: Dict = {
     verdict: "Verdict",
     follow: "Suivre",
     reasoningTariff: "coût du raisonnement",
+    bbUnit: "bb",
+    translationErrorPrefix: "erreur de traduction",
     action: {
       fold: "Fold",
       check: "Check",

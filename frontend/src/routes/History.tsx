@@ -129,7 +129,7 @@ export function History() {
                       <>
                         <span className="capitalize">{r.parsed_advice.action}</span>
                         {r.parsed_advice.to_amount_bb != null && (
-                          <span className="opacity-70"> {r.parsed_advice.to_amount_bb}bb</span>
+                          <span className="opacity-70"> {r.parsed_advice.to_amount_bb}{t("routes.history.bbUnit")}</span>
                         )}
                       </>
                     ) : (

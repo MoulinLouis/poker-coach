@@ -269,6 +269,7 @@ function LangToggle({
   state: TranslationState;
   disabled?: boolean;
 }) {
+  const { t } = useLocale();
   const { lang, loading, error, toggle } = state;
   const label = loading ? "…" : error ? "!" : lang === "fr" ? "FR" : "EN";
   return (
@@ -283,7 +284,7 @@ function LangToggle({
         background: "var(--color-lacquer-raised)",
         border: "1px solid rgba(201,162,94,0.3)",
       }}
-      title={error ? `translation error: ${error}` : undefined}
+      title={error ? `${t("advice.translationErrorPrefix")}: ${error}` : undefined}
     >
       {label}
     </button>
@@ -350,7 +351,7 @@ function AdviceCard({
             <span className="font-mono text-base tabular-nums text-[color:var(--color-gold-pale)]">
               <span className="opacity-50">{t("advice.toPrefix")} </span>
               {advice.to_amount_bb}
-              <span className="opacity-50 ml-0.5">bb</span>
+              <span className="opacity-50 ml-0.5">{t("advice.bbUnit")}</span>
             </span>
           )}
         </div>

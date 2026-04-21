@@ -5,6 +5,9 @@ export const en = {
     history: "History",
     prompts: "Prompts",
   },
+  app: {
+    tagline: "Heads-Up · No Limit",
+  },
   setup: {
     kicker: "New spot",
     title: "Setup",
@@ -29,6 +32,8 @@ export const en = {
     verdict: "Verdict",
     follow: "Follow",
     reasoningTariff: "reasoning tariff",
+    bbUnit: "bb",
+    translationErrorPrefix: "translation error",
     action: {
       fold: "Fold",
       check: "Check",

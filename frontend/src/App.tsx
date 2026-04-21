@@ -40,7 +40,7 @@ export function App() {
           <div className="ml-auto flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-parchment-dim)]">
             <LocaleToggle />
             <span className="hidden md:inline w-px h-3 bg-[color:var(--color-gold-shadow)]" />
-            <span className="hidden md:inline">Heads-Up · No Limit</span>
+            <span className="hidden md:inline">{t("app.tagline")}</span>
             <span className="hidden md:inline w-px h-3 bg-[color:var(--color-gold-shadow)]" />
             <span className="hidden md:inline font-mono tabular-nums">v.0427</span>
           </div>
