@@ -36,7 +36,7 @@ describe("LocaleProvider + useLocale", () => {
     act(() => result.current.setLang("fr"));
     expect(result.current.lang).toBe("fr");
     expect(window.localStorage.getItem("locale")).toBe("fr");
-    expect(result.current.t("nav.spot")).toBe("Analyse de situation");
+    expect(result.current.t("nav.spot")).toBe("Analyse de spot");
   });
 
   it("t() falls back to the key and warns on missing keys in dev", () => {
