@@ -67,18 +67,12 @@ def normalize_strategy(
                 raise ValueError(f"sizing required for action {action!r}")
             to_chips = round(to_amount_bb * bb_chips)
             if la.min_to is not None and to_chips < la.min_to:
-                raise ValueError(
-                    f"sizing {to_amount_bb}bb out of range for {action!r}"
-                )
+                raise ValueError(f"sizing {to_amount_bb}bb out of range for {action!r}")
             if la.max_to is not None and to_chips > la.max_to:
-                raise ValueError(
-                    f"sizing {to_amount_bb}bb out of range for {action!r}"
-                )
+                raise ValueError(f"sizing {to_amount_bb}bb out of range for {action!r}")
         elif action in _NON_SIZING_ACTIONS:
             if to_amount_bb is not None:
-                raise ValueError(
-                    f"to_amount_bb must be null for action {action!r}"
-                )
+                raise ValueError(f"to_amount_bb must be null for action {action!r}")
         else:
             raise ValueError(f"unknown action {action!r}")
 
