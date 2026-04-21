@@ -59,4 +59,17 @@ export const en = {
     tableDecisions: "Decisions",
     tableCost: "Cost",
   },
+  cardPicker: {
+    hero: "Hero",
+    villain: "Villain",
+    deal: "Deal",
+    clear: "Clear",
+    hide: "Hide",
+    edit: "Edit",
+    tipHideGrid: "Hide card grid",
+    tipShowGrid: "Show card grid",
+    tipSlotSelect: "click to select, then pick a card from the grid",
+    tipSlotClear: "clear this slot",
+    ariaClearPrefix: "clear",
+  },
 } as const;

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { SUITS, type Suit } from "../utils/cards";
 import { PlayingCard } from "./PlayingCard";
+import { useLocale } from "../i18n";
 
 const RANKS = ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"] as const;
 const SUIT_KEYS = ["s", "h", "d", "c"] as const satisfies readonly Suit[];
@@ -9,12 +10,18 @@ type SlotId = "h1" | "h2" | "v1" | "v2";
 
 const SLOT_ORDER: SlotId[] = ["h1", "h2", "v1", "v2"];
 
-const SLOT_META: Record<SlotId, { owner: "hero" | "villain"; label: string }> = {
-  h1: { owner: "hero", label: "Hero 1" },
-  h2: { owner: "hero", label: "Hero 2" },
-  v1: { owner: "villain", label: "Villain 1" },
-  v2: { owner: "villain", label: "Villain 2" },
+const SLOT_META: Record<SlotId, { owner: "hero" | "villain"; slotNumber: "1" | "2" }> = {
+  h1: { owner: "hero", slotNumber: "1" },
+  h2: { owner: "hero", slotNumber: "2" },
+  v1: { owner: "villain", slotNumber: "1" },
+  v2: { owner: "villain", slotNumber: "2" },
 };
+
+function slotLabel(t: (k: "cardPicker.hero" | "cardPicker.villain") => string, id: SlotId) {
+  const meta = SLOT_META[id];
+  const owner = meta.owner === "hero" ? t("cardPicker.hero") : t("cardPicker.villain");
+  return `${owner} ${meta.slotNumber}`;
+}
 
 function allSlotsFilled(slots: Record<SlotId, string | null>): boolean {
   return SLOT_ORDER.every((s) => slots[s] != null);
@@ -32,6 +39,7 @@ export function CardPicker({
     villain: [string, string] | null;
   }) => void;
 }) {
+  const { t } = useLocale();
   // Uncontrolled: we own the per-slot state locally. Parent props seed the
   // initial state only — see commit history on this file for the why.
   const [slots, setSlots] = useState<Record<SlotId, string | null>>(() => ({
@@ -124,7 +132,7 @@ export function CardPicker({
     <div className="flex flex-col gap-3" data-testid="card-picker">
       <div className="flex items-center gap-4 flex-wrap">
         <SlotGroup
-          title="Hero"
+          title={t("cardPicker.hero")}
           slots={["h1", "h2"]}
           active={activeSlot}
           values={slots}
@@ -136,7 +144,7 @@ export function CardPicker({
           style={{ background: "rgba(201,162,94,0.2)" }}
         />
         <SlotGroup
-          title="Villain"
+          title={t("cardPicker.villain")}
           slots={["v1", "v2"]}
           active={activeSlot}
           values={slots}
@@ -154,7 +162,7 @@ export function CardPicker({
               border: "1px solid rgba(201,162,94,0.25)",
             }}
           >
-            Deal
+            {t("cardPicker.deal")}
           </button>
           <button
             data-testid="card-clear"
@@ -166,14 +174,14 @@ export function CardPicker({
               border: "1px solid rgba(201,162,94,0.15)",
             }}
           >
-            Clear
+            {t("cardPicker.clear")}
           </button>
           <button
             data-testid="card-picker-toggle"
             onClick={() => setExpanded((e) => !e)}
             aria-expanded={expanded}
             aria-controls="card-picker-grid"
-            title={expanded ? "Hide card grid" : "Show card grid"}
+            title={expanded ? t("cardPicker.tipHideGrid") : t("cardPicker.tipShowGrid")}
             className="px-2 py-1.5 rounded-md font-mono text-[10px] uppercase tracking-[0.25em] transition flex items-center gap-1.5"
             style={{
               color: "var(--color-gold-pale)",
@@ -187,7 +195,7 @@ export function CardPicker({
             >
               ▾
             </span>
-            <span>{expanded ? "Hide" : "Edit"}</span>
+            <span>{expanded ? t("cardPicker.hide") : t("cardPicker.edit")}</span>
           </button>
         </div>
       </div>
@@ -233,6 +241,7 @@ function SlotGroup({
   onSlotClick: (s: SlotId) => void;
   onSlotClear: (s: SlotId) => void;
 }) {
+  const { t } = useLocale();
   return (
     <div className="flex flex-col gap-1.5">
       <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
@@ -244,7 +253,7 @@ function SlotGroup({
             <button
               data-testid={`slot-${s}`}
               onClick={() => onSlotClick(s)}
-              title="click to select, then pick a card from the grid"
+              title={t("cardPicker.tipSlotSelect")}
               className="rounded-md p-0.5 transition"
               style={{
                 boxShadow:
@@ -265,7 +274,7 @@ function SlotGroup({
                       "repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 6px)",
                   }}
                 >
-                  {SLOT_META[s].label.split(" ")[1]}
+                  {SLOT_META[s].slotNumber}
                 </div>
               )}
             </button>
@@ -273,8 +282,8 @@ function SlotGroup({
               <button
                 data-testid={`slot-clear-${s}`}
                 onClick={() => onSlotClear(s)}
-                title="clear this slot"
-                aria-label={`clear ${SLOT_META[s].label}`}
+                title={t("cardPicker.tipSlotClear")}
+                aria-label={`${t("cardPicker.ariaClearPrefix")} ${slotLabel(t, s)}`}
                 className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
                 style={{
                   background: "var(--color-ink)",

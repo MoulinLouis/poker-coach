@@ -61,4 +61,17 @@ export const fr: Dict = {
     tableDecisions: "Décisions",
     tableCost: "Coût",
   },
+  cardPicker: {
+    hero: "Héros",
+    villain: "Vilain",
+    deal: "Distribuer",
+    clear: "Effacer",
+    hide: "Masquer",
+    edit: "Modifier",
+    tipHideGrid: "Masquer la grille des cartes",
+    tipShowGrid: "Afficher la grille des cartes",
+    tipSlotSelect: "cliquez pour sélectionner, puis choisissez une carte dans la grille",
+    tipSlotClear: "effacer cet emplacement",
+    ariaClearPrefix: "effacer",
+  },
 };
