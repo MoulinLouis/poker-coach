@@ -12,7 +12,8 @@ from __future__ import annotations
 import pytest
 
 from poker_coach.analytics import VillainStats
-from poker_coach.engine.rules import start_hand
+from poker_coach.engine.models import Action
+from poker_coach.engine.rules import apply_action, start_hand
 from poker_coach.prompts.context import state_to_coach_variables
 from poker_coach.prompts.renderer import PromptRenderer
 from poker_coach.settings import PROMPTS_ROOT
@@ -96,3 +97,22 @@ def test_coach_v2_renders_bucket_token(effective_stack: int, token: str) -> None
     rendered = renderer.render("coach", "v2", variables)
     assert f"Stack depth: {token}" in rendered.rendered_prompt
     assert "SPR" in rendered.rendered_prompt
+
+
+def test_v2_renders_live_pot() -> None:
+    """pot_bb_live = pot + hero_committed + villain_committed, in BB."""
+    state = start_hand(effective_stack=10_000, bb=100, button="hero", hero_hole=("As", "Kd"))
+    # Hero opens to 250, villain raises to 900 → live pot = 1150 chips = 11.5bb
+    state = apply_action(state, Action(actor="hero", type="raise", to_amount=250))
+    state = apply_action(state, Action(actor="villain", type="raise", to_amount=900))
+
+    variables = state_to_coach_variables(
+        state,
+        villain_profile="unknown",
+        villain_stats=VillainStats.zero().as_prompt_payload(),
+    )
+    assert variables["pot_bb_live"] == pytest.approx(11.5)
+
+    renderer = PromptRenderer(PROMPTS_ROOT)
+    rendered = renderer.render("coach", "v2", variables)
+    assert "11.5" in rendered.rendered_prompt
