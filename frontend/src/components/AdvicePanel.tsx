@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { Advice } from "../api/types";
 import type { StreamState } from "../api/useAdviceStream";
 import { type TranslationState, useAdviceTranslation } from "../api/useAdviceTranslation";
+import { useLocale } from "../i18n";
+import type { DictKey } from "../i18n";
 
 export function AdvicePanel({
   stream,
@@ -16,6 +18,7 @@ export function AdvicePanel({
 }) {
   const reasoningTranslation = useAdviceTranslation(stream.reasoning ?? "");
   const adviceTranslation = useAdviceTranslation(stream.advice?.reasoning ?? "");
+  const { t } = useLocale();
 
   const displayedReasoning =
     reasoningTranslation.lang === "fr" && reasoningTranslation.frText !== null
@@ -46,10 +49,10 @@ export function AdvicePanel({
       <header className="flex items-center justify-between gap-2">
         <div className="flex flex-col -space-y-0.5">
           <span className="text-[9px] uppercase tracking-[0.4em] text-[color:var(--color-parchment-dim)]">
-            Coach
+            {t("advice.coach")}
           </span>
           <span className="text-lg font-semibold tracking-tight text-[color:var(--color-bone)]">
-            Advisor
+            {t("advice.advisor")}
           </span>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -67,7 +70,7 @@ export function AdvicePanel({
                 borderRadius: "2px",
               }}
             >
-              Diverged
+              {t("advice.diverged")}
             </span>
           )}
         </div>
@@ -102,7 +105,7 @@ export function AdvicePanel({
         <div className="flex items-center gap-2 text-[10px] font-mono text-[color:var(--color-parchment-dim)]">
           <span className="w-1 h-1 rounded-full bg-[color:var(--color-gold)]" />
           <span className="tabular-nums">
-            ${stream.costUsd.toFixed(4)} · reasoning tariff
+            ${stream.costUsd.toFixed(4)} · {t("advice.reasoningTariff")}
           </span>
         </div>
       )}
@@ -153,6 +156,7 @@ function CornerAccent({
 }
 
 function EmptyState() {
+  const { t } = useLocale();
   return (
     <div className="flex flex-col items-center text-center gap-3 py-6">
       <svg viewBox="0 0 40 40" className="w-8 h-8 text-[color:var(--color-gold)]/40" fill="none" stroke="currentColor" strokeWidth="1">
@@ -161,17 +165,18 @@ function EmptyState() {
         <circle cx="20" cy="20" r="3" fill="currentColor" opacity="0.4" />
       </svg>
       <p className="text-[13px] text-[color:var(--color-parchment)] leading-snug max-w-[240px]">
-        Click{" "}
+        {t("advice.emptyPrefix")}{" "}
         <span className="font-semibold text-[color:var(--color-gold-pale)]">
-          advise
+          {t("advice.emptyHighlight")}
         </span>{" "}
-        on hero's turn to get a read.
+        {t("advice.emptySuffix")}
       </p>
     </div>
   );
 }
 
 function ThinkingIndicator() {
+  const { t } = useLocale();
   return (
     <div className="flex items-center gap-3 text-sm py-2">
       <span className="relative flex h-2 w-2">
@@ -185,7 +190,7 @@ function ThinkingIndicator() {
         />
       </span>
       <span className="font-mono text-[11px] tracking-[0.25em] uppercase text-[color:var(--color-gold-pale)]">
-        Thinking
+        {t("advice.thinking")}
       </span>
     </div>
   );
@@ -200,6 +205,7 @@ function ThinkingBlock({
   displayedReasoning: string;
   translation: TranslationState;
 }) {
+  const { t } = useLocale();
   const [userOverride, setUserOverride] = useState<boolean | null>(null);
   const prevStatusRef = useRef(stream.status);
 
@@ -224,7 +230,7 @@ function ThinkingBlock({
           className="flex items-center gap-2 text-[9px] uppercase tracking-[0.3em] font-mono text-[color:var(--color-parchment)] hover:text-[color:var(--color-bone)] transition"
         >
           <span>{collapsed ? "▸" : "▾"}</span>
-          <span>Reasoning</span>
+          <span>{t("advice.reasoning")}</span>
           {live && (
             <span
               className="w-1.5 h-1.5 rounded-full animate-pulse"
@@ -232,7 +238,7 @@ function ThinkingBlock({
             />
           )}
           <span className="tabular-nums opacity-60 normal-case tracking-normal">
-            · {stream.reasoning!.length} chars
+            · {stream.reasoning!.length} {t("advice.charsUnit")}
           </span>
         </button>
         <LangToggle state={translation} disabled={!isTerminal} />
@@ -295,18 +301,19 @@ function AdviceCard({
   translation: TranslationState;
   onFollow?: () => void;
 }) {
+  const { t } = useLocale();
   const confidence = advice.confidence;
 
   const actionTheme: Record<
     string,
-    { glow: string; accent: string; label: string }
+    { glow: string; accent: string; labelKey: DictKey }
   > = {
-    fold: { glow: "rgba(137,127,101,0.3)", accent: "var(--color-parchment)", label: "Fold" },
-    check: { glow: "rgba(45,146,116,0.35)", accent: "var(--color-jade)", label: "Check" },
-    call: { glow: "rgba(45,146,116,0.35)", accent: "var(--color-jade)", label: "Call" },
-    bet: { glow: "rgba(201,162,94,0.45)", accent: "var(--color-gold-bright)", label: "Bet" },
-    raise: { glow: "rgba(201,162,94,0.45)", accent: "var(--color-gold-bright)", label: "Raise" },
-    allin: { glow: "rgba(232,93,76,0.45)", accent: "var(--color-coral)", label: "All-in" },
+    fold: { glow: "rgba(137,127,101,0.3)", accent: "var(--color-parchment)", labelKey: "advice.action.fold" },
+    check: { glow: "rgba(45,146,116,0.35)", accent: "var(--color-jade)", labelKey: "advice.action.check" },
+    call: { glow: "rgba(45,146,116,0.35)", accent: "var(--color-jade)", labelKey: "advice.action.call" },
+    bet: { glow: "rgba(201,162,94,0.45)", accent: "var(--color-gold-bright)", labelKey: "advice.action.bet" },
+    raise: { glow: "rgba(201,162,94,0.45)", accent: "var(--color-gold-bright)", labelKey: "advice.action.raise" },
+    allin: { glow: "rgba(232,93,76,0.45)", accent: "var(--color-coral)", labelKey: "advice.action.allin" },
   };
   const theme = actionTheme[advice.action] ?? actionTheme.fold;
 
@@ -324,7 +331,7 @@ function AdviceCard({
       {/* placard header */}
       <div className="px-4 pt-3 pb-2 flex items-center justify-between border-b border-[color:var(--color-gold-shadow)]/40">
         <span className="font-mono text-[9px] uppercase tracking-[0.4em] text-[color:var(--color-gold-pale)]">
-          Verdict
+          {t("advice.verdict")}
         </span>
         <div className="flex items-center gap-2">
           <ConfidenceDial level={confidence} />
@@ -337,11 +344,11 @@ function AdviceCard({
           <span
             className="foil font-display text-[34px] leading-none font-bold tracking-tight"
           >
-            {theme.label}
+            {t(theme.labelKey)}
           </span>
           {advice.to_amount_bb != null && (
             <span className="font-mono text-base tabular-nums text-[color:var(--color-gold-pale)]">
-              <span className="opacity-50">to </span>
+              <span className="opacity-50">{t("advice.toPrefix")} </span>
               {advice.to_amount_bb}
               <span className="opacity-50 ml-0.5">bb</span>
             </span>
@@ -366,7 +373,7 @@ function AdviceCard({
               } as React.CSSProperties
             }
           >
-            <span className="text-[15px]">Follow</span>
+            <span className="text-[15px]">{t("advice.follow")}</span>
             <span className="font-mono text-[11px] opacity-80 capitalize tabular-nums">
               {advice.action}
               {advice.to_amount_bb != null ? ` · ${advice.to_amount_bb}bb` : ""}
@@ -379,6 +386,7 @@ function AdviceCard({
 }
 
 function ConfidenceDial({ level }: { level: "high" | "medium" | "low" }) {
+  const { t } = useLocale();
   const pct = level === "high" ? 100 : level === "medium" ? 66 : 33;
   const color =
     level === "high"
@@ -413,7 +421,7 @@ function ConfidenceDial({ level }: { level: "high" | "medium" | "low" }) {
         className="font-mono text-[9px] uppercase tracking-[0.2em]"
         style={{ color }}
       >
-        {level}
+        {t(`advice.confidence.${level}` as DictKey)}
       </span>
     </div>
   );
