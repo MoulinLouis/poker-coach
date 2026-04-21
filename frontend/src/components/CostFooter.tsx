@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchCost } from "../api/client";
 import type { CostResponse } from "../api/types";
-import { useLocale } from "../i18n";
+import { formatInt, formatUsd, useLocale } from "../i18n";
 
 const POLL_MS = 5000;
 
@@ -28,7 +28,7 @@ export function CostFooter({ sessionId }: { sessionId: string | null }) {
   }, [sessionId]);
 
   const decisionCount = cost?.by_model.reduce((s, r) => s + r.decision_count, 0) ?? 0;
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
 
   return (
     <footer
@@ -53,15 +53,15 @@ export function CostFooter({ sessionId }: { sessionId: string | null }) {
             >
               ▴
             </span>
-            <Stat label={t("costFooter.session")} value={`$${(cost?.session_usd ?? 0).toFixed(4)}`} accent />
+            <Stat label={t("costFooter.session")} value={formatUsd(lang, cost?.session_usd ?? 0)} accent />
             <span className="hidden sm:inline-flex items-center gap-4">
               <Divider />
-              <Stat label={t("costFooter.allTime")} value={`$${(cost?.all_time_usd ?? 0).toFixed(4)}`} />
+              <Stat label={t("costFooter.allTime")} value={formatUsd(lang, cost?.all_time_usd ?? 0)} />
             </span>
             <Divider />
             <Stat
               label={t("costFooter.decisionsShort")}
-              value={decisionCount.toString()}
+              value={formatInt(lang, decisionCount)}
               mono
             />
             <span className="hidden sm:inline ml-2 text-[11px] text-[color:var(--color-parchment-dim)] group-hover:text-[color:var(--color-parchment)]">
@@ -103,9 +103,9 @@ export function CostFooter({ sessionId }: { sessionId: string | null }) {
                     <td className="py-1.5 pr-4 text-[color:var(--color-parchment)]">
                       {row.reasoning_effort}
                     </td>
-                    <td className="py-1.5 pr-4 text-right">{row.decision_count}</td>
+                    <td className="py-1.5 pr-4 text-right">{formatInt(lang, row.decision_count)}</td>
                     <td className="py-1.5 text-right font-semibold text-[color:var(--color-gold-pale)]">
-                      ${row.cost_usd.toFixed(4)}
+                      {formatUsd(lang, row.cost_usd)}
                     </td>
                   </tr>
                 ))}

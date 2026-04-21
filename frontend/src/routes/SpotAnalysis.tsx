@@ -17,7 +17,7 @@ import type {
   VillainProfile,
 } from "../api/types";
 import { useAdviceStream, type StreamState } from "../api/useAdviceStream";
-import { useLocale } from "../i18n";
+import { formatUsd, useLocale } from "../i18n";
 import { parseHole } from "../utils/cards";
 
 interface ColumnState {
@@ -56,7 +56,7 @@ function bb(state: GameState, chips: number): string {
 }
 
 export function SpotAnalysis() {
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
   const [session, setSession] = useState<string | null>(null);
   const [presets, setPresets] = useState<PresetSummary[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -346,7 +346,7 @@ export function SpotAnalysis() {
               )}
               {c.stream.costUsd != null && (
                 <div className="text-[11px] text-stone-500 mt-1 tabular-nums">
-                  ${c.stream.costUsd.toFixed(4)}
+                  {formatUsd(lang, c.stream.costUsd)}
                 </div>
               )}
               {c.stream.errorMessage && (

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Advice } from "../api/types";
 import type { StreamState } from "../api/useAdviceStream";
 import { type TranslationState, useAdviceTranslation } from "../api/useAdviceTranslation";
-import { useLocale } from "../i18n";
+import { formatUsd, useLocale } from "../i18n";
 import type { DictKey } from "../i18n";
 
 export function AdvicePanel({
@@ -18,7 +18,7 @@ export function AdvicePanel({
 }) {
   const reasoningTranslation = useAdviceTranslation(stream.reasoning ?? "");
   const adviceTranslation = useAdviceTranslation(stream.advice?.reasoning ?? "");
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
 
   const displayedReasoning =
     reasoningTranslation.lang === "fr" && reasoningTranslation.frText !== null
@@ -105,7 +105,7 @@ export function AdvicePanel({
         <div className="flex items-center gap-2 text-[10px] font-mono text-[color:var(--color-parchment-dim)]">
           <span className="w-1 h-1 rounded-full bg-[color:var(--color-gold)]" />
           <span className="tabular-nums">
-            ${stream.costUsd.toFixed(4)} · {t("advice.reasoningTariff")}
+            {formatUsd(lang, stream.costUsd)} · {t("advice.reasoningTariff")}
           </span>
         </div>
       )}

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDecisionDetail, listDecisions } from "../api/client";
 import type { DecisionDetail, DecisionListRow } from "../api/types";
-import { useLocale } from "../i18n";
+import { formatDateTime, formatLatencyMs, formatUsd, useLocale } from "../i18n";
 
 export function History() {
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
   const [rows, setRows] = useState<DecisionListRow[]>([]);
   const [filters, setFilters] = useState<{
     model_id: string;
@@ -115,7 +115,7 @@ export function History() {
                   }`}
                 >
                   <td className="px-3 py-1.5 text-stone-400">
-                    {r.created_at.slice(0, 19).replace("T", " ")}
+                    {formatDateTime(lang, r.created_at)}
                   </td>
                   <td className="px-3 py-1.5">{r.model_id}</td>
                   <td className="px-3 py-1.5 opacity-70">
@@ -137,10 +137,10 @@ export function History() {
                     )}
                   </td>
                   <td className="px-3 py-1.5 text-right opacity-80">
-                    {r.cost_usd != null ? `$${r.cost_usd.toFixed(4)}` : "—"}
+                    {r.cost_usd != null ? formatUsd(lang, r.cost_usd) : "—"}
                   </td>
                   <td className="px-3 py-1.5 text-right opacity-70">
-                    {r.latency_ms != null ? `${r.latency_ms}ms` : "—"}
+                    {r.latency_ms != null ? formatLatencyMs(lang, r.latency_ms) : "—"}
                   </td>
                 </tr>
               ))}
@@ -183,10 +183,10 @@ export function History() {
             </dd>
             <dt className="opacity-60">{t("routes.history.detailCost")}</dt>
             <dd>
-              {selected.cost_usd != null ? `$${selected.cost_usd.toFixed(4)}` : "—"}
+              {selected.cost_usd != null ? formatUsd(lang, selected.cost_usd) : "—"}
             </dd>
             <dt className="opacity-60">{t("routes.history.detailLatency")}</dt>
-            <dd>{selected.latency_ms != null ? `${selected.latency_ms}ms` : "—"}</dd>
+            <dd>{selected.latency_ms != null ? formatLatencyMs(lang, selected.latency_ms) : "—"}</dd>
           </dl>
 
           {selected.parsed_advice && (
