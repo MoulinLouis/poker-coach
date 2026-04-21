@@ -38,7 +38,7 @@ from poker_coach.oracle.base import (
 )
 from poker_coach.oracle.pricing import PricingSnapshot, compute_cost
 from poker_coach.oracle.strategy_validator import normalize_strategy
-from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
+from poker_coach.oracle.system_prompt import system_prompt_for
 from poker_coach.oracle.tool_schema import openai_tool_spec
 from poker_coach.prompts.renderer import RenderedPrompt
 
@@ -69,7 +69,9 @@ class OpenAIOracle:
         spec: ModelSpec,
         system_prompt: str | None = None,
     ) -> AsyncIterator[OracleEvent]:
-        effective_system = system_prompt if system_prompt is not None else SYSTEM_PROMPT
+        effective_system = (
+            system_prompt if system_prompt is not None else system_prompt_for(rendered.version)
+        )
         kwargs: dict[str, Any] = {
             "model": spec.model_id,
             "instructions": effective_system,

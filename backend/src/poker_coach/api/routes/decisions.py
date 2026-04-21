@@ -25,7 +25,7 @@ from poker_coach.api.schemas import (
 from poker_coach.db.tables import decisions, hands, sessions
 from poker_coach.ids import new_id
 from poker_coach.oracle.presets import MODEL_PRESETS
-from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
+from poker_coach.oracle.system_prompt import system_prompt_for
 from poker_coach.prompts.context import state_to_coach_variables
 from poker_coach.prompts.renderer import PromptRenderer
 
@@ -64,7 +64,7 @@ def create_decision(
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"prompt render failed: {exc}") from exc
 
-    system_prompt_snapshot = SYSTEM_PROMPT
+    system_prompt_snapshot = system_prompt_for(rendered.version)
     system_prompt_hash_snapshot = hashlib.sha256(system_prompt_snapshot.encode("utf-8")).hexdigest()
 
     with engine.begin() as conn:

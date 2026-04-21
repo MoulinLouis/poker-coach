@@ -37,7 +37,7 @@ from poker_coach.oracle.base import (
 )
 from poker_coach.oracle.pricing import PricingSnapshot, compute_cost
 from poker_coach.oracle.strategy_validator import normalize_strategy
-from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
+from poker_coach.oracle.system_prompt import system_prompt_for
 from poker_coach.oracle.tool_schema import anthropic_tool_spec
 from poker_coach.prompts.renderer import RenderedPrompt
 
@@ -70,7 +70,9 @@ class AnthropicOracle:
         spec: ModelSpec,
         system_prompt: str | None = None,
     ) -> AsyncIterator[OracleEvent]:
-        effective_system = system_prompt if system_prompt is not None else SYSTEM_PROMPT
+        effective_system = (
+            system_prompt if system_prompt is not None else system_prompt_for(rendered.version)
+        )
 
         # Anthropic requires max_tokens > thinking.budget_tokens on the
         # legacy "enabled" API (thinking tokens count against max_tokens).
