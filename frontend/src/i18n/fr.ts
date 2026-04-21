@@ -109,4 +109,11 @@ export const fr: Dict = {
     slotTurn: "turn",
     slotRiver: "river",
   },
+  handSummary: {
+    handLabel: "Main",
+    closed: "Terminée",
+    agreement: "Accord",
+    noAdvice: "Aucun conseil demandé pour cette main.",
+    nextHand: "Main suivante",
+  },
 };

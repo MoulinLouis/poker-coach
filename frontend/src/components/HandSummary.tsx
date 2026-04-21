@@ -1,4 +1,5 @@
 import type { GameState } from "../api/types";
+import { useLocale } from "../i18n";
 
 export function HandSummary({
   state,
@@ -9,6 +10,7 @@ export function HandSummary({
   agreement: { total: number; diverged: number };
   onNewHand: () => void;
 }) {
+  const { t } = useLocale();
   const rate =
     agreement.total === 0
       ? null
@@ -37,12 +39,12 @@ export function HandSummary({
     >
       <div className="flex flex-col gap-2">
         <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-[color:var(--color-parchment-dim)]">
-          Hand · {state.hand_id.slice(0, 8)} · Closed
+          {t("handSummary.handLabel")} · {state.hand_id.slice(0, 8)} · {t("handSummary.closed")}
         </span>
         {rate != null ? (
           <div className="flex items-baseline gap-3">
             <span className="text-sm text-[color:var(--color-parchment)]">
-              Agreement
+              {t("handSummary.agreement")}
             </span>
             <span
               className="text-[2rem] font-bold tabular-nums tracking-tight"
@@ -56,7 +58,7 @@ export function HandSummary({
           </div>
         ) : (
           <span className="text-sm text-[color:var(--color-parchment)]">
-            No advice requested this hand.
+            {t("handSummary.noAdvice")}
           </span>
         )}
       </div>
@@ -75,7 +77,7 @@ export function HandSummary({
           N
         </kbd>
         <span className="font-semibold text-sm tracking-tight">
-          Next hand
+          {t("handSummary.nextHand")}
         </span>
       </button>
     </div>

@@ -107,4 +107,11 @@ export const en = {
     slotTurn: "turn",
     slotRiver: "river",
   },
+  handSummary: {
+    handLabel: "Hand",
+    closed: "Closed",
+    agreement: "Agreement",
+    noAdvice: "No advice requested this hand.",
+    nextHand: "Next hand",
+  },
 } as const;
