@@ -4,6 +4,7 @@
 - Board: Ah 7c 2d
 - Button (small blind): hero
 - Pot (settled prior streets): 6.0 bb
+- Pot (live, including this street): 6.0 bb
 - Effective stack (starting): 100.0 bb
 - Hero stack behind: 97.0 bb
 - Villain stack behind: 97.0 bb
