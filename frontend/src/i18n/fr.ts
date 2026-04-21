@@ -95,4 +95,9 @@ export const fr: Dict = {
       complete: "Terminé",
     },
   },
+  seat: {
+    dealerButtonAria: "bouton du donneur",
+    bbUnit: "bb",
+    depth: "tapis",
+  },
 };

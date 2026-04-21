@@ -1,10 +1,12 @@
 import type { GameState, Seat as SeatId } from "../api/types";
+import { useLocale } from "../i18n";
 import { PlayingCard } from "./PlayingCard";
 
 function DealerButton() {
+  const { t } = useLocale();
   return (
     <span
-      aria-label="dealer button"
+      aria-label={t("seat.dealerButtonAria")}
       className="inline-flex items-center justify-center w-6 h-6 rounded-full shrink-0 select-none"
       style={{
         background:
@@ -37,6 +39,7 @@ export function Seat({
   state: GameState;
   showHole: boolean;
 }) {
+  const { t } = useLocale();
   const stack = state.stacks[id];
   const isToAct = state.to_act === id;
   const isButton = state.button === id;
@@ -74,7 +77,7 @@ export function Seat({
         <span className="text-[15px] font-semibold tracking-tight">{label}</span>
         <span className="font-mono text-[11px] tabular-nums text-[color:var(--color-gold-pale)]">
           {stackBb.toFixed(1)}
-          <span className="opacity-60 ml-0.5">bb</span>
+          <span className="opacity-60 ml-0.5">{t("seat.bbUnit")}</span>
         </span>
       </div>
 
@@ -121,7 +124,7 @@ export function Seat({
           ))}
         </div>
         <div className="flex items-center justify-between text-[8px] uppercase font-mono tracking-[0.25em] text-[color:var(--color-parchment-dim)]">
-          <span>depth</span>
+          <span>{t("seat.depth")}</span>
           <span className="tabular-nums">{depthPct.toFixed(0)}%</span>
         </div>
       </div>

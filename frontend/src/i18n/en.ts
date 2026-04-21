@@ -93,4 +93,9 @@ export const en = {
       complete: "Complete",
     },
   },
+  seat: {
+    dealerButtonAria: "dealer button",
+    bbUnit: "bb",
+    depth: "depth",
+  },
 } as const;
