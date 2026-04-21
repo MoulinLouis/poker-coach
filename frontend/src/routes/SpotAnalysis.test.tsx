@@ -22,6 +22,7 @@ beforeEach(() => {
       to_act: "hero",
       pot: 150,
       bb: 100,
+      ante: 0,
       stacks: { hero: 9850, villain: 9850 },
       committed: { hero: 50, villain: 100 },
       hero_hole: ["As", "Kd"],

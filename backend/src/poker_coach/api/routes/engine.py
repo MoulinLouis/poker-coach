@@ -27,6 +27,7 @@ router = APIRouter()
 class StartHandRequest(BaseModel):
     effective_stack: int
     bb: int
+    ante: int = 0
     button: Seat
     hero_hole: tuple[str, str] | None = None
     villain_hole: tuple[str, str] | None = None
@@ -48,15 +49,19 @@ class ApplyActionRequest(BaseModel):
 
 @router.post("/engine/start", response_model=EngineSnapshot)
 def start(body: StartHandRequest) -> EngineSnapshot:
-    state = start_hand(
-        effective_stack=body.effective_stack,
-        bb=body.bb,
-        button=body.button,
-        hero_hole=body.hero_hole,
-        villain_hole=body.villain_hole,
-        rng_seed=body.rng_seed,
-        deck_snapshot=body.deck_snapshot,
-    )
+    try:
+        state = start_hand(
+            effective_stack=body.effective_stack,
+            bb=body.bb,
+            ante=body.ante,
+            button=body.button,
+            hero_hole=body.hero_hole,
+            villain_hole=body.villain_hole,
+            rng_seed=body.rng_seed,
+            deck_snapshot=body.deck_snapshot,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return EngineSnapshot(state=state, legal_actions=legal_actions(state))
 
 

@@ -27,6 +27,7 @@ export interface LegalAction {
 export interface GameState {
   hand_id: string;
   bb: number;
+  ante: number;
   effective_stack: number;
   button: Seat;
   hero_hole: [string, string];

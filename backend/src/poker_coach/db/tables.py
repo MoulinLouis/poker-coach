@@ -44,6 +44,7 @@ hands = Table(
     Column("hand_id", String(32), primary_key=True),
     Column("session_id", String(32), ForeignKey("sessions.session_id"), nullable=False),
     Column("bb", Integer, nullable=False),
+    Column("ante", Integer, nullable=False, server_default="0"),
     Column("effective_stack_start", Integer, nullable=False),
     Column("deck_snapshot", JSON, nullable=True),
     Column("rng_seed", Integer, nullable=True),

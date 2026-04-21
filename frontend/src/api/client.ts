@@ -42,6 +42,7 @@ export async function createSession(mode: "live" | "spot"): Promise<{ session_id
 export async function createHand(input: {
   session_id: string;
   bb: number;
+  ante?: number;
   effective_stack_start: number;
   rng_seed?: number | null;
   deck_snapshot?: string[] | null;
@@ -52,6 +53,7 @@ export async function createHand(input: {
 export async function engineStart(input: {
   effective_stack: number;
   bb: number;
+  ante?: number;
   button: Seat;
   hero_hole?: [string, string] | null;
   villain_hole?: [string, string] | null;

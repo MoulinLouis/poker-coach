@@ -7,6 +7,7 @@ export interface SetupValues {
   heroHole: string;
   villainHole: string;
   effectiveStack: number;
+  ante: number;
   button: Seat;
   presetId: string;
   villainProfile: VillainProfile;
@@ -86,6 +87,20 @@ export function SetupPanel({
               value={values.effectiveStack}
               onChange={(e) =>
                 onChange({ effectiveStack: parseInt(e.target.value || "0", 10) })
+              }
+              className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
+              style={{
+                border: "1px solid rgba(201,162,94,0.22)",
+                background: "rgba(10,7,6,0.45)",
+              }}
+            />
+          </Field>
+          <Field label={t("setup.ante")} unit={t("setup.chipsUnit")}>
+            <input
+              type="number"
+              value={values.ante}
+              onChange={(e) =>
+                onChange({ ante: parseInt(e.target.value || "0", 10) })
               }
               className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
               style={{

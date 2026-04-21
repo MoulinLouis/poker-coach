@@ -45,6 +45,7 @@ export function LiveCoach() {
     heroHole: "AsKd",
     villainHole: "QcQh",
     effectiveStack: 10_000,
+    ante: 0,
     button: "hero",
     presetId: "",
     villainProfile: "unknown",
@@ -93,11 +94,13 @@ export function LiveCoach() {
       const hand = await createHand({
         session_id: s.sessionId,
         bb: 100,
+        ante: setup.ante,
         effective_stack_start: setup.effectiveStack,
       });
       const snap = await engineStart({
         effective_stack: setup.effectiveStack,
         bb: 100,
+        ante: setup.ante,
         button: setup.button,
         hero_hole: hero,
         villain_hole: villain,

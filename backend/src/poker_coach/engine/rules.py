@@ -35,6 +35,7 @@ def start_hand(
     effective_stack: int,
     bb: int,
     button: Seat,
+    ante: int = 0,
     hero_hole: tuple[str, str] | None = None,
     villain_hole: tuple[str, str] | None = None,
     rng_seed: int | None = None,
@@ -43,8 +44,12 @@ def start_hand(
 ) -> GameState:
     if bb < 2 or bb % 2 != 0:
         raise ValueError(f"bb ({bb}) must be a positive even integer")
-    if effective_stack <= bb:
-        raise ValueError(f"effective_stack ({effective_stack}) must exceed bb ({bb})")
+    if ante < 0:
+        raise ValueError(f"ante ({ante}) must be non-negative")
+    if effective_stack - bb - ante <= 0:
+        raise ValueError(
+            f"effective_stack ({effective_stack}) must cover bb ({bb}) + ante ({ante})"
+        )
 
     if rng_seed is not None and deck_snapshot is None:
         deck_snapshot = seeded_shuffle(rng_seed)
@@ -58,19 +63,21 @@ def start_hand(
 
     sb = bb // 2
     non_button = other_seat(button)
-    stacks = {button: effective_stack - sb, non_button: effective_stack - bb}
+    # BB-ante format: only the non-button (BB) seat posts the ante.
+    stacks = {button: effective_stack - sb, non_button: effective_stack - bb - ante}
     committed = {button: sb, non_button: bb}
 
     return GameState(
         hand_id=hand_id or uuid.uuid4().hex,
         bb=bb,
+        ante=ante,
         effective_stack=effective_stack,
         button=button,
         hero_hole=hero_hole,
         villain_hole=villain_hole,
         stacks=stacks,
         committed=committed,
-        pot=0,
+        pot=ante,
         street="preflop",
         to_act=button,
         last_aggressor=non_button,
@@ -93,6 +100,7 @@ def initial_state(state: GameState) -> GameState:
     return start_hand(
         effective_stack=state.effective_stack,
         bb=state.bb,
+        ante=state.ante,
         button=state.button,
         hero_hole=state.hero_hole,
         villain_hole=state.villain_hole,

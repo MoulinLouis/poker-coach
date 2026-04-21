@@ -13,6 +13,7 @@ export const en = {
     title: "Setup",
     newHand: "New hand",
     effectiveStack: "Effective stack",
+    ante: "Ante",
     chipsUnit: "chips",
     button: "Button",
     hero: "Hero",

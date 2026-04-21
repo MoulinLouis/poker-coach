@@ -48,6 +48,7 @@ def state_to_coach_variables(
     ]
     pot_bb = _bb(state.pot, bb)
     pot_bb_live = round((state.pot + sum(state.committed.values())) / bb, 2)
+    ante_bb = _bb(state.ante, bb)
     effective_bb = _bb(state.effective_stack, bb)
     # SPR uses live pot; guard against the preflop pre-action pot being ~0
     # so the ratio stays a meaningful scalar rather than exploding.
@@ -65,6 +66,7 @@ def state_to_coach_variables(
         "button": state.button,
         "pot_bb": pot_bb,
         "pot_bb_live": pot_bb_live,
+        "ante_bb": ante_bb,
         "effective_bb": effective_bb,
         "hero_stack_bb": _bb(state.stacks["hero"], bb),
         "villain_stack_bb": _bb(state.stacks["villain"], bb),

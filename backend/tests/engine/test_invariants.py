@@ -98,12 +98,17 @@ def played_hand(draw: st.DrawFn) -> list[GameState]:
     bb = draw(st.sampled_from([100, 200, 1_000]))
     if effective_stack <= bb:
         effective_stack = bb + bb
+    ante = draw(st.sampled_from([0, 50]))
+    # Ensure BB stack can cover blind + ante.
+    if effective_stack - bb - ante <= 0:
+        effective_stack = bb + ante + bb
     button: Seat = draw(st.sampled_from(["hero", "villain"]))
     rng_seed = draw(st.integers(min_value=0, max_value=2**30))
 
     state = start_hand(
         effective_stack=effective_stack,
         bb=bb,
+        ante=ante,
         button=button,
         rng_seed=rng_seed,
     )

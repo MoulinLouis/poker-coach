@@ -15,6 +15,7 @@ export const fr: Dict = {
     title: "Configuration",
     newHand: "Nouvelle main",
     effectiveStack: "Stack effectif",
+    ante: "Ante",
     chipsUnit: "jetons",
     button: "Bouton",
     hero: "Hero",

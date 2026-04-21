@@ -47,6 +47,7 @@ class GameState(BaseModel):
 
     hand_id: str
     bb: int
+    ante: int = 0
     effective_stack: int
     button: Seat
     hero_hole: tuple[str, str]

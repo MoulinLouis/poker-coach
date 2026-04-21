@@ -26,6 +26,7 @@ def create_hand(
                 hand_id=hand_id,
                 session_id=body.session_id,
                 bb=body.bb,
+                ante=body.ante,
                 effective_stack_start=body.effective_stack_start,
                 rng_seed=body.rng_seed,
                 deck_snapshot=body.deck_snapshot,

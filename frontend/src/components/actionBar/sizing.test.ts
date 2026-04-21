@@ -12,6 +12,7 @@ function baseState(overrides: Partial<GameState> = {}): GameState {
   return {
     hand_id: "h",
     bb: 100,
+    ante: 0,
     effective_stack: 10000,
     button: "hero",
     hero_hole: ["As", "Kd"],

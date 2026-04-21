@@ -22,6 +22,7 @@ def test_coach_v3_renders_with_v2_variables_plus_bb_chips() -> None:
         "button": "hero",
         "pot_bb": 6.0,
         "pot_bb_live": 6.0,
+        "ante_bb": 0.0,
         "effective_bb": 100.0,
         "hero_stack_bb": 97.0,
         "villain_stack_bb": 97.0,
@@ -68,3 +69,25 @@ def test_v3_renders_live_pot() -> None:
     renderer = PromptRenderer(REPO_ROOT / "prompts")
     rendered = renderer.render("coach", "v3", variables)
     assert "11.5" in rendered.rendered_prompt
+
+
+def test_v3_renders_ante_block() -> None:
+    state = start_hand(
+        effective_stack=10_000,
+        bb=100,
+        ante=50,
+        button="hero",
+        hero_hole=("As", "Kd"),
+        villain_hole=("Qc", "Qh"),
+    )
+    variables = state_to_coach_variables(
+        state,
+        villain_profile="unknown",
+        villain_stats={"hands_played": 0},
+        include_bb_chips=True,
+    )
+    assert variables["ante_bb"] == pytest.approx(0.5)
+
+    renderer = PromptRenderer(REPO_ROOT / "prompts")
+    rendered = renderer.render("coach", "v3", variables)
+    assert "Ante (BB posts): 0.5 bb" in rendered.rendered_prompt
