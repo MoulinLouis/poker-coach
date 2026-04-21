@@ -27,7 +27,7 @@ MODEL_PRESETS: dict[str, ModelSpec] = {
         model_id="claude-opus-4-7",
         thinking_mode="adaptive",
         reasoning_effort="high",
-        temperature=1.0,
+        temperature=0.2,
     ),
     # Sonnet 4.6 runs *without* thinking: observed cost at
     # thinking_budget=4096 was ~$0.028/call (output dominated by thinking
