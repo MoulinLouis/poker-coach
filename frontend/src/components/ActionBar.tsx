@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Action, GameState, LegalAction, Seat } from "../api/types";
+import { useLocale } from "../i18n";
 import {
   clampChips,
   getPresets,
@@ -25,6 +26,7 @@ export function ActionBar({
   onRequestAdvice?: () => void;
   adviceDisabled?: boolean;
 }) {
+  const { t } = useLocale();
   const lbt = useMemo(() => legalByType(legal), [legal]);
   const sized = sizeableType(lbt);
   const sizingLegal = sized ? lbt[sized]! : null;
@@ -97,17 +99,17 @@ export function ActionBar({
           />
           <div className="flex flex-col -space-y-0.5">
             <span className="text-[9px] uppercase tracking-[0.35em] font-mono text-[color:var(--color-parchment-dim)]">
-              {isHero ? "Act" : "Observe"}
+              {isHero ? t("actionBar.actKicker") : t("actionBar.observeKicker")}
             </span>
             <span className="text-[15px] font-semibold tracking-tight text-[color:var(--color-bone)]">
-              {isHero ? "Your turn" : "Villain to act"}
+              {isHero ? t("actionBar.yourTurn") : t("actionBar.villainToAct")}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {actor === "villain" && (
             <span className="text-[11px] text-[color:var(--color-parchment)]">
-              click what villain just did
+              {t("actionBar.villainHint")}
             </span>
           )}
           {onRequestAdvice && (
@@ -122,7 +124,7 @@ export function ActionBar({
                 border: "1px solid rgba(201,162,94,0.45)",
               }}
             >
-              Advise
+              {t("actionBar.advise")}
             </button>
           )}
         </div>
@@ -147,17 +149,17 @@ export function ActionBar({
           visible={Boolean(lbt.fold)}
           onClick={() => fireFixed("fold")}
           tone="fold"
-          label="Fold"
+          label={t("actionBar.fold")}
         />
         <ActionSlot
           testId={lbt.check ? "action-check" : "action-call"}
           visible={Boolean(lbt.check || lbt.call)}
           onClick={() => fireFixed(lbt.check ? "check" : "call")}
           tone="passive"
-          label={lbt.check ? "Check" : "Call"}
+          label={lbt.check ? t("actionBar.check") : t("actionBar.call")}
           sub={
             !lbt.check
-              ? `${(callDeltaChips / bb).toFixed(1)} bb`
+              ? `${(callDeltaChips / bb).toFixed(1)} ${t("actionBar.bbUnit")}`
               : undefined
           }
         />
@@ -168,20 +170,20 @@ export function ActionBar({
             tone={atMax && lbt.allin ? "allin" : "aggressive"}
             label={
               atMax && lbt.allin
-                ? "All-in"
+                ? t("actionBar.allIn")
                 : sized === "raise"
-                  ? "Raise to"
-                  : "Bet"
+                  ? t("actionBar.raiseTo")
+                  : t("actionBar.bet")
             }
-            sub={`${sizeBb.toFixed(1)} bb`}
+            sub={`${sizeBb.toFixed(1)} ${t("actionBar.bbUnit")}`}
           />
         ) : lbt.allin ? (
           <ChipAction
             testId="action-allin"
             onClick={fireAllIn}
             tone="allin"
-            label="All-in"
-            sub={`${((lbt.allin.max_to ?? 0) / bb).toFixed(1)} bb`}
+            label={t("actionBar.allIn")}
+            sub={`${((lbt.allin.max_to ?? 0) / bb).toFixed(1)} ${t("actionBar.bbUnit")}`}
           />
         ) : (
           <div />
@@ -210,6 +212,7 @@ function SizingPanel({
   sizeBb: number;
   potPct: number | null;
 }) {
+  const { t } = useLocale();
   const min = la.min_to!;
   const max = la.max_to!;
   const activeLabel = presets.find((p) => p.toChips === sizeChips)?.label;
@@ -236,10 +239,10 @@ function SizingPanel({
     >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-[color:var(--color-parchment-dim)]">
-          Sizing · Presets
+          {t("actionBar.sizingHeader")}
         </span>
         <span className="font-mono text-[10px] tabular-nums text-[color:var(--color-parchment)]">
-          {min / state.bb}–{(max / state.bb).toFixed(0)} bb
+          {min / state.bb}–{(max / state.bb).toFixed(0)} {t("actionBar.bbUnit")}
         </span>
       </div>
 
@@ -284,7 +287,7 @@ function SizingPanel({
           data-testid="size-minus"
           onClick={() => onNudge(-state.bb)}
           disabled={sizeChips <= min}
-          aria-label="Decrease size by 1bb"
+          aria-label={t("actionBar.decreaseAria")}
           className="h-9 w-9 rounded-full font-display text-xl leading-none transition disabled:opacity-30"
           style={{
             color: "var(--color-bone)",
@@ -332,7 +335,7 @@ function SizingPanel({
             value={sizeChips}
             onChange={(e) => onSetChips(Number(e.target.value))}
             data-testid="size-slider"
-            aria-label="Bet size in chips"
+            aria-label={t("actionBar.sliderAria")}
             className="relative w-full appearance-none bg-transparent cursor-pointer
               [&::-webkit-slider-thumb]:appearance-none
               [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
@@ -350,7 +353,7 @@ function SizingPanel({
           data-testid="size-plus"
           onClick={() => onNudge(state.bb)}
           disabled={sizeChips >= max}
-          aria-label="Increase size by 1bb"
+          aria-label={t("actionBar.increaseAria")}
           className="h-9 w-9 rounded-full font-display text-xl leading-none transition disabled:opacity-30"
           style={{
             color: "var(--color-bone)",
@@ -375,7 +378,7 @@ function SizingPanel({
                 if (e.key === "Escape") { setEditing(false); }
               }}
               autoFocus
-              aria-label="Bet size in bb"
+              aria-label={t("actionBar.readoutAria")}
               className="text-[2rem] font-bold tabular-nums bg-transparent border-b-2 outline-none w-24 transition-colors tracking-tight"
               style={{
                 color: "var(--color-gold-bright)",
@@ -388,24 +391,24 @@ function SizingPanel({
               onClick={() => { setEditing(true); setRawInput(sizeBb.toFixed(1)); }}
               className="text-[2rem] font-bold tabular-nums cursor-text select-none transition-colors leading-none tracking-tight"
               style={{ color: "var(--color-bone)" }}
-              title="Click to type a size"
+              title={t("actionBar.readoutTitle")}
             >
               {sizeBb.toFixed(1)}
             </span>
           )}
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
-            bb
+            {t("actionBar.bbUnit")}
           </span>
         </div>
         <div className="flex items-baseline gap-3 font-mono text-[10px] tabular-nums">
           <span className="text-[color:var(--color-parchment-dim)]">
-            {sizeChips} chips
+            {sizeChips} {t("actionBar.chipsSuffix")}
           </span>
           {potPct != null && (
             <>
               <span className="text-[color:var(--color-gold-shadow)]">·</span>
               <span className="text-[color:var(--color-gold-pale)]">
-                {Math.round(potPct)}% pot
+                {Math.round(potPct)}% {t("actionBar.potSuffix")}
               </span>
             </>
           )}
