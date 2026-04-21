@@ -150,7 +150,7 @@ export function LiveCoach() {
         hand_id: session.handId,
         model_preset: setup.presetId,
         prompt_name: "coach",
-        prompt_version: "v2",
+        prompt_version: "v3",
         game_state: snapshot.state,
         villain_profile: setup.villainProfile,
       });
