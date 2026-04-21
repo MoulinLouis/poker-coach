@@ -24,6 +24,7 @@ from typing import Any, Protocol
 
 from pydantic import ValidationError
 
+from poker_coach.engine.models import LegalAction
 from poker_coach.oracle.base import (
     Advice,
     ModelSpec,
@@ -35,6 +36,7 @@ from poker_coach.oracle.base import (
     UsageComplete,
 )
 from poker_coach.oracle.pricing import PricingSnapshot, compute_cost
+from poker_coach.oracle.strategy_validator import normalize_strategy
 from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
 from poker_coach.oracle.tool_schema import anthropic_tool_spec
 from poker_coach.prompts.renderer import RenderedPrompt
@@ -92,7 +94,7 @@ class AnthropicOracle:
                 }
             ],
             "messages": [{"role": "user", "content": rendered.rendered_prompt}],
-            "tools": [anthropic_tool_spec()],
+            "tools": [anthropic_tool_spec(rendered.version)],
         }
 
         # tool_choice rules:
@@ -149,6 +151,17 @@ class AnthropicOracle:
             return
 
         raw_input = _coerce_tool_input(tool_use_block)
+        if rendered.version == "v3":
+            try:
+                raw_input = _apply_v3_strategy(raw_input, rendered)
+            except (ValueError, KeyError, TypeError) as exc:
+                yield OracleError(
+                    kind="invalid_schema",
+                    message=f"strategy validation failed: {exc}",
+                    raw_tool_input=raw_input,
+                )
+                return
+
         try:
             advice = Advice.model_validate(raw_input)
         except ValidationError as exc:
@@ -193,6 +206,39 @@ class AnthropicOracle:
             cache_creation_input_tokens=cache_creation,
             cache_read_input_tokens=cache_read,
         )
+
+
+def _apply_v3_strategy(raw_input: dict[str, Any], rendered: RenderedPrompt) -> dict[str, Any]:
+    """Validate `strategy` and derive top-level action/to_amount_bb from the argmax.
+
+    Reads `bb_chips` and `legal_actions` (BB-denominated) out of the rendered
+    prompt's variables sidecar. `legal_actions` is converted to chip-denominated
+    LegalAction so the validator can range-check bet/raise sizings.
+    """
+    bb_chips = int(rendered.variables["bb_chips"])
+    legal: list[LegalAction] = []
+    for la in rendered.variables.get("legal_actions", []):
+        min_to_bb = la.get("min_to_bb")
+        max_to_bb = la.get("max_to_bb")
+        legal.append(
+            LegalAction(
+                type=la["type"],
+                min_to=round(min_to_bb * bb_chips) if min_to_bb is not None else None,
+                max_to=round(max_to_bb * bb_chips) if max_to_bb is not None else None,
+            )
+        )
+    strategy = normalize_strategy(
+        raw_input.get("strategy", []) or [],
+        legal_actions=legal,
+        bb_chips=bb_chips,
+    )
+    argmax = strategy[0]
+    return {
+        **raw_input,
+        "strategy": [e.model_dump(mode="json") for e in strategy],
+        "action": argmax.action,
+        "to_amount_bb": argmax.to_amount_bb,
+    }
 
 
 def _find_tool_use(message: Any) -> Any | None:

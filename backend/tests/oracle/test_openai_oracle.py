@@ -237,6 +237,88 @@ async def test_provider_exception_emits_oracle_error() -> None:
     assert emitted[0].kind == "provider_error"
 
 
+def _v3_rendered(legal: list[dict[str, Any]], bb_chips: int = 100) -> RenderedPrompt:
+    return RenderedPrompt(
+        pack="coach",
+        version="v3",
+        template_hash="a" * 64,
+        template_raw="---\nname: coach\nversion: v3\n---\nbody",
+        rendered_prompt="body",
+        variables={"bb_chips": bb_chips, "legal_actions": legal},
+    )
+
+
+@pytest.mark.asyncio
+async def test_v3_parses_strategy_and_derives_argmax() -> None:
+    function_call = FakeFunctionCall(
+        type="function_call",
+        name="submit_advice",
+        arguments=(
+            '{"action":null,"to_amount_bb":null,'
+            '"reasoning":"Polarized c-bet.","confidence":"medium",'
+            '"strategy":['
+            '{"action":"check","to_amount_bb":null,"frequency":0.35},'
+            '{"action":"bet","to_amount_bb":3.0,"frequency":0.65}'
+            "]}"
+        ),
+    )
+    response = FakeResponse(
+        output=[function_call],
+        usage=FakeUsage(input_tokens=100, output_tokens=100),
+    )
+    rendered = _v3_rendered(
+        [
+            {"type": "check", "min_to_bb": None, "max_to_bb": None},
+            {"type": "bet", "min_to_bb": 1.0, "max_to_bb": 97.0},
+        ]
+    )
+    oracle = OpenAIOracle(fake_stream_caller([], response), sample_pricing())
+
+    emitted = [e async for e in oracle.advise_stream(rendered, sample_spec())]
+    tool_events = [e for e in emitted if isinstance(e, ToolCallComplete)]
+    assert len(tool_events) == 1
+
+    advice = tool_events[0].advice
+    assert advice.strategy is not None
+    assert len(advice.strategy) == 2
+    assert advice.strategy[0].action == "bet"
+    assert advice.strategy[0].frequency == pytest.approx(0.65)
+    assert advice.action == "bet"
+    assert advice.to_amount_bb == 3.0
+
+
+@pytest.mark.asyncio
+async def test_v3_rejects_invalid_strategy() -> None:
+    function_call = FakeFunctionCall(
+        type="function_call",
+        name="submit_advice",
+        arguments=(
+            '{"action":null,"to_amount_bb":null,'
+            '"reasoning":"Invalid.","confidence":"low",'
+            '"strategy":['
+            '{"action":"check","to_amount_bb":null,"frequency":0.3},'
+            '{"action":"bet","to_amount_bb":3.0,"frequency":0.3}'
+            "]}"
+        ),
+    )
+    response = FakeResponse(
+        output=[function_call],
+        usage=FakeUsage(input_tokens=100, output_tokens=100),
+    )
+    rendered = _v3_rendered(
+        [
+            {"type": "check", "min_to_bb": None, "max_to_bb": None},
+            {"type": "bet", "min_to_bb": 1.0, "max_to_bb": 97.0},
+        ]
+    )
+    oracle = OpenAIOracle(fake_stream_caller([], response), sample_pricing())
+
+    emitted = [e async for e in oracle.advise_stream(rendered, sample_spec())]
+    assert not any(isinstance(e, ToolCallComplete) for e in emitted)
+    errors = [e for e in emitted if isinstance(e, OracleError) and e.kind == "invalid_schema"]
+    assert len(errors) == 1
+
+
 @pytest.mark.asyncio
 async def test_openai_oracle_passes_system_prompt_as_instructions() -> None:
     from poker_coach.oracle.system_prompt import SYSTEM_PROMPT

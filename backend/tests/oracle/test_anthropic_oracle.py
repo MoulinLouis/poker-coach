@@ -291,6 +291,86 @@ async def test_anthropic_oracle_applies_cache_write_premium_on_first_call() -> N
     assert round(usage.cost_usd, 5) == 0.027
 
 
+def _v3_rendered(legal: list[dict[str, Any]], bb_chips: int = 100) -> RenderedPrompt:
+    return RenderedPrompt(
+        pack="coach",
+        version="v3",
+        template_hash="a" * 64,
+        template_raw="---\nname: coach\nversion: v3\n---\nprompt body",
+        rendered_prompt="prompt body",
+        variables={"bb_chips": bb_chips, "legal_actions": legal},
+    )
+
+
+@pytest.mark.asyncio
+async def test_v3_parses_strategy_and_derives_argmax() -> None:
+    tool_input = {
+        "action": None,
+        "to_amount_bb": None,
+        "reasoning": "Polarized c-bet.",
+        "confidence": "medium",
+        "strategy": [
+            {"action": "check", "to_amount_bb": None, "frequency": 0.35},
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 0.65},
+        ],
+    }
+    message = FakeMessage(
+        content=[tool_use_block(tool_input)],
+        usage=FakeUsage(input_tokens=100, output_tokens=100),
+    )
+    rendered = _v3_rendered(
+        [
+            {"type": "check", "min_to_bb": None, "max_to_bb": None},
+            {"type": "bet", "min_to_bb": 1.0, "max_to_bb": 97.0},
+        ]
+    )
+    oracle = AnthropicOracle(fake_stream_caller([], message), sample_pricing())
+
+    emitted = [e async for e in oracle.advise_stream(rendered, sample_spec())]
+    tool_events = [e for e in emitted if isinstance(e, ToolCallComplete)]
+    assert len(tool_events) == 1
+
+    advice = tool_events[0].advice
+    assert advice.strategy is not None
+    assert len(advice.strategy) == 2
+    # Sorted desc by frequency: argmax first.
+    assert advice.strategy[0].action == "bet"
+    assert advice.strategy[0].frequency == pytest.approx(0.65)
+    # Server-derived top-level fields match argmax.
+    assert advice.action == "bet"
+    assert advice.to_amount_bb == 3.0
+
+
+@pytest.mark.asyncio
+async def test_v3_rejects_invalid_strategy() -> None:
+    tool_input = {
+        "action": None,
+        "to_amount_bb": None,
+        "reasoning": "Invalid.",
+        "confidence": "low",
+        "strategy": [
+            {"action": "check", "to_amount_bb": None, "frequency": 0.3},
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 0.3},
+        ],
+    }
+    message = FakeMessage(
+        content=[tool_use_block(tool_input)],
+        usage=FakeUsage(input_tokens=100, output_tokens=100),
+    )
+    rendered = _v3_rendered(
+        [
+            {"type": "check", "min_to_bb": None, "max_to_bb": None},
+            {"type": "bet", "min_to_bb": 1.0, "max_to_bb": 97.0},
+        ]
+    )
+    oracle = AnthropicOracle(fake_stream_caller([], message), sample_pricing())
+
+    emitted = [e async for e in oracle.advise_stream(rendered, sample_spec())]
+    assert not any(isinstance(e, ToolCallComplete) for e in emitted)
+    errors = [e for e in emitted if isinstance(e, OracleError) and e.kind == "invalid_schema"]
+    assert len(errors) == 1
+
+
 @pytest.mark.asyncio
 async def test_ignores_non_thinking_deltas() -> None:
     events = [

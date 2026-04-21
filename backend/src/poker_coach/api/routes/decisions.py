@@ -48,13 +48,15 @@ def create_decision(
     renderer = PromptRenderer(prompts_root)
     try:
         villain_stats_payload: dict[str, object] | None = None
-        if body.prompt_version == "v2":
+        uses_villain_block = body.prompt_version in ("v2", "v3")
+        if uses_villain_block:
             stats = compute_villain_stats(engine, body.session_id, limit=50)
             villain_stats_payload = stats.as_prompt_payload()
         variables = state_to_coach_variables(
             body.game_state,
-            villain_profile=body.villain_profile if body.prompt_version == "v2" else None,
+            villain_profile=body.villain_profile if uses_villain_block else None,
             villain_stats=villain_stats_payload,
+            include_bb_chips=body.prompt_version == "v3",
         )
         rendered = renderer.render(body.prompt_name, body.prompt_version, variables)
     except FileNotFoundError as exc:

@@ -27,6 +27,7 @@ def state_to_coach_variables(
     state: GameState,
     villain_profile: VillainProfile | None = None,
     villain_stats: dict[str, Any] | None = None,
+    include_bb_chips: bool = False,
 ) -> dict[str, Any]:
     bb = state.bb
     history = [
@@ -76,4 +77,6 @@ def state_to_coach_variables(
         result["villain_profile"] = villain_profile
     if villain_stats is not None:
         result["villain_stats"] = villain_stats
+    if include_bb_chips:
+        result["bb_chips"] = state.bb
     return result
