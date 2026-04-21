@@ -28,6 +28,8 @@ def state_to_coach_variables(
     villain_profile: VillainProfile | None = None,
     villain_stats: dict[str, Any] | None = None,
     include_bb_chips: bool = False,
+    payout_structure: list[float] | None = None,
+    blind_level_label: str | None = None,
 ) -> dict[str, Any]:
     bb = state.bb
     history = [
@@ -87,4 +89,8 @@ def state_to_coach_variables(
         result["villain_stats"] = villain_stats
     if include_bb_chips:
         result["bb_chips"] = state.bb
+    # Always include ICM keys so StrictUndefined rendering doesn't fail when the
+    # template declares them. None/"" signals "no tournament context".
+    result["payout_structure"] = payout_structure
+    result["blind_level_label"] = blind_level_label or ""
     return result

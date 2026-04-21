@@ -35,6 +35,8 @@ sessions = Table(
     Column("ended_at", DateTime, nullable=True),
     Column("mode", String(16), nullable=False),  # 'live' | 'spot'
     Column("notes", Text, nullable=True),
+    Column("payout_structure", JSON, nullable=True),
+    Column("blind_level_label", String(64), nullable=True),
 )
 
 

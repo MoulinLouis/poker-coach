@@ -12,6 +12,9 @@ export interface SetupValues {
   button: Seat;
   presetId: string;
   villainProfile: VillainProfile;
+  firstPayoutPct: number;
+  secondPayoutPct: number;
+  blindLevel: string;
 }
 
 export function SetupPanel({
@@ -193,6 +196,57 @@ export function SetupPanel({
             </span>{" "}
             {t("setup.chipsUnit")}
           </div>
+          <details className="col-span-2 sm:col-span-4">
+            <summary className="cursor-pointer font-mono text-[9px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)] hover:text-[color:var(--color-bone)]">
+              {t("setup.tournamentSection")}
+            </summary>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-3">
+              <Field label={t("setup.firstPayout")} unit="%">
+                <input
+                  type="number"
+                  value={values.firstPayoutPct}
+                  onChange={(e) =>
+                    onChange({
+                      firstPayoutPct: parseInt(e.target.value || "0", 10),
+                    })
+                  }
+                  className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
+                  style={{
+                    border: "1px solid rgba(201,162,94,0.22)",
+                    background: "rgba(10,7,6,0.45)",
+                  }}
+                />
+              </Field>
+              <Field label={t("setup.secondPayout")} unit="%">
+                <input
+                  type="number"
+                  value={values.secondPayoutPct}
+                  onChange={(e) =>
+                    onChange({
+                      secondPayoutPct: parseInt(e.target.value || "0", 10),
+                    })
+                  }
+                  className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
+                  style={{
+                    border: "1px solid rgba(201,162,94,0.22)",
+                    background: "rgba(10,7,6,0.45)",
+                  }}
+                />
+              </Field>
+              <Field label={t("setup.blindLevel")}>
+                <input
+                  type="text"
+                  value={values.blindLevel}
+                  onChange={(e) => onChange({ blindLevel: e.target.value })}
+                  className="w-full bg-transparent px-3 py-2 rounded-md font-mono text-[11px] text-[color:var(--color-bone)] outline-none transition-colors"
+                  style={{
+                    border: "1px solid rgba(201,162,94,0.22)",
+                    background: "rgba(10,7,6,0.45)",
+                  }}
+                />
+              </Field>
+            </div>
+          </details>
         </div>
 
         {/* right column — card picker area */}

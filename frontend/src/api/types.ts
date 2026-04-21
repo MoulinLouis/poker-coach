@@ -131,6 +131,14 @@ export interface DecisionDetail extends DecisionListRow {
   retry_of: string | null;
 }
 
+export interface SessionDetail {
+  session_id: string;
+  mode: string;
+  notes: string | null;
+  payout_structure: number[] | null;
+  blind_level_label: string | null;
+}
+
 export interface PackVersion {
   version: string;
   description: string | null;

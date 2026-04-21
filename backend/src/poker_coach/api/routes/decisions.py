@@ -52,11 +52,22 @@ def create_decision(
         if uses_villain_block:
             stats = compute_villain_stats(engine, body.session_id, limit=50)
             villain_stats_payload = stats.as_prompt_payload()
+        with engine.connect() as conn:
+            session_icm_row = conn.execute(
+                select(
+                    sessions.c.payout_structure,
+                    sessions.c.blind_level_label,
+                ).where(sessions.c.session_id == body.session_id)
+            ).first()
+        payout_structure = session_icm_row.payout_structure if session_icm_row else None
+        blind_level_label = session_icm_row.blind_level_label if session_icm_row else None
         variables = state_to_coach_variables(
             body.game_state,
             villain_profile=body.villain_profile if uses_villain_block else None,
             villain_stats=villain_stats_payload,
             include_bb_chips=body.prompt_version == "v3",
+            payout_structure=payout_structure,
+            blind_level_label=blind_level_label,
         )
         rendered = renderer.render(body.prompt_name, body.prompt_version, variables)
     except FileNotFoundError as exc:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from poker_coach.engine.models import Action, GameState
 from poker_coach.prompts.context import VillainProfile
@@ -28,10 +28,32 @@ DecisionStatus = Literal[
 class CreateSessionRequest(BaseModel):
     mode: Literal["live", "spot"]
     notes: str | None = None
+    payout_structure: list[float] | None = None
+    blind_level_label: str | None = None
+
+    @field_validator("payout_structure")
+    @classmethod
+    def _validate_payouts(cls, v: list[float] | None) -> list[float] | None:
+        if v is None:
+            return None
+        if any(x < 0 for x in v):
+            raise ValueError("payout_structure entries must be non-negative")
+        total = sum(v)
+        if abs(total - 1.0) > 0.001:
+            raise ValueError(f"payout_structure must sum to 1.0 (got {total:.3f})")
+        return v
 
 
 class CreateSessionResponse(BaseModel):
     session_id: str
+
+
+class SessionDetail(BaseModel):
+    session_id: str
+    mode: str
+    notes: str | None
+    payout_structure: list[float] | None
+    blind_level_label: str | None
 
 
 class CreateHandRequest(BaseModel):

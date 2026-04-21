@@ -40,6 +40,8 @@ def test_coach_v3_renders_with_v2_variables_plus_bb_chips() -> None:
         "villain_profile": "unknown",
         "villain_stats": {"hands_played": 0},
         "bb_chips": 100,
+        "payout_structure": None,
+        "blind_level_label": "",
     }
     rendered = renderer.render("coach", "v3", variables)
     assert rendered.version == "v3"
@@ -71,6 +73,48 @@ def test_v3_renders_live_pot() -> None:
     renderer = PromptRenderer(REPO_ROOT / "prompts")
     rendered = renderer.render("coach", "v3", variables)
     assert "11.5" in rendered.rendered_prompt
+
+
+def test_v3_renders_payout_structure_when_provided() -> None:
+    state = start_hand(
+        effective_stack=10_000,
+        bb=100,
+        button="hero",
+        hero_hole=("As", "Kd"),
+        villain_hole=("Qc", "Qh"),
+    )
+    variables = state_to_coach_variables(
+        state,
+        villain_profile="unknown",
+        villain_stats={"hands_played": 0},
+        include_bb_chips=True,
+        payout_structure=[0.65, 0.35],
+        blind_level_label="50/100 + 100 ante",
+    )
+    renderer = PromptRenderer(REPO_ROOT / "prompts")
+    rendered = renderer.render("coach", "v3", variables)
+    assert "Payout structure" in rendered.rendered_prompt
+    assert "0.65" in rendered.rendered_prompt
+    assert "50/100" in rendered.rendered_prompt
+
+
+def test_v3_omits_payout_block_when_not_provided() -> None:
+    state = start_hand(
+        effective_stack=10_000,
+        bb=100,
+        button="hero",
+        hero_hole=("As", "Kd"),
+        villain_hole=("Qc", "Qh"),
+    )
+    variables = state_to_coach_variables(
+        state,
+        villain_profile="unknown",
+        villain_stats={"hands_played": 0},
+        include_bb_chips=True,
+    )
+    renderer = PromptRenderer(REPO_ROOT / "prompts")
+    rendered = renderer.render("coach", "v3", variables)
+    assert "Tournament context" not in rendered.rendered_prompt
 
 
 def test_v3_renders_ante_block() -> None:

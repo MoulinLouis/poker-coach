@@ -87,7 +87,7 @@ export function SpotAnalysis() {
 
   const initSession = useCallback(async (): Promise<string> => {
     if (session) return session;
-    const { session_id } = await createSession("spot");
+    const { session_id } = await createSession({ mode: "spot" });
     setSession(session_id);
     return session_id;
   }, [session]);

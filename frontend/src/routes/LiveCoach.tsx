@@ -50,6 +50,9 @@ export function LiveCoach() {
     button: "hero",
     presetId: "",
     villainProfile: "unknown",
+    firstPayoutPct: 0,
+    secondPayoutPct: 0,
+    blindLevel: "",
   });
   const [snapshot, setSnapshot] = useState<EngineSnapshot | null>(null);
   const [decisionId, setDecisionId] = useState<string | null>(null);
@@ -73,11 +76,21 @@ export function LiveCoach() {
 
   const startSessionIfNeeded = useCallback(async (): Promise<SessionState> => {
     if (session) return session;
-    const { session_id } = await createSession("live");
+    const first = setup.firstPayoutPct;
+    const second = setup.secondPayoutPct;
+    const payout_structure =
+      first > 0 && second > 0 && Math.abs(first + second - 100) < 0.5
+        ? [first / 100, second / 100]
+        : null;
+    const { session_id } = await createSession({
+      mode: "live",
+      payout_structure,
+      blind_level_label: setup.blindLevel || null,
+    });
     const next: SessionState = { sessionId: session_id, handId: null };
     setSession(next);
     return next;
-  }, [session]);
+  }, [session, setup.firstPayoutPct, setup.secondPayoutPct, setup.blindLevel]);
 
   const newHand = useCallback(async () => {
     setError(null);

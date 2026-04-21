@@ -9,6 +9,7 @@ import type {
   PresetsResponse,
   PromptDetail,
   Seat,
+  SessionDetail,
   VillainProfile,
 } from "./types";
 
@@ -35,8 +36,17 @@ export async function listPresets(): Promise<PresetsResponse> {
   return getJSON<PresetsResponse>("/api/presets");
 }
 
-export async function createSession(mode: "live" | "spot"): Promise<{ session_id: string }> {
-  return postJSON("/api/sessions", { mode });
+export async function createSession(input: {
+  mode: "live" | "spot";
+  notes?: string | null;
+  payout_structure?: number[] | null;
+  blind_level_label?: string | null;
+}): Promise<{ session_id: string }> {
+  return postJSON("/api/sessions", input);
+}
+
+export async function getSession(sessionId: string): Promise<SessionDetail> {
+  return getJSON<SessionDetail>(`/api/sessions/${sessionId}`);
 }
 
 export async function createHand(input: {
