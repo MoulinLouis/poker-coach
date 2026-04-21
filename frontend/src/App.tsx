@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { CostFooter } from "./components/CostFooter";
+import { LocaleToggle } from "./components/LocaleToggle";
+import { useLocale } from "./i18n";
+import type { DictKey } from "./i18n";
 import { History } from "./routes/History";
 import { LiveCoach } from "./routes/LiveCoach";
 import { Prompts } from "./routes/Prompts";
@@ -7,15 +10,16 @@ import { SpotAnalysis } from "./routes/SpotAnalysis";
 
 type Route = "live" | "spot" | "history" | "prompts";
 
-const ROUTES: { value: Route; label: string; no: string }[] = [
-  { value: "live", label: "Live Coach", no: "I" },
-  { value: "spot", label: "Spot Analysis", no: "II" },
-  { value: "history", label: "History", no: "III" },
-  { value: "prompts", label: "Prompts", no: "IV" },
+const ROUTES: { value: Route; labelKey: DictKey; no: string }[] = [
+  { value: "live", labelKey: "nav.live", no: "I" },
+  { value: "spot", labelKey: "nav.spot", no: "II" },
+  { value: "history", labelKey: "nav.history", no: "III" },
+  { value: "prompts", labelKey: "nav.prompts", no: "IV" },
 ];
 
 export function App() {
   const [route, setRoute] = useState<Route>("live");
+  const { t } = useLocale();
   return (
     <div className="min-h-screen pb-20 text-[color:var(--color-bone)] overflow-x-hidden">
       <header className="sticky top-0 z-20 backdrop-blur-xl bg-[color:var(--color-ink)]/70 border-b border-[color:var(--color-gold-shadow)]/60">
@@ -27,16 +31,18 @@ export function App() {
                 key={r.value}
                 current={route}
                 value={r.value}
-                label={r.label}
+                label={t(r.labelKey)}
                 no={r.no}
                 onSelect={setRoute}
               />
             ))}
           </nav>
-          <div className="ml-auto hidden md:flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-parchment-dim)]">
-            <span>Heads-Up · No Limit</span>
-            <span className="w-px h-3 bg-[color:var(--color-gold-shadow)]" />
-            <span className="font-mono tabular-nums">v.0427</span>
+          <div className="ml-auto flex items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-[color:var(--color-parchment-dim)]">
+            <LocaleToggle />
+            <span className="hidden md:inline w-px h-3 bg-[color:var(--color-gold-shadow)]" />
+            <span className="hidden md:inline">Heads-Up · No Limit</span>
+            <span className="hidden md:inline w-px h-3 bg-[color:var(--color-gold-shadow)]" />
+            <span className="hidden md:inline font-mono tabular-nums">v.0427</span>
           </div>
         </div>
         <div className="relative h-px">
