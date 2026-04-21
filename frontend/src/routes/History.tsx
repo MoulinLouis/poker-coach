@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDecisionDetail, listDecisions } from "../api/client";
 import type { DecisionDetail, DecisionListRow } from "../api/types";
+import { useLocale } from "../i18n";
 
 export function History() {
+  const { t } = useLocale();
   const [rows, setRows] = useState<DecisionListRow[]>([]);
   const [filters, setFilters] = useState<{
     model_id: string;
@@ -48,22 +50,22 @@ export function History() {
   return (
     <div className="flex gap-4 max-w-[1400px] mx-auto">
       <div className="flex-1 flex flex-col gap-3 min-w-0">
-        <h1 className="text-xl font-semibold">History</h1>
+        <h1 className="text-xl font-semibold">{t("routes.history.title")}</h1>
         <div className="flex gap-2 items-center flex-wrap">
           <Filter
-            label="model"
+            label={t("routes.history.filterModel")}
             value={filters.model_id}
             onChange={(v) => setFilters((f) => ({ ...f, model_id: v }))}
             placeholder="claude-opus-4-7"
           />
           <Filter
-            label="status"
+            label={t("routes.history.filterStatus")}
             value={filters.status}
             onChange={(v) => setFilters((f) => ({ ...f, status: v }))}
-            placeholder="ok / provider_error / …"
+            placeholder={t("routes.history.filterStatusPlaceholder")}
           />
           <Filter
-            label="prompt version"
+            label={t("routes.history.filterPromptVersion")}
             value={filters.prompt_version}
             onChange={(v) => setFilters((f) => ({ ...f, prompt_version: v }))}
             placeholder="v1"
@@ -72,7 +74,7 @@ export function History() {
             onClick={reload}
             className="ml-auto px-3 py-1.5 rounded-md bg-stone-800 hover:bg-stone-700 text-sm ring-1 ring-white/10"
           >
-            Refresh
+            {t("routes.history.refresh")}
           </button>
         </div>
         {error && (
@@ -84,20 +86,20 @@ export function History() {
           <table className="w-full text-xs tabular-nums">
             <thead className="bg-stone-900 text-stone-400 uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="text-left px-3 py-2">When</th>
-                <th className="text-left px-3 py-2">Model</th>
-                <th className="text-left px-3 py-2">Prompt</th>
-                <th className="text-left px-3 py-2">Status</th>
-                <th className="text-left px-3 py-2">Advice</th>
-                <th className="text-right px-3 py-2">Cost</th>
-                <th className="text-right px-3 py-2">Latency</th>
+                <th className="text-left px-3 py-2">{t("routes.history.columnWhen")}</th>
+                <th className="text-left px-3 py-2">{t("routes.history.columnModel")}</th>
+                <th className="text-left px-3 py-2">{t("routes.history.columnPrompt")}</th>
+                <th className="text-left px-3 py-2">{t("routes.history.columnStatus")}</th>
+                <th className="text-left px-3 py-2">{t("routes.history.columnAdvice")}</th>
+                <th className="text-right px-3 py-2">{t("routes.history.columnCost")}</th>
+                <th className="text-right px-3 py-2">{t("routes.history.columnLatency")}</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && !loading && (
                 <tr>
                   <td colSpan={7} className="p-4 text-center text-stone-500">
-                    No decisions yet.
+                    {t("routes.history.empty")}
                   </td>
                 </tr>
               )}
@@ -151,7 +153,7 @@ export function History() {
         <aside className="w-[460px] shrink-0 rounded-lg bg-stone-900 p-4 ring-1 ring-white/5 text-sm max-h-[80vh] overflow-auto">
           <header className="flex justify-between items-baseline mb-3">
             <div>
-              <div className="text-[10px] uppercase tracking-widest opacity-60">Decision</div>
+              <div className="text-[10px] uppercase tracking-widest opacity-60">{t("routes.history.detailDecision")}</div>
               <div className="font-mono text-xs">{selected.decision_id.slice(0, 16)}…</div>
             </div>
             <button
@@ -162,39 +164,39 @@ export function History() {
             </button>
           </header>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs mb-3">
-            <dt className="opacity-60">Model</dt>
+            <dt className="opacity-60">{t("routes.history.detailModel")}</dt>
             <dd>{selected.model_id}</dd>
-            <dt className="opacity-60">Effort / budget</dt>
+            <dt className="opacity-60">{t("routes.history.detailEffort")}</dt>
             <dd>{selected.reasoning_effort ?? selected.thinking_budget ?? "—"}</dd>
-            <dt className="opacity-60">Prompt</dt>
+            <dt className="opacity-60">{t("routes.history.detailPrompt")}</dt>
             <dd>
               {selected.prompt_name}/{selected.prompt_version}
             </dd>
-            <dt className="opacity-60">Status</dt>
+            <dt className="opacity-60">{t("routes.history.detailStatus")}</dt>
             <dd>
               <StatusBadge status={selected.status} />
             </dd>
-            <dt className="opacity-60">Tokens (in/out/reasoning)</dt>
+            <dt className="opacity-60">{t("routes.history.detailTokens")}</dt>
             <dd>
               {selected.input_tokens ?? "—"} / {selected.output_tokens ?? "—"} /{" "}
               {selected.reasoning_tokens ?? "—"}
             </dd>
-            <dt className="opacity-60">Cost</dt>
+            <dt className="opacity-60">{t("routes.history.detailCost")}</dt>
             <dd>
               {selected.cost_usd != null ? `$${selected.cost_usd.toFixed(4)}` : "—"}
             </dd>
-            <dt className="opacity-60">Latency</dt>
+            <dt className="opacity-60">{t("routes.history.detailLatency")}</dt>
             <dd>{selected.latency_ms != null ? `${selected.latency_ms}ms` : "—"}</dd>
           </dl>
 
           {selected.parsed_advice && (
-            <Collapsible title="Advice" defaultOpen>
+            <Collapsible title={t("routes.history.sectionAdvice")} defaultOpen>
               <div className="rounded bg-amber-500/10 border border-amber-500/40 p-2">
                 <div className="font-semibold capitalize">
                   {selected.parsed_advice.action}
                   {selected.parsed_advice.to_amount_bb != null && (
                     <span className="ml-1 text-amber-200">
-                      to {selected.parsed_advice.to_amount_bb} bb
+                      {t("routes.history.toPrefix")} {selected.parsed_advice.to_amount_bb} {t("routes.history.bbUnit")}
                     </span>
                   )}{" "}
                   ({selected.parsed_advice.confidence})
@@ -206,24 +208,24 @@ export function History() {
             </Collapsible>
           )}
           {selected.reasoning_text && (
-            <Collapsible title="Reasoning stream">
+            <Collapsible title={t("routes.history.sectionReasoning")}>
               <pre className="text-[11px] font-mono whitespace-pre-wrap bg-black/40 p-2 rounded max-h-56 overflow-auto">
                 {selected.reasoning_text}
               </pre>
             </Collapsible>
           )}
-          <Collapsible title="Rendered prompt">
+          <Collapsible title={t("routes.history.sectionPrompt")}>
             <pre className="text-[11px] font-mono whitespace-pre-wrap bg-black/40 p-2 rounded max-h-56 overflow-auto">
               {selected.rendered_prompt}
             </pre>
           </Collapsible>
-          <Collapsible title="Game state">
+          <Collapsible title={t("routes.history.sectionGameState")}>
             <pre className="text-[11px] font-mono whitespace-pre-wrap bg-black/40 p-2 rounded max-h-56 overflow-auto">
               {JSON.stringify(selected.game_state, null, 2)}
             </pre>
           </Collapsible>
           {selected.error_message && (
-            <Collapsible title="Error" defaultOpen>
+            <Collapsible title={t("routes.history.sectionError")} defaultOpen>
               <pre className="text-[11px] font-mono whitespace-pre-wrap bg-red-900/30 text-red-200 p-2 rounded ring-1 ring-red-500/30">
                 {selected.error_message}
               </pre>
