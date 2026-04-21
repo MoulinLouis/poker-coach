@@ -25,6 +25,15 @@ _NON_SIZING_ACTIONS = {"fold", "check", "call", "allin"}
 _TOLERANCE_LOW = 0.98
 _TOLERANCE_HIGH = 1.02
 
+_ACTION_CONSERVATISM: dict[str, int] = {
+    "fold": 0,
+    "check": 1,
+    "call": 2,
+    "bet": 3,
+    "raise": 4,
+    "allin": 5,
+}
+
 
 def normalize_strategy(
     raw: list[dict[str, Any]],
@@ -105,7 +114,13 @@ def normalize_strategy(
             )
         )
 
-    entries.sort(key=lambda e: (-e.frequency, e.action))
+    entries.sort(
+        key=lambda e: (
+            -e.frequency,
+            _ACTION_CONSERVATISM[e.action],
+            e.to_amount_bb if e.to_amount_bb is not None else 0.0,
+        )
+    )
     return entries
 
 
