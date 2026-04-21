@@ -104,4 +104,9 @@ export const fr: Dict = {
     bbUnit: "bb",
     label: "Pot",
   },
+  board: {
+    slotFlop: "flop",
+    slotTurn: "turn",
+    slotRiver: "river",
+  },
 };

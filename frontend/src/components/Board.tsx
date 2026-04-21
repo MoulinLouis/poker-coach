@@ -1,8 +1,17 @@
+import { useLocale } from "../i18n";
+import type { DictKey } from "../i18n";
 import { PlayingCard } from "./PlayingCard";
 
-const SLOT_LABELS = ["flop", "flop", "flop", "turn", "river"] as const;
+const SLOT_LABEL_KEYS: readonly DictKey[] = [
+  "board.slotFlop",
+  "board.slotFlop",
+  "board.slotFlop",
+  "board.slotTurn",
+  "board.slotRiver",
+];
 
 export function Board({ cards }: { cards: string[] }) {
+  const { t } = useLocale();
   return (
     <div
       data-testid="board"
@@ -24,7 +33,7 @@ export function Board({ cards }: { cards: string[] }) {
               }}
             >
               <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] sm:tracking-[0.3em] text-[color:var(--color-parchment-dim)] opacity-50">
-                {SLOT_LABELS[i]}
+                {t(SLOT_LABEL_KEYS[i])}
               </span>
             </div>
           )}

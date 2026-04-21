@@ -102,4 +102,9 @@ export const en = {
     bbUnit: "bb",
     label: "Pot",
   },
+  board: {
+    slotFlop: "flop",
+    slotTurn: "turn",
+    slotRiver: "river",
+  },
 } as const;
