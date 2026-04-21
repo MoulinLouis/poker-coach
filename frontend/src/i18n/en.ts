@@ -137,4 +137,13 @@ export const en = {
     chipsSuffix: "chips",
     potSuffix: "pot",
   },
+  routes: {
+    liveCoach: {
+      errorHoleCards: "hole cards must be 4 characters, e.g. AsKd",
+      errorAdviceOnHeroTurn: "advice is only requested on hero's turn",
+      errorFollowIllegal: "cannot follow: advice action is not a current legal action",
+      sessionLabel: "session",
+      agreementLabel: "agreement",
+    },
+  },
 } as const;

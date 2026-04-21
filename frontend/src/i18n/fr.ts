@@ -139,4 +139,13 @@ export const fr: Dict = {
     chipsSuffix: "jetons",
     potSuffix: "pot",
   },
+  routes: {
+    liveCoach: {
+      errorHoleCards: "les cartes fermées doivent faire 4 caractères, ex. AsKd",
+      errorAdviceOnHeroTurn: "le conseil n'est demandé qu'au tour du héros",
+      errorFollowIllegal: "impossible de suivre : l'action conseillée n'est pas légale",
+      sessionLabel: "session",
+      agreementLabel: "accord",
+    },
+  },
 };

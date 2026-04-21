@@ -18,6 +18,7 @@ import { HandSummary } from "../components/HandSummary";
 import { PokerTable } from "../components/PokerTable";
 import { SetupPanel, type SetupValues } from "../components/SetupPanel";
 import { useHotkeys } from "../hooks/useHotkeys";
+import { useLocale } from "../i18n";
 import { parseHole } from "../utils/cards";
 
 interface SessionState {
@@ -37,6 +38,7 @@ function divergesFromAdvice(
 }
 
 export function LiveCoach() {
+  const { t } = useLocale();
   const [session, setSession] = useState<SessionState | null>(null);
   const [presets, setPresets] = useState<PresetSummary[]>([]);
   const [setup, setSetup] = useState<SetupValues>({
@@ -83,7 +85,7 @@ export function LiveCoach() {
     const hero = parseHole(setup.heroHole);
     const villain = parseHole(setup.villainHole);
     if (!hero || !villain) {
-      setError("hole cards must be 4 characters, e.g. AsKd");
+      setError(t("routes.liveCoach.errorHoleCards"));
       return;
     }
     try {
@@ -137,7 +139,7 @@ export function LiveCoach() {
   const requestAdvice = useCallback(async () => {
     if (!snapshot || !session || !setup.presetId) return;
     if (snapshot.state.to_act !== "hero") {
-      setError("advice is only requested on hero's turn");
+      setError(t("routes.liveCoach.errorAdviceOnHeroTurn"));
       return;
     }
     setError(null);
@@ -213,7 +215,7 @@ export function LiveCoach() {
   const followAdvice = useCallback(() => {
     const action = adviceToAction();
     if (!action) {
-      setError("cannot follow: advice action is not a current legal action");
+      setError(t("routes.liveCoach.errorFollowIllegal"));
       return;
     }
     void heroAction(action);
@@ -259,7 +261,7 @@ export function LiveCoach() {
               className="w-1 h-1 rounded-full"
               style={{ background: "var(--color-jade)" }}
             />
-            session · {session.sessionId.slice(0, 8)}
+            {t("routes.liveCoach.sessionLabel")} · {session.sessionId.slice(0, 8)}
           </span>
           {agreement.total > 0 && (
             <span data-testid="agreement-rate" className="flex items-center gap-1.5">
@@ -267,7 +269,7 @@ export function LiveCoach() {
                 className="w-1 h-1 rotate-45"
                 style={{ background: "var(--color-gold-deep)" }}
               />
-              <span>agreement</span>
+              <span>{t("routes.liveCoach.agreementLabel")}</span>
               <span className="text-[color:var(--color-gold-bright)] font-semibold tracking-normal">
                 {Math.round(
                   ((agreement.total - agreement.diverged) / agreement.total) * 100,
