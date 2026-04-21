@@ -40,35 +40,73 @@ Start from a GTO-baseline (simplified solver-aligned play: standard sizings, coh
 When the user prompt includes a `Villain observed stats` block (>=10 hands), let those stats dominate the `unknown`/`reg` default exploits. Typical population assumptions stop applying once you have direct evidence — e.g. if VPIP/PFR is 48/38 over 25 hands you are facing a LAG, not a typical reg; adjust flat-call defense, 3-bet frequency, and barrel sizing accordingly. Below 10 hands the sample is noise; fall back to the profile defaults.
 """
 
-_SIZING = """## Sizing anchors (100bb HU baseline)
+_SIZING = """## Sizing anchors (tournament HU — stack-depth-aware)
 
-Defaults for a competent HU reg. Treat as anchors, not rules — deviate when board/history/stack depth warrants.
+Defaults for a competent HU reg across SnG-typical depths. Treat as anchors, not rules — deviate when board/history/stack depth/ante structure warrants.
 
-Preflop:
-- BTN (SB) open: 2-2.5bb. 2bb is fine at 100bb with no rake considerations.
-- BB 3bet vs BTN open: 10-12bb (roughly 4x IP, 3.5x OOP adjusted for HU).
+### Preflop by effective stack
+
+**Deep (>=40bb eff)**
+- BTN (SB) open: 2-2.5bb (drop toward 2bb when ante is posted; ante already sweetens the pot).
+- BB 3bet vs BTN open: 10-12bb OOP, 8-10bb IP-adjusted HU.
 - BTN 4bet vs BB 3bet: 22-25bb (2.2-2.5x the 3bet).
-- 5bet = all-in at 100bb.
+- 5bet = all-in.
 
-Postflop (as preflop aggressor):
-- Flop small cbet (25-33% pot): wide range, static/dry boards, high-card boards hero caps.
-- Flop big cbet (66-75% pot): polar range, dynamic/wet boards, boards that favor caller's range.
-- Turn std: 66-75% pot on most non-polar barrels.
-- Turn overbet (125-150% pot): polar ranges, uncapped vs capped, scare cards for villain's range.
-- River polar: 75-125% for thin-to-medium value and bluffs. Overbet (150%+) only when villain is capped and your range is nutted.
-- River thin value: 25-40% pot when villain's calling range is wide and your hand beats mid-strength only.
+**Mid (25-40bb eff)**
+- BTN open: 2-2.2bb. 3-bet sizings collapse to ~7-9bb.
+- BB 3bet: mix of small (7bb) and jam with polarized range.
+- 4bet = all-in. No small 4bet room left.
 
-Stack depth adjustments:
-- Shallow (30-50bb eff): collapse sizings, more SPR-aware jam/fold lines, fewer multi-street bluffs.
-- Standard (75-125bb eff): the tree above.
-- Deep (>150bb eff): overbets gain EV, donk-leads become viable OOP, river polarization widens.
+**Short (15-25bb eff)**
+- BTN: open 2bb or min-raise; jam with top ~10% and the short-stack-bluff part of range (Axs, low pairs).
+- BB 3bet: predominantly jam. Small 3bets (~5bb) only with a very specific call-a-jam range.
+- 4bet = all-in, always.
+
+**Push/fold (<=12bb eff)**
+- BTN strategy is limp-or-jam, or open-jam. Raise-fold lines are -EV; do not recommend them.
+- BB strategy is check-or-jam over a limp; check-or-call the BB against an open; re-jam wider vs min-opens.
+- Use Nash push/fold charts as the baseline; exploit only on reads.
+- At <=8bb, BTN is jamming ~65%+ of hands; BB calling jams with ~35-45%. Any advice that involves post-flop play at this depth is almost certainly wrong.
+
+### Ante adjustments
+
+When an ante is in the pot (BB posts ante on top of BB):
+- Open wider: BTN open range widens ~20-30% vs no-ante because the preflop pot is already ~50% bigger before action.
+- 3-bet lighter: BB steals back with a wider 3-bet range.
+- Push-fold thresholds loosen by ~1bb (12bb ante ~= 11bb no-ante).
+
+### Postflop (as preflop aggressor)
+
+**Flop cbet**
+- Small (25-33% pot): wide range on static/dry boards that favor hero (high-card boards where hero caps).
+- Big (66-75% pot): polarized on dynamic/wet boards, boards that favor caller's range.
+
+**Turn**
+- Standard: 66-75% pot on most non-polar barrels.
+- Overbet (125-150%): polar ranges, uncapped vs capped, scare cards for villain's range.
+
+**River**
+- Polar: 75-125% for thin-to-medium value + bluffs.
+- Overbet (150%+): only when villain is capped and your range is nutted.
+- Thin value: 25-40% pot when villain's calling range is wide.
 
 ## Board texture heuristic
 
-- Static dry (e.g. K72r, A83r, T62r): small cbet at high frequency; barrel turn selectively with equity.
-- Dynamic wet (e.g. T98ss, 976, JT9): polarize — big cbet with strong hands and real draws, check the rest. Don't small-cbet the whole range; it folds out trash without protecting medium.
-- Paired (e.g. 775, QQ4): low cbet frequency, polar sizings only. Villain rarely has the trip.
-- Monotone: check more as PFR; bets should be polar. Hero's flush blockers matter.
+- Static dry (K72r, A83r, T62r): small cbet at high frequency; barrel turn selectively with equity.
+- Dynamic wet (T98ss, 976, JT9): polarize — big cbet with strong hands and real draws, check the rest.
+- Paired (775, QQ4): low cbet frequency, polar sizings only. Villain rarely has the trip.
+- Monotone: check more as PFR; bets should be polar. Flush blockers matter.
+
+## ICM framework
+
+When the user prompt includes a `Tournament context` block with a `payout_structure`, apply ICM pressure:
+
+- HU for 1st — payouts like 65/35 or 60/40 mean winning is worth less than the raw chip equity suggests. Calling wide jams with close-to-50% equity is chipEV-neutral but ICM-negative. **Tighten calling ranges by ~3-5 percentile** versus a 50/50 payout baseline.
+- Short stack facing big stack — big stack should call tighter than Nash, short stack should shove wider than Nash. This is the opposite of intuition; the short stack has less to lose in $EV terms.
+- Bubble spots (if `payout_structure` has more than two entries and the short stack is close to the min-cash) — call even tighter, attack shorter stacks with jams.
+- No `Tournament context` block means cash-game chipEV; ignore ICM entirely.
+
+Never invent payout structure; if it's not in the user prompt, there isn't one.
 
 ## Confidence mapping
 
