@@ -72,4 +72,12 @@ export const en = {
     tipSlotClear: "clear this slot",
     ariaClearPrefix: "clear",
   },
+  boardPicker: {
+    flop: "Reveal the flop",
+    turn: "Reveal the turn",
+    river: "Reveal the river",
+    runout: "Reveal the run-out (all-in)",
+    random: "Random",
+    confirm: "Confirm",
+  },
 } as const;

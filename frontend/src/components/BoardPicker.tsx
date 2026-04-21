@@ -1,16 +1,11 @@
 import { useMemo, useState } from "react";
 import { SUITS, type Suit } from "../utils/cards";
 import { PlayingCard } from "./PlayingCard";
+import { useLocale } from "../i18n";
+import type { DictKey } from "../i18n";
 
 const RANKS = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"] as const;
 const SUIT_KEYS = ["s","h","d","c"] as const satisfies readonly Suit[];
-
-const HEADERS: Record<string, string> = {
-  flop: "Révèle le flop",
-  turn: "Révèle le turn",
-  river: "Révèle la river",
-  runout: "Révèle le run-out (all-in)",
-};
 
 export function BoardPicker({
   street,
@@ -39,6 +34,16 @@ export function BoardPicker({
   );
 
   const allFilled = slots.every((x) => x != null);
+
+  const { t } = useLocale();
+  const headerKey: DictKey = (
+    {
+      flop: "boardPicker.flop",
+      turn: "boardPicker.turn",
+      river: "boardPicker.river",
+      runout: "boardPicker.runout",
+    } as const
+  )[street];
 
   const pickCard = (code: string) => {
     if (used.has(code) && slots[activeIdx] !== code) return;
@@ -77,7 +82,7 @@ export function BoardPicker({
       className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
     >
       <div className="bg-stone-900 rounded-2xl p-6 ring-1 ring-white/10 max-w-2xl w-full flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-stone-100">{HEADERS[street]}</h2>
+        <h2 className="text-lg font-semibold text-stone-100">{t(headerKey)}</h2>
 
         <div className="flex items-center gap-3 flex-wrap">
           {existingBoard.map((c, i) => (
@@ -123,7 +128,7 @@ export function BoardPicker({
             onClick={dealRandom}
             className="px-4 py-2 rounded-md bg-stone-800 hover:bg-stone-700 text-sm text-stone-100 ring-1 ring-white/10 transition"
           >
-            Random
+            {t("boardPicker.random")}
           </button>
           <button
             data-testid="board-picker-confirm"
@@ -131,7 +136,7 @@ export function BoardPicker({
             disabled={!allFilled}
             className="px-4 py-2 rounded-md bg-amber-500 text-stone-950 font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-amber-400 transition"
           >
-            Confirmer
+            {t("boardPicker.confirm")}
           </button>
         </div>
       </div>

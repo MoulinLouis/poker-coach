@@ -74,4 +74,12 @@ export const fr: Dict = {
     tipSlotClear: "effacer cet emplacement",
     ariaClearPrefix: "effacer",
   },
+  boardPicker: {
+    flop: "Révèle le flop",
+    turn: "Révèle le turn",
+    river: "Révèle la river",
+    runout: "Révèle le run-out (all-in)",
+    random: "Aléatoire",
+    confirm: "Confirmer",
+  },
 };
