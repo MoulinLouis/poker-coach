@@ -1,9 +1,21 @@
-import type { GameState, Seat as SeatId } from "../api/types";
+import type { GameState, Seat as SeatId, Street } from "../api/types";
+import { useLocale } from "../i18n";
+import type { DictKey } from "../i18n";
 import { Board } from "./Board";
 import { Pot } from "./Pot";
 import { Seat } from "./Seat";
 
+const STREET_KEYS: Record<Street, DictKey> = {
+  preflop: "pokerTable.street.preflop",
+  flop: "pokerTable.street.flop",
+  turn: "pokerTable.street.turn",
+  river: "pokerTable.street.river",
+  showdown: "pokerTable.street.showdown",
+  complete: "pokerTable.street.complete",
+};
+
 function BetChips({ bb, seat }: { bb: number; seat: SeatId }) {
+  const { t } = useLocale();
   if (bb <= 0) return null;
   return (
     <div
@@ -38,7 +50,7 @@ function BetChips({ bb, seat }: { bb: number; seat: SeatId }) {
       </svg>
       <span className="font-mono text-[11px] tabular-nums text-[color:var(--color-bone)]">
         {bb.toFixed(1)}
-        <span className="opacity-50 ml-0.5">bb</span>
+        <span className="opacity-50 ml-0.5">{t("pokerTable.bbUnit")}</span>
       </span>
     </div>
   );
@@ -63,13 +75,14 @@ function Fleuron({ className = "" }: { className?: string }) {
 }
 
 export function PokerTable({ state }: { state: GameState }) {
+  const { t } = useLocale();
   const showVillainHole =
     state.pending_reveal === null &&
     (state.street === "showdown" || state.street === "complete");
   const potBb = state.pot / state.bb;
   const heroBetBb = state.committed.hero / state.bb;
   const villainBetBb = state.committed.villain / state.bb;
-  const streetLabel = state.street.charAt(0).toUpperCase() + state.street.slice(1);
+  const streetLabel = t(STREET_KEYS[state.street]);
 
   return (
     <div
@@ -111,7 +124,7 @@ export function PokerTable({ state }: { state: GameState }) {
         />
 
         <div className="relative flex flex-col items-center gap-3 sm:gap-5 min-h-[380px] sm:min-h-[460px]">
-          <Seat id="villain" label="Villain" state={state} showHole={showVillainHole} />
+          <Seat id="villain" label={t("pokerTable.villain")} state={state} showHole={showVillainHole} />
           <BetChips bb={villainBetBb} seat="villain" />
 
           <div className="flex flex-col items-center gap-3 sm:gap-4 my-1 sm:my-2">
@@ -129,7 +142,7 @@ export function PokerTable({ state }: { state: GameState }) {
           </div>
 
           <BetChips bb={heroBetBb} seat="hero" />
-          <Seat id="hero" label="Hero" state={state} showHole={true} />
+          <Seat id="hero" label={t("pokerTable.hero")} state={state} showHole={true} />
         </div>
       </div>
     </div>

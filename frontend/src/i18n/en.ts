@@ -80,4 +80,17 @@ export const en = {
     random: "Random",
     confirm: "Confirm",
   },
+  pokerTable: {
+    hero: "Hero",
+    villain: "Villain",
+    bbUnit: "bb",
+    street: {
+      preflop: "Preflop",
+      flop: "Flop",
+      turn: "Turn",
+      river: "River",
+      showdown: "Showdown",
+      complete: "Complete",
+    },
+  },
 } as const;

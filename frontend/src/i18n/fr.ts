@@ -82,4 +82,17 @@ export const fr: Dict = {
     random: "Aléatoire",
     confirm: "Confirmer",
   },
+  pokerTable: {
+    hero: "Héros",
+    villain: "Vilain",
+    bbUnit: "bb",
+    street: {
+      preflop: "Préflop",
+      flop: "Flop",
+      turn: "Turn",
+      river: "River",
+      showdown: "Showdown",
+      complete: "Terminé",
+    },
+  },
 };
