@@ -47,4 +47,16 @@ export const en = {
     emptySuffix: "on hero's turn to get a read.",
     toPrefix: "to",
   },
+  costFooter: {
+    session: "Session",
+    allTime: "All-time",
+    decisionsShort: "Dec.",
+    viewLedger: "view ledger",
+    hideLedger: "hide ledger",
+    ticker: "Live · Polling",
+    tableModel: "Model",
+    tableEffort: "Effort",
+    tableDecisions: "Decisions",
+    tableCost: "Cost",
+  },
 } as const;

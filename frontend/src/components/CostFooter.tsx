@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchCost } from "../api/client";
 import type { CostResponse } from "../api/types";
+import { useLocale } from "../i18n";
 
 const POLL_MS = 5000;
 
@@ -27,6 +28,7 @@ export function CostFooter({ sessionId }: { sessionId: string | null }) {
   }, [sessionId]);
 
   const decisionCount = cost?.by_model.reduce((s, r) => s + r.decision_count, 0) ?? 0;
+  const { t } = useLocale();
 
   return (
     <footer
@@ -51,26 +53,26 @@ export function CostFooter({ sessionId }: { sessionId: string | null }) {
             >
               ▴
             </span>
-            <Stat label="Session" value={`$${(cost?.session_usd ?? 0).toFixed(4)}`} accent />
+            <Stat label={t("costFooter.session")} value={`$${(cost?.session_usd ?? 0).toFixed(4)}`} accent />
             <span className="hidden sm:inline-flex items-center gap-4">
               <Divider />
-              <Stat label="All-time" value={`$${(cost?.all_time_usd ?? 0).toFixed(4)}`} />
+              <Stat label={t("costFooter.allTime")} value={`$${(cost?.all_time_usd ?? 0).toFixed(4)}`} />
             </span>
             <Divider />
             <Stat
-              label="Dec."
+              label={t("costFooter.decisionsShort")}
               value={decisionCount.toString()}
               mono
             />
             <span className="hidden sm:inline ml-2 text-[11px] text-[color:var(--color-parchment-dim)] group-hover:text-[color:var(--color-parchment)]">
-              {expanded ? "hide ledger" : "view ledger"}
+              {expanded ? t("costFooter.hideLedger") : t("costFooter.viewLedger")}
             </span>
           </button>
 
           {/* decorative ticker ornament */}
           <div className="ml-auto hidden md:flex items-center gap-2 font-mono text-[9px] tracking-[0.3em] uppercase text-[color:var(--color-gold-deep)]">
             <span className="w-1 h-1 rounded-full bg-[color:var(--color-jade)] animate-pulse" />
-            Live · Polling
+            {t("costFooter.ticker")}
           </div>
         </div>
 
@@ -85,10 +87,10 @@ export function CostFooter({ sessionId }: { sessionId: string | null }) {
             <table className="w-full text-xs tabular-nums font-mono mt-2">
               <thead className="text-[color:var(--color-parchment-dim)] uppercase tracking-[0.25em] text-[9px]">
                 <tr>
-                  <th className="text-left py-1.5 pr-4 font-normal">Model</th>
-                  <th className="text-left py-1.5 pr-4 font-normal">Effort</th>
-                  <th className="text-right py-1.5 pr-4 font-normal">Decisions</th>
-                  <th className="text-right py-1.5 font-normal">Cost</th>
+                  <th className="text-left py-1.5 pr-4 font-normal">{t("costFooter.tableModel")}</th>
+                  <th className="text-left py-1.5 pr-4 font-normal">{t("costFooter.tableEffort")}</th>
+                  <th className="text-right py-1.5 pr-4 font-normal">{t("costFooter.tableDecisions")}</th>
+                  <th className="text-right py-1.5 font-normal">{t("costFooter.tableCost")}</th>
                 </tr>
               </thead>
               <tbody>

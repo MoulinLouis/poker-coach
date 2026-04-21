@@ -49,4 +49,16 @@ export const fr: Dict = {
     emptySuffix: "au tour du héros pour obtenir une lecture.",
     toPrefix: "à",
   },
+  costFooter: {
+    session: "Session",
+    allTime: "Total",
+    decisionsShort: "Déc.",
+    viewLedger: "voir le registre",
+    hideLedger: "masquer le registre",
+    ticker: "En direct · Scrutation",
+    tableModel: "Modèle",
+    tableEffort: "Effort",
+    tableDecisions: "Décisions",
+    tableCost: "Coût",
+  },
 };
