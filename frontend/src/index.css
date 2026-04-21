@@ -1,28 +1,319 @@
 @import "tailwindcss";
 
-@theme {
-  --color-felt: #0e5a33;
-  --color-felt-dark: #083d22;
-  --color-card-bg: #fafafa;
-  --color-card-red: #c0352c;
-  --color-card-black: #111111;
-  --color-chip-gold: #d4a14a;
+/* ==========================================================================
+   Maison du Coup — Analytical Casino Noir
+   1920s parlor × quant terminal. Fraunces × Archivo × JetBrains Mono.
+   ========================================================================== */
 
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+@theme {
+  /* ——— Ink & surface ——— */
+  --color-ink: #0a0706;
+  --color-ink-soft: #120d0c;
+  --color-oxblood: #260a0e;
+  --color-oxblood-deep: #170608;
+  --color-lacquer: #141012;
+  --color-lacquer-raised: #1d1718;
+
+  /* ——— Felt ——— */
+  --color-felt: #0e4a36;
+  --color-felt-deep: #062a1e;
+  --color-felt-highlight: #1a6f53;
+
+  /* ——— Bone / parchment ——— */
+  --color-bone: #ede3cc;
+  --color-bone-soft: #d6caad;
+  --color-parchment: #b9ad8b;
+  --color-parchment-dim: #897f65;
+
+  /* ——— Gold foil ——— */
+  --color-gold: #c9a25e;
+  --color-gold-bright: #f0d38a;
+  --color-gold-pale: #e8cf99;
+  --color-gold-deep: #8a6b2e;
+  --color-gold-shadow: #4a3818;
+
+  /* ——— Signals ——— */
+  --color-coral: #e85d4c;
+  --color-coral-soft: #b94236;
+  --color-jade: #2d9274;
+  --color-jade-soft: #1c6651;
+  --color-card-red: #a82731;
+  --color-card-black: #1a1412;
+  --color-card-face: #f3ebd4;
+
+  /* ——— Type ——— */
+  --font-sans:
+    "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display:
+    "Fraunces", "Archivo", ui-serif, Georgia, serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ——— Motion ——— */
+  --ease-supple: cubic-bezier(0.22, 0.68, 0.28, 1);
 }
 
-.bg-felt {
+/* ——— Global canvas ——————————————————————————————————————————— */
+html,
+body {
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  font-feature-settings:
+    "ss01",
+    "ss02",
+    "cv11",
+    "tnum" 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+body {
+  min-height: 100vh;
+  background-image:
+    radial-gradient(
+      ellipse 90% 60% at 50% -10%,
+      rgba(201, 162, 94, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 10% 100%,
+      rgba(38, 10, 14, 0.7),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 90% 100%,
+      rgba(14, 74, 54, 0.25),
+      transparent 60%
+    ),
+    linear-gradient(180deg, #0a0706 0%, #0a0706 40%, #120909 100%);
+  background-attachment: fixed;
+}
+
+/* ——— Grain overlay: fixed, pointer-events disabled, very subtle ——— */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Vignette halo at edges */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
   background: radial-gradient(
     ellipse at center,
-    var(--color-felt) 0%,
-    var(--color-felt-dark) 100%
+    transparent 55%,
+    rgba(0, 0, 0, 0.5) 100%
   );
 }
 
+#root {
+  position: relative;
+  z-index: 2;
+}
+
+/* ——— Typography utility classes ——————————————————————————————— */
+.font-display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+}
+.font-display-tight {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 12, "SOFT" 0;
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ——— Felt surface ——————————————————————————————————————— */
+.bg-felt {
+  background:
+    radial-gradient(
+      ellipse 70% 55% at 50% 40%,
+      var(--color-felt-highlight) 0%,
+      var(--color-felt) 45%,
+      var(--color-felt-deep) 100%
+    );
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.6),
+    inset 0 2px 0 rgba(255, 255, 255, 0.04);
+}
+
+.bg-felt::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='f'><feTurbulence baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23f)'/></svg>");
+}
+
+/* ——— Lacquer panel (for cards/panels) ——— */
+.bg-lacquer {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(29, 23, 24, 0.92),
+      rgba(20, 16, 18, 0.92)
+    );
+  backdrop-filter: blur(8px) saturate(110%);
+}
+
+/* ——— Gold foil shimmer (text) ——————————————————————————————— */
+.foil {
+  background: linear-gradient(
+    100deg,
+    var(--color-gold-deep) 0%,
+    var(--color-gold) 20%,
+    var(--color-gold-bright) 40%,
+    var(--color-gold) 60%,
+    var(--color-gold-deep) 80%,
+    var(--color-gold) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: foil-shimmer 6s linear infinite;
+}
+
+@keyframes foil-shimmer {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Border foil — as a pseudo-element gradient border */
+.foil-border {
+  position: relative;
+}
+.foil-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    var(--color-gold-deep),
+    var(--color-gold-bright) 40%,
+    var(--color-gold-deep) 60%,
+    var(--color-gold) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ——— Deco rule — thin gold line with a rhombus pip ——— */
+.deco-rule {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-gold-deep) 20%,
+    var(--color-gold) 50%,
+    var(--color-gold-deep) 80%,
+    transparent 100%
+  );
+}
+.deco-rule::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  background: var(--color-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow: 0 0 0 1px var(--color-ink);
+}
+
+/* ——— Chip button (physical poker chip aesthetic) ———————————————— */
+.chip-button {
+  position: relative;
+  isolation: isolate;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0) 35%,
+      rgba(0, 0, 0, 0.25) 100%
+    ),
+    var(--chip-core, #2a2324);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4),
+    0 2px 0 rgba(0, 0, 0, 0.4),
+    0 6px 16px -6px rgba(0, 0, 0, 0.8);
+  transition:
+    transform 120ms var(--ease-supple),
+    filter 120ms var(--ease-supple),
+    box-shadow 120ms var(--ease-supple);
+}
+.chip-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.chip-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(0, 0, 0, 0.5),
+    0 2px 6px -4px rgba(0, 0, 0, 0.8);
+}
+.chip-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Outer rim */
+.chip-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0) 40%,
+    rgba(0, 0, 0, 0.5)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ——— Animations ————————————————————————————————————— */
 @keyframes fade-slide-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -33,22 +324,120 @@
 @keyframes fade-zoom-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.9) rotateY(30deg);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotateY(0);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(0, -4px);
+  }
+}
+
+@keyframes pulse-halo {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(201, 162, 94, 0.55),
+      0 0 40px 0 rgba(201, 162, 94, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px rgba(201, 162, 94, 0),
+      0 0 60px 6px rgba(201, 162, 94, 0.35);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
 .anim-fade-up {
-  animation: fade-slide-up 300ms ease-out;
+  animation: fade-slide-up 420ms var(--ease-supple) both;
 }
 
 .anim-zoom-in {
-  animation: fade-zoom-in 300ms ease-out;
+  animation: fade-zoom-in 500ms var(--ease-supple) both;
+  transform-style: preserve-3d;
 }
 
-body {
-  margin: 0;
+.anim-halo {
+  animation: pulse-halo 2.2s ease-in-out infinite;
+}
+
+.anim-drift {
+  animation: drift 4s ease-in-out infinite;
+}
+
+.stagger > * {
+  opacity: 0;
+  animation: fade-slide-up 550ms var(--ease-supple) forwards;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 60ms;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 140ms;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 220ms;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 300ms;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 380ms;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 460ms;
+}
+
+/* ——— Form elements ——————————————————————————————————— */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  color: var(--color-bone);
+}
+
+/* ——— Scrollbars ——————————————————————————————————————— */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold-deep) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-gold-deep);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+/* ——— Selection ——— */
+::selection {
+  background: rgba(201, 162, 94, 0.4);
+  color: var(--color-bone);
 }

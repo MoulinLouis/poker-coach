@@ -50,12 +50,9 @@ export function ActionBar({
   const fireFixed = (type: "fold" | "check" | "call") => {
     const la = lbt[type];
     if (!la) return;
-    // call/check/fold carry no amount on the LegalAction; the backend derives
-    // the call amount from state.committed (see engine/models.py).
     onAction({ actor, type, to_amount: null });
   };
 
-  // Delta the actor must put in to call, derived from state (not legal).
   const callDeltaChips = (() => {
     const other = actor === "hero" ? "villain" : "hero";
     return Math.max(0, state.committed[other] - state.committed[actor]);
@@ -67,40 +64,65 @@ export function ActionBar({
   };
 
   const bb = state.bb;
-  // Clamp for display so a stale sizeChips (e.g. across a spot transition
-  // where the parent didn't remount) can never render an out-of-range
-  // readout or a slider thumb that disagrees with the native range input.
   const effectiveSizeChips = sizingLegal ? clampChips(sizeChips, sizingLegal) : sizeChips;
   const sizeBb = effectiveSizeChips / bb;
   const potPct = sizingLegal ? sizingPotPct(effectiveSizeChips, state) : null;
   const atMax =
     sizingLegal?.max_to != null && effectiveSizeChips >= sizingLegal.max_to;
-  const actorLabel = actor === "hero" ? "Your turn" : "Villain to act";
+  const isHero = actor === "hero";
 
   return (
     <div
-      className={`rounded-xl p-4 flex flex-col gap-3 ring-1 ${
-        actor === "hero"
-          ? "bg-stone-900/90 ring-white/10"
-          : "bg-stone-900/70 ring-white/5"
-      }`}
+      className="relative rounded-2xl p-3 sm:p-5 flex flex-col gap-3 sm:gap-4"
       data-testid="action-bar"
       data-actor={actor}
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(29,23,24,0.88), rgba(20,16,18,0.92))",
+        border: isHero
+          ? "1px solid rgba(201,162,94,0.4)"
+          : "1px solid rgba(201,162,94,0.12)",
+        boxShadow:
+          "0 20px 60px -30px rgba(0,0,0,0.9), inset 0 1px 0 rgba(201,162,94,0.12)",
+      }}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-stone-100">{actorLabel}</span>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span
+            className={`w-2 h-2 rounded-full ${isHero ? "animate-pulse" : ""}`}
+            style={{
+              background: isHero ? "var(--color-gold)" : "var(--color-parchment-dim)",
+              boxShadow: isHero ? "0 0 12px var(--color-gold)" : undefined,
+            }}
+          />
+          <div className="flex flex-col -space-y-0.5">
+            <span className="text-[9px] uppercase tracking-[0.35em] font-mono text-[color:var(--color-parchment-dim)]">
+              {isHero ? "Act" : "Observe"}
+            </span>
+            <span className="text-[15px] font-semibold tracking-tight text-[color:var(--color-bone)]">
+              {isHero ? "Your turn" : "Villain to act"}
+            </span>
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           {actor === "villain" && (
-            <span className="text-xs text-stone-400">Click what villain just did</span>
+            <span className="text-[11px] text-[color:var(--color-parchment)]">
+              click what villain just did
+            </span>
           )}
           {onRequestAdvice && (
             <button
               data-testid="request-advice"
               onClick={onRequestAdvice}
               disabled={adviceDisabled}
-              className="text-xs font-semibold text-amber-400 hover:text-amber-300 disabled:opacity-40 transition"
+              className="relative group font-mono text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-md transition disabled:opacity-40"
+              style={{
+                color: "var(--color-gold-bright)",
+                background: "rgba(201,162,94,0.08)",
+                border: "1px solid rgba(201,162,94,0.45)",
+              }}
             >
-              advise
+              Advise
             </button>
           )}
         </div>
@@ -119,56 +141,47 @@ export function ActionBar({
         />
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <ActionSlot
           testId="action-fold"
           visible={Boolean(lbt.fold)}
           onClick={() => fireFixed("fold")}
-          tone="neutral"
+          tone="fold"
           label="Fold"
         />
         <ActionSlot
           testId={lbt.check ? "action-check" : "action-call"}
           visible={Boolean(lbt.check || lbt.call)}
           onClick={() => fireFixed(lbt.check ? "check" : "call")}
-          tone="info"
-          label={
-            lbt.check
-              ? "Check"
-              : `Call ${(callDeltaChips / bb).toFixed(1)}bb`
+          tone="passive"
+          label={lbt.check ? "Check" : "Call"}
+          sub={
+            !lbt.check
+              ? `${(callDeltaChips / bb).toFixed(1)} bb`
+              : undefined
           }
         />
         {sizingLegal ? (
-          <button
-            data-testid="action-raise"
+          <ChipAction
+            testId="action-raise"
             onClick={atMax && lbt.allin ? fireAllIn : fireSizing}
-            className={`h-14 rounded-xl font-semibold text-white shadow transition active:scale-[0.98] flex flex-col items-center justify-center leading-tight ${
+            tone={atMax && lbt.allin ? "allin" : "aggressive"}
+            label={
               atMax && lbt.allin
-                ? "bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600"
-                : "bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600"
-            }`}
-          >
-            {atMax && lbt.allin ? (
-              <>
-                <span className="text-xs opacity-80">All-in</span>
-                <span className="text-base tabular-nums">{sizeBb.toFixed(1)}bb</span>
-              </>
-            ) : (
-              <>
-                <span className="text-xs opacity-80">
-                  {sized === "raise" ? "Raise to" : "Bet"}
-                </span>
-                <span className="text-base tabular-nums">{sizeBb.toFixed(1)}bb</span>
-              </>
-            )}
-          </button>
+                ? "All-in"
+                : sized === "raise"
+                  ? "Raise to"
+                  : "Bet"
+            }
+            sub={`${sizeBb.toFixed(1)} bb`}
+          />
         ) : lbt.allin ? (
-          <ActionSlot
+          <ChipAction
             testId="action-allin"
-            visible
             onClick={fireAllIn}
             tone="allin"
-            label={`All-in ${((lbt.allin.max_to ?? 0) / bb).toFixed(1)}bb`}
+            label="All-in"
+            sub={`${((lbt.allin.max_to ?? 0) / bb).toFixed(1)} bb`}
           />
         ) : (
           <div />
@@ -212,7 +225,24 @@ function SizingPanel({
   };
 
   return (
-    <div className="rounded-lg bg-black/30 ring-1 ring-white/5 p-3 flex flex-col gap-3">
+    <div
+      className="relative rounded-xl p-3 sm:p-4 flex flex-col gap-3 sm:gap-3.5"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(10,7,6,0.65), rgba(10,7,6,0.4))",
+        border: "1px solid rgba(201,162,94,0.15)",
+        boxShadow: "inset 0 1px 0 rgba(0,0,0,0.4)",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[9px] tracking-[0.3em] uppercase text-[color:var(--color-parchment-dim)]">
+          Sizing · Presets
+        </span>
+        <span className="font-mono text-[10px] tabular-nums text-[color:var(--color-parchment)]">
+          {min / state.bb}–{(max / state.bb).toFixed(0)} bb
+        </span>
+      </div>
+
       <div className="flex gap-1.5 flex-wrap">
         {presets.map((p) => {
           const isMax = p.kind === "max";
@@ -222,15 +252,26 @@ function SizingPanel({
               key={p.label}
               data-testid={`preset-${p.label}`}
               onClick={() => onSetChips(p.toChips)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                active
+              className="relative px-3 py-1 rounded-full font-mono text-[10px] tracking-widest uppercase transition"
+              style={{
+                color: active
                   ? isMax
-                    ? "bg-red-500/20 ring-1 ring-red-400 text-red-100"
-                    : "bg-emerald-500/20 ring-1 ring-emerald-400 text-emerald-100"
+                    ? "var(--color-coral)"
+                    : "var(--color-gold-bright)"
                   : isMax
-                    ? "bg-red-500/10 text-red-200 hover:bg-red-500/20"
-                    : "bg-white/5 text-stone-200 hover:bg-white/15"
-              }`}
+                    ? "var(--color-coral-soft)"
+                    : "var(--color-parchment)",
+                background: active
+                  ? isMax
+                    ? "rgba(232,93,76,0.12)"
+                    : "rgba(201,162,94,0.12)"
+                  : "transparent",
+                border: active
+                  ? isMax
+                    ? "1px solid rgba(232,93,76,0.6)"
+                    : "1px solid rgba(201,162,94,0.6)"
+                  : "1px solid rgba(201,162,94,0.18)",
+              }}
             >
               {p.label}
             </button>
@@ -238,29 +279,49 @@ function SizingPanel({
         })}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <button
           data-testid="size-minus"
           onClick={() => onNudge(-state.bb)}
-          className="h-9 w-9 rounded-lg bg-white/5 hover:bg-white/15 text-stone-100 text-lg font-bold transition disabled:opacity-40"
           disabled={sizeChips <= min}
           aria-label="Decrease size by 1bb"
+          className="h-9 w-9 rounded-full font-display text-xl leading-none transition disabled:opacity-30"
+          style={{
+            color: "var(--color-bone)",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(201,162,94,0.25)",
+          }}
         >
           −
         </button>
         <div className="relative flex-1 h-9 flex items-center">
-          <div className="absolute inset-x-0 h-2 rounded-full bg-stone-700 pointer-events-none" />
           <div
-            className="absolute h-2 rounded-full bg-emerald-500 pointer-events-none"
-            style={{ width: `${pct(sizeChips, min, max)}%` }}
+            className="absolute inset-x-0 h-[3px] rounded-full pointer-events-none"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              boxShadow: "inset 0 1px 0 rgba(0,0,0,0.5)",
+            }}
+          />
+          <div
+            className="absolute h-[3px] rounded-full pointer-events-none"
+            style={{
+              width: `${pct(sizeChips, min, max)}%`,
+              background:
+                "linear-gradient(90deg, var(--color-gold-deep), var(--color-gold-bright))",
+              boxShadow: "0 0 8px rgba(240,211,138,0.5)",
+            }}
           />
           {presets.map((p) => (
             <span
               key={p.label}
-              className={`absolute w-0.5 h-3 rounded-full pointer-events-none ${
-                p.kind === "max" ? "bg-red-400" : "bg-white/60"
-              }`}
-              style={{ left: `calc(${pct(p.toChips, min, max)}% - 1px)` }}
+              className="absolute w-px h-3 pointer-events-none"
+              style={{
+                left: `calc(${pct(p.toChips, min, max)}% - 0.5px)`,
+                background:
+                  p.kind === "max"
+                    ? "var(--color-coral)"
+                    : "rgba(237,227,204,0.5)",
+              }}
             />
           ))}
           <input
@@ -272,21 +333,36 @@ function SizingPanel({
             onChange={(e) => onSetChips(Number(e.target.value))}
             data-testid="size-slider"
             aria-label="Bet size in chips"
-            className="relative w-full appearance-none bg-transparent cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:ring-2 [&::-webkit-slider-thumb]:ring-emerald-400 [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-emerald-400"
+            className="relative w-full appearance-none bg-transparent cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+              [&::-webkit-slider-thumb]:rounded-full
+              [&::-webkit-slider-thumb]:bg-[color:var(--color-gold-bright)]
+              [&::-webkit-slider-thumb]:ring-2 [&::-webkit-slider-thumb]:ring-[color:var(--color-gold-deep)]
+              [&::-webkit-slider-thumb]:shadow-[0_0_0_2px_rgba(10,7,6,0.8),0_4px_10px_-2px_rgba(240,211,138,0.5)]
+              [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5
+              [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:bg-[color:var(--color-gold-bright)]
+              [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[color:var(--color-gold-deep)]"
           />
         </div>
         <button
           data-testid="size-plus"
           onClick={() => onNudge(state.bb)}
-          className="h-9 w-9 rounded-lg bg-white/5 hover:bg-white/15 text-stone-100 text-lg font-bold transition disabled:opacity-40"
           disabled={sizeChips >= max}
           aria-label="Increase size by 1bb"
+          className="h-9 w-9 rounded-full font-display text-xl leading-none transition disabled:opacity-30"
+          style={{
+            color: "var(--color-bone)",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(201,162,94,0.25)",
+          }}
         >
           +
         </button>
       </div>
 
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-end justify-between">
         <div className="flex items-baseline gap-2">
           {editing ? (
             <input
@@ -300,24 +376,40 @@ function SizingPanel({
               }}
               autoFocus
               aria-label="Bet size in bb"
-              className="text-3xl font-bold tabular-nums text-stone-50 bg-transparent border-b-2 border-emerald-400 outline-none w-20 transition-colors"
+              className="text-[2rem] font-bold tabular-nums bg-transparent border-b-2 outline-none w-24 transition-colors tracking-tight"
+              style={{
+                color: "var(--color-gold-bright)",
+                borderColor: "var(--color-gold)",
+              }}
             />
           ) : (
             <span
               data-testid="size-readout-bb"
               onClick={() => { setEditing(true); setRawInput(sizeBb.toFixed(1)); }}
-              className="text-3xl font-bold tabular-nums text-stone-50 cursor-text hover:text-emerald-300 transition-colors select-none"
+              className="text-[2rem] font-bold tabular-nums cursor-text select-none transition-colors leading-none tracking-tight"
+              style={{ color: "var(--color-bone)" }}
               title="Click to type a size"
             >
               {sizeBb.toFixed(1)}
             </span>
           )}
-          <span className="text-xs text-stone-400">bb</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
+            bb
+          </span>
         </div>
-        <span className="text-xs text-stone-400 tabular-nums">
-          = {sizeChips} chips
-          {potPct != null ? ` · ${Math.round(potPct)}% pot` : ""}
-        </span>
+        <div className="flex items-baseline gap-3 font-mono text-[10px] tabular-nums">
+          <span className="text-[color:var(--color-parchment-dim)]">
+            {sizeChips} chips
+          </span>
+          {potPct != null && (
+            <>
+              <span className="text-[color:var(--color-gold-shadow)]">·</span>
+              <span className="text-[color:var(--color-gold-pale)]">
+                {Math.round(potPct)}% pot
+              </span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -334,27 +426,86 @@ function ActionSlot({
   onClick,
   tone,
   label,
+  sub,
 }: {
   testId: string;
   visible: boolean;
   onClick: () => void;
-  tone: "neutral" | "info" | "allin";
+  tone: "fold" | "passive";
   label: string;
+  sub?: string;
 }) {
   if (!visible) return <div />;
-  const toneClass =
-    tone === "neutral"
-      ? "bg-stone-700 hover:bg-stone-600 text-stone-100"
-      : tone === "info"
-        ? "bg-sky-700 hover:bg-sky-600 text-white"
-        : "bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white";
+  const chipCore =
+    tone === "fold"
+      ? "linear-gradient(180deg, #3b2e2e 0%, #1f1718 100%)"
+      : "linear-gradient(180deg, #23504a 0%, #0f2b26 100%)";
+  const textColor =
+    tone === "fold" ? "var(--color-parchment)" : "var(--color-bone)";
+
   return (
     <button
       data-testid={testId}
       onClick={onClick}
-      className={`h-14 rounded-xl font-semibold shadow transition active:scale-[0.98] ${toneClass}`}
+      className="chip-button h-14 flex flex-col items-center justify-center leading-tight"
+      style={
+        {
+          "--chip-core": chipCore,
+          color: textColor,
+        } as React.CSSProperties
+      }
     >
-      {label}
+      <span className="font-semibold text-[15px] tracking-tight">
+        {label}
+      </span>
+      {sub && (
+        <span className="font-mono text-[10px] opacity-70 tabular-nums">
+          {sub}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function ChipAction({
+  testId,
+  onClick,
+  tone,
+  label,
+  sub,
+}: {
+  testId: string;
+  onClick: () => void;
+  tone: "aggressive" | "allin";
+  label: string;
+  sub?: string;
+}) {
+  const chipCore =
+    tone === "aggressive"
+      ? "linear-gradient(180deg, #d8b876 0%, #a07a2e 100%)"
+      : "linear-gradient(180deg, #e85d4c 0%, #8a1e16 100%)";
+  const textColor =
+    tone === "aggressive" ? "var(--color-ink)" : "var(--color-bone)";
+  return (
+    <button
+      data-testid={testId}
+      onClick={onClick}
+      className="chip-button h-14 flex flex-col items-center justify-center leading-tight"
+      style={
+        {
+          "--chip-core": chipCore,
+          color: textColor,
+        } as React.CSSProperties
+      }
+    >
+      <span className="font-bold text-[15px] tracking-tight">
+        {label}
+      </span>
+      {sub && (
+        <span className="font-mono text-[11px] tabular-nums opacity-80">
+          {sub}
+        </span>
+      )}
     </button>
   );
 }

@@ -131,7 +131,10 @@ export function CardPicker({
           onSlotClick={selectSlot}
           onSlotClear={clearSlot}
         />
-        <div className="w-px self-stretch bg-white/10" />
+        <div
+          className="w-px self-stretch"
+          style={{ background: "rgba(201,162,94,0.2)" }}
+        />
         <SlotGroup
           title="Villain"
           slots={["v1", "v2"]}
@@ -144,14 +147,24 @@ export function CardPicker({
           <button
             data-testid="card-deal-random"
             onClick={dealRandom}
-            className="px-3 py-1.5 rounded-md bg-stone-800 hover:bg-stone-700 text-sm text-stone-100 ring-1 ring-white/10 transition"
+            className="px-3 py-1.5 rounded-md font-mono text-[10px] uppercase tracking-[0.25em] transition"
+            style={{
+              color: "var(--color-bone)",
+              background: "rgba(10,7,6,0.5)",
+              border: "1px solid rgba(201,162,94,0.25)",
+            }}
           >
-            Deal random
+            Deal
           </button>
           <button
             data-testid="card-clear"
             onClick={clearAll}
-            className="px-3 py-1.5 rounded-md bg-stone-800 hover:bg-stone-700 text-sm text-stone-100 ring-1 ring-white/10 transition"
+            className="px-3 py-1.5 rounded-md font-mono text-[10px] uppercase tracking-[0.25em] transition"
+            style={{
+              color: "var(--color-parchment)",
+              background: "rgba(10,7,6,0.5)",
+              border: "1px solid rgba(201,162,94,0.15)",
+            }}
           >
             Clear
           </button>
@@ -161,7 +174,12 @@ export function CardPicker({
             aria-expanded={expanded}
             aria-controls="card-picker-grid"
             title={expanded ? "Hide card grid" : "Show card grid"}
-            className="px-2 py-1.5 rounded-md bg-stone-800 hover:bg-stone-700 text-sm text-stone-100 ring-1 ring-white/10 transition flex items-center gap-1"
+            className="px-2 py-1.5 rounded-md font-mono text-[10px] uppercase tracking-[0.25em] transition flex items-center gap-1.5"
+            style={{
+              color: "var(--color-gold-pale)",
+              background: "rgba(201,162,94,0.08)",
+              border: "1px solid rgba(201,162,94,0.35)",
+            }}
           >
             <span
               className={`inline-block transition-transform ${expanded ? "rotate-180" : ""}`}
@@ -169,9 +187,7 @@ export function CardPicker({
             >
               ▾
             </span>
-            <span className="text-xs uppercase tracking-wider">
-              {expanded ? "Hide" : "Edit"}
-            </span>
+            <span>{expanded ? "Hide" : "Edit"}</span>
           </button>
         </div>
       </div>
@@ -179,8 +195,14 @@ export function CardPicker({
       {expanded && (
         <div
           id="card-picker-grid"
-          className="grid gap-1 bg-stone-950 rounded-lg p-2 ring-1 ring-white/5 anim-fade-up"
-          style={{ gridTemplateColumns: `auto repeat(${RANKS.length}, minmax(0, 1fr))` }}
+          className="grid gap-1 rounded-lg p-3 anim-fade-up overflow-x-auto"
+          style={{
+            gridTemplateColumns: `auto repeat(${RANKS.length}, minmax(28px, 1fr))`,
+            minWidth: "min-content",
+            background:
+              "linear-gradient(180deg, rgba(10,7,6,0.7), rgba(10,7,6,0.5))",
+            border: "1px solid rgba(201,162,94,0.15)",
+          }}
         >
           {SUIT_KEYS.map((suit) => (
             <SuitRow
@@ -212,8 +234,10 @@ function SlotGroup({
   onSlotClear: (s: SlotId) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-widest opacity-60">{title}</span>
+    <div className="flex flex-col gap-1.5">
+      <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
+        {title}
+      </span>
       <div className="flex gap-2">
         {slots.map((s) => (
           <div key={s} className="relative group">
@@ -221,16 +245,26 @@ function SlotGroup({
               data-testid={`slot-${s}`}
               onClick={() => onSlotClick(s)}
               title="click to select, then pick a card from the grid"
-              className={`rounded-md p-0.5 transition ${
-                active === s
-                  ? "ring-2 ring-amber-400 shadow-lg shadow-amber-500/30"
-                  : "ring-1 ring-white/10 hover:ring-white/30"
-              }`}
+              className="rounded-md p-0.5 transition"
+              style={{
+                boxShadow:
+                  active === s
+                    ? "0 0 0 2px var(--color-gold), 0 4px 16px -4px rgba(240,211,138,0.5)"
+                    : "0 0 0 1px rgba(201,162,94,0.15)",
+              }}
             >
               {values[s] ? (
                 <PlayingCard code={values[s]} size="sm" />
               ) : (
-                <div className="w-10 h-14 rounded-md border-2 border-dashed border-white/20 flex items-center justify-center text-[10px] text-stone-500">
+                <div
+                  className="w-10 h-14 rounded-md flex items-center justify-center font-mono text-[9px] uppercase tracking-widest"
+                  style={{
+                    color: "var(--color-parchment-dim)",
+                    border: "1px dashed rgba(201,162,94,0.3)",
+                    background:
+                      "repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 6px)",
+                  }}
+                >
                   {SLOT_META[s].label.split(" ")[1]}
                 </div>
               )}
@@ -241,7 +275,12 @@ function SlotGroup({
                 onClick={() => onSlotClear(s)}
                 title="clear this slot"
                 aria-label={`clear ${SLOT_META[s].label}`}
-                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-stone-700 text-stone-100 text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 ring-1 ring-stone-900 transition"
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                style={{
+                  background: "var(--color-ink)",
+                  color: "var(--color-gold-pale)",
+                  border: "1px solid var(--color-gold-deep)",
+                }}
               >
                 ×
               </button>

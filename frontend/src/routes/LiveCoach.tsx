@@ -231,7 +231,7 @@ export function LiveCoach() {
   ]);
 
   return (
-    <div className="flex flex-col gap-4 max-w-[1280px] mx-auto">
+    <div className="flex flex-col gap-5 stagger">
       <SetupPanel
         values={setup}
         presets={presets}
@@ -240,31 +240,50 @@ export function LiveCoach() {
       />
 
       {error && (
-        <div className="rounded bg-red-900/30 text-red-200 p-2 text-sm ring-1 ring-red-500/30">
+        <div
+          className="rounded-xl p-3 text-sm font-display italic"
+          style={{
+            background: "rgba(232,93,76,0.08)",
+            color: "var(--color-coral)",
+            border: "1px solid rgba(232,93,76,0.35)",
+          }}
+        >
           {error}
         </div>
       )}
 
       {session && (
-        <div className="text-xs text-stone-400 tabular-nums">
-          session {session.sessionId.slice(0, 8)}
+        <div className="flex items-center gap-4 font-mono text-[10px] tabular-nums uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="w-1 h-1 rounded-full"
+              style={{ background: "var(--color-jade)" }}
+            />
+            session · {session.sessionId.slice(0, 8)}
+          </span>
           {agreement.total > 0 && (
-            <span className="ml-3" data-testid="agreement-rate">
-              agreement{" "}
-              <span className="text-stone-200 font-semibold">
+            <span data-testid="agreement-rate" className="flex items-center gap-1.5">
+              <span
+                className="w-1 h-1 rotate-45"
+                style={{ background: "var(--color-gold-deep)" }}
+              />
+              <span>agreement</span>
+              <span className="text-[color:var(--color-gold-bright)] font-semibold tracking-normal">
                 {Math.round(
                   ((agreement.total - agreement.diverged) / agreement.total) * 100,
                 )}
                 %
-              </span>{" "}
-              ({agreement.total - agreement.diverged}/{agreement.total})
+              </span>
+              <span className="opacity-60 normal-case tracking-normal">
+                ({agreement.total - agreement.diverged}/{agreement.total})
+              </span>
             </span>
           )}
         </div>
       )}
 
       {snapshot && (
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-start">
           {snapshot.state.pending_reveal !== null && (
             <BoardPicker
               street={snapshot.state.pending_reveal}
@@ -277,7 +296,7 @@ export function LiveCoach() {
               onConfirm={applyReveal}
             />
           )}
-          <div className="flex-1 flex flex-col gap-4 min-w-0">
+          <div className="order-1 lg:order-none flex-1 flex flex-col gap-4 min-w-0">
             <PokerTable state={snapshot.state} />
             {!handComplete && snapshot.state.to_act && (
               <ActionBar

@@ -3,7 +3,7 @@ import { parseHole } from "../utils/cards";
 import { CardPicker } from "./CardPicker";
 
 export interface SetupValues {
-  heroHole: string; // 4-char code like "AsKd"
+  heroHole: string;
   villainHole: string;
   effectiveStack: number;
   button: Seat;
@@ -28,90 +28,174 @@ export function SetupPanel({
   const villain = parseHole(values.villainHole);
 
   return (
-    <section className="rounded-xl bg-stone-800 p-4 text-stone-100 flex flex-col gap-4 ring-1 ring-white/5">
-      <div className="flex flex-wrap items-end gap-4">
-        <Field label="Effective stack (chips)">
-          <input
-            type="number"
-            value={values.effectiveStack}
-            onChange={(e) =>
-              onChange({ effectiveStack: parseInt(e.target.value || "0", 10) })
-            }
-            className="w-24 bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-          />
-        </Field>
-        <Field label="Button">
-          <select
-            value={values.button}
-            onChange={(e) => onChange({ button: e.target.value as Seat })}
-            className="bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-          >
-            <option value="hero">hero</option>
-            <option value="villain">villain</option>
-          </select>
-        </Field>
-        <Field label="Model">
-          <select
-            value={values.presetId}
-            onChange={(e) => onChange({ presetId: e.target.value })}
-            className="bg-stone-900 rounded px-2 py-1 ring-1 ring-white/10 focus:ring-amber-400 outline-none"
-          >
-            {presets.map((p) => (
-              <option key={p.selector_id} value={p.selector_id}>
-                {p.selector_id}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Villain profile">
-          <div className="flex gap-1 rounded bg-stone-900 p-1 ring-1 ring-white/10">
-            {(["reg", "unknown"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                data-testid={`villain-profile-${p}`}
-                className={`rounded px-2 py-1 text-xs transition ${
-                  values.villainProfile === p
-                    ? "bg-stone-600 text-stone-100"
-                    : "text-stone-400 hover:text-stone-200"
-                }`}
-                onClick={() => onChange({ villainProfile: p })}
-              >
-                {p === "reg" ? "Reg" : "Unknown"}
-              </button>
-            ))}
-          </div>
-        </Field>
+    <section
+      className="relative rounded-2xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-5 overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(29,23,24,0.85), rgba(20,16,18,0.9))",
+        border: "1px solid rgba(201,162,94,0.2)",
+        boxShadow:
+          "0 20px 60px -30px rgba(0,0,0,0.85), inset 0 1px 0 rgba(201,162,94,0.14)",
+      }}
+    >
+      {/* Header ribbon */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
+        <div className="flex flex-col">
+          <span className="font-mono text-[9px] tracking-[0.35em] sm:tracking-[0.4em] uppercase text-[color:var(--color-parchment-dim)]">
+            New spot
+          </span>
+          <span className="text-lg sm:text-xl font-semibold tracking-tight text-[color:var(--color-bone)]">
+            Setup
+          </span>
+        </div>
         <button
           data-testid="new-hand"
           onClick={onStart}
           disabled={disabled}
-          className="ml-auto px-4 py-2 rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition"
+          className="chip-button h-11 sm:h-12 px-4 sm:px-5 flex items-center justify-center gap-2 sm:gap-3 group shrink-0"
+          style={
+            {
+              "--chip-core":
+                "linear-gradient(180deg, #e6c584 0%, #a07a2e 100%)",
+              color: "var(--color-ink)",
+            } as React.CSSProperties
+          }
         >
-          <kbd className="mr-2 opacity-60 text-[10px] font-mono">n</kbd>
-          New hand
+          <kbd className="hidden sm:inline font-mono text-[9px] tracking-widest px-1.5 py-0.5 rounded border border-[color:var(--color-ink)]/30 bg-black/15">
+            N
+          </kbd>
+          <span className="font-semibold text-sm tracking-tight">
+            New hand
+          </span>
+          <span className="text-base leading-none group-hover:translate-x-0.5 transition-transform">
+            →
+          </span>
         </button>
       </div>
 
-      <CardPicker
-        heroHole={hero}
-        villainHole={villain}
-        onChange={({ hero: h, villain: v }) =>
-          onChange({
-            heroHole: h ? h[0] + h[1] : "",
-            villainHole: v ? v[0] + v[1] : "",
-          })
-        }
-      />
+      <div className="deco-rule" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5 lg:gap-6 items-start">
+        {/* left column — fields */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <Field label="Effective stack" unit="chips">
+            <input
+              type="number"
+              value={values.effectiveStack}
+              onChange={(e) =>
+                onChange({ effectiveStack: parseInt(e.target.value || "0", 10) })
+              }
+              className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
+              style={{
+                border: "1px solid rgba(201,162,94,0.22)",
+                background: "rgba(10,7,6,0.45)",
+              }}
+            />
+          </Field>
+          <Field label="Button">
+            <select
+              value={values.button}
+              onChange={(e) => onChange({ button: e.target.value as Seat })}
+              className="w-full px-3 py-2 rounded-md text-sm text-[color:var(--color-bone)] outline-none transition-colors appearance-none cursor-pointer"
+              style={{
+                border: "1px solid rgba(201,162,94,0.22)",
+                background: "rgba(10,7,6,0.45)",
+              }}
+            >
+              <option value="hero">Hero</option>
+              <option value="villain">Villain</option>
+            </select>
+          </Field>
+          <Field label="Oracle · Model">
+            <select
+              value={values.presetId}
+              onChange={(e) => onChange({ presetId: e.target.value })}
+              className="w-full px-3 py-2 rounded-md font-mono text-[11px] text-[color:var(--color-bone)] outline-none transition-colors appearance-none cursor-pointer"
+              style={{
+                border: "1px solid rgba(201,162,94,0.22)",
+                background: "rgba(10,7,6,0.45)",
+              }}
+            >
+              {presets.map((p) => (
+                <option key={p.selector_id} value={p.selector_id}>
+                  {p.selector_id}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Villain · Profile">
+            <div
+              className="flex p-1 rounded-md"
+              style={{
+                border: "1px solid rgba(201,162,94,0.22)",
+                background: "rgba(10,7,6,0.45)",
+              }}
+            >
+              {(["reg", "unknown"] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  data-testid={`villain-profile-${p}`}
+                  className="flex-1 rounded px-2 py-1 font-mono text-[10px] uppercase tracking-[0.2em] transition"
+                  style={{
+                    color:
+                      values.villainProfile === p
+                        ? "var(--color-ink)"
+                        : "var(--color-parchment-dim)",
+                    background:
+                      values.villainProfile === p
+                        ? "linear-gradient(180deg, var(--color-gold-bright), var(--color-gold-deep))"
+                        : "transparent",
+                  }}
+                  onClick={() => onChange({ villainProfile: p })}
+                >
+                  {p === "reg" ? "Reg" : "Unk."}
+                </button>
+              ))}
+            </div>
+          </Field>
+        </div>
+
+        {/* right column — card picker area */}
+        <div className="shrink-0">
+          <CardPicker
+            heroHole={hero}
+            villainHole={villain}
+            onChange={({ hero: h, villain: v }) =>
+              onChange({
+                heroHole: h ? h[0] + h[1] : "",
+                villainHole: v ? v[0] + v[1] : "",
+              })
+            }
+          />
+        </div>
+      </div>
     </section>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  unit,
+  children,
+}: {
+  label: string;
+  unit?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <label className="flex flex-col text-[11px] uppercase tracking-wider opacity-70 gap-1">
-      <span>{label}</span>
-      <div className="normal-case opacity-100 text-sm">{children}</div>
+    <label className="flex flex-col gap-1.5">
+      <span className="flex items-baseline justify-between">
+        <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
+          {label}
+        </span>
+        {unit && (
+          <span className="font-mono text-[8px] uppercase tracking-widest text-[color:var(--color-gold-deep)]">
+            {unit}
+          </span>
+        )}
+      </span>
+      {children}
     </label>
   );
 }
