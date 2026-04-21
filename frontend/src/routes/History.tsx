@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDecisionDetail, listDecisions } from "../api/client";
 import type { DecisionDetail, DecisionListRow } from "../api/types";
+import { StrategyBars } from "../components/StrategyBars";
 import { formatDateTime, formatLatencyMs, formatUsd, useLocale } from "../i18n";
 
 export function History() {
@@ -204,6 +205,11 @@ export function History() {
                 <p className="mt-1 text-[11px] opacity-90">
                   {selected.parsed_advice.reasoning}
                 </p>
+                {selected.parsed_advice.strategy && selected.parsed_advice.strategy.length > 0 && (
+                  <div className="mt-2">
+                    <StrategyBars strategy={selected.parsed_advice.strategy} />
+                  </div>
+                )}
               </div>
             </Collapsible>
           )}
