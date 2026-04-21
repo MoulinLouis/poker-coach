@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { getPrompt, listPacks, savePrompt } from "../api/client";
 import type { Pack, PromptDetail } from "../api/types";
+import { useLocale } from "../i18n";
 
 export function Prompts() {
+  const { t } = useLocale();
   const [packs, setPacks] = useState<Pack[]>([]);
   const [activePack, setActivePack] = useState<string | null>(null);
   const [activeVersion, setActiveVersion] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function Prompts() {
         `$1${newVersion}`,
       );
       await savePrompt(activePack, newVersion, rewritten);
-      setNotice(`Saved ${activePack}/${newVersion}`);
+      setNotice(`${t("routes.prompts.savedPrefix")} ${activePack}/${newVersion}`);
       await reloadPacks();
       setActiveVersion(newVersion);
     } catch (err) {
@@ -72,9 +74,9 @@ export function Prompts() {
   return (
     <div className="flex gap-4 max-w-[1400px] mx-auto">
       <aside className="w-[260px] shrink-0 rounded-lg bg-stone-900 ring-1 ring-white/5 p-3">
-        <h2 className="text-sm font-semibold mb-2">Packs</h2>
+        <h2 className="text-sm font-semibold mb-2">{t("routes.prompts.packsHeader")}</h2>
         {packs.length === 0 && (
-          <p className="text-xs text-stone-500">No packs found in prompts/ directory.</p>
+          <p className="text-xs text-stone-500">{t("routes.prompts.packsEmpty")}</p>
         )}
         <ul className="space-y-3">
           {packs.map((p) => (
@@ -124,17 +126,19 @@ export function Prompts() {
       <section className="flex-1 min-w-0 flex flex-col gap-3">
         <div className="flex items-baseline gap-3">
           <h1 className="text-xl font-semibold">
-            {activePack ? `${activePack} / ${activeVersion ?? ""}` : "Prompts"}
+            {activePack ? `${activePack} / ${activeVersion ?? ""}` : t("routes.prompts.defaultTitle")}
           </h1>
           {detail && (
             <span className="text-xs text-stone-500 font-mono">
-              hash {detail.template_hash.slice(0, 12)}…
+              {t("routes.prompts.hashPrefix")} {detail.template_hash.slice(0, 12)}…
             </span>
           )}
           {activePackDef && (
             <span className="text-xs text-stone-500 ml-auto">
-              {activePackDef.versions.length} version
-              {activePackDef.versions.length === 1 ? "" : "s"}
+              {activePackDef.versions.length}{" "}
+              {activePackDef.versions.length === 1
+                ? t("routes.prompts.versionSingular")
+                : t("routes.prompts.versionPlural")}
             </span>
           )}
         </div>
@@ -143,7 +147,7 @@ export function Prompts() {
         )}
         {detail && (
           <div className="text-xs text-stone-500">
-            declared variables:{" "}
+            {t("routes.prompts.declaredVariables")}{" "}
             <span className="text-stone-300">{detail.declared_variables.join(", ")}</span>
           </div>
         )}
@@ -166,7 +170,7 @@ export function Prompts() {
         />
         <div className="flex items-center gap-3 flex-wrap">
           <label className="flex flex-col text-[10px] uppercase tracking-wider opacity-70 gap-0.5">
-            <span>Save as new version</span>
+            <span>{t("routes.prompts.saveAsNewVersion")}</span>
             <input
               value={newVersion}
               onChange={(e) => setNewVersion(e.target.value)}
@@ -180,10 +184,10 @@ export function Prompts() {
             disabled={!activePack || !newVersion}
             className="px-4 py-2 rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 transition"
           >
-            Save
+            {t("routes.prompts.save")}
           </button>
           <p className="text-xs text-stone-500">
-            New versions are written to disk. Commit them yourself with <code>git</code>.
+            {t("routes.prompts.diskNotePrefix")} <code>git</code>.
           </p>
         </div>
       </section>

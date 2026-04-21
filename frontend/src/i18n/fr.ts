@@ -210,5 +210,18 @@ export const fr: Dict = {
       toPrefix: "à",
       bbUnit: "bb",
     },
+    prompts: {
+      packsHeader: "Packs",
+      packsEmpty: "Aucun pack trouvé dans le dossier prompts/.",
+      defaultTitle: "Invites",
+      hashPrefix: "hash",
+      versionSingular: "version",
+      versionPlural: "versions",
+      declaredVariables: "variables déclarées :",
+      saveAsNewVersion: "Enregistrer comme nouvelle version",
+      save: "Enregistrer",
+      savedPrefix: "Enregistré",
+      diskNotePrefix: "Les nouvelles versions sont écrites sur le disque. Validez-les vous-même avec",
+    },
   },
 };

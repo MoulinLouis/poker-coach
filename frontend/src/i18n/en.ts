@@ -208,5 +208,18 @@ export const en = {
       toPrefix: "to",
       bbUnit: "bb",
     },
+    prompts: {
+      packsHeader: "Packs",
+      packsEmpty: "No packs found in prompts/ directory.",
+      defaultTitle: "Prompts",
+      hashPrefix: "hash",
+      versionSingular: "version",
+      versionPlural: "versions",
+      declaredVariables: "declared variables:",
+      saveAsNewVersion: "Save as new version",
+      save: "Save",
+      savedPrefix: "Saved",
+      diskNotePrefix: "New versions are written to disk. Commit them yourself with",
+    },
   },
 } as const;
