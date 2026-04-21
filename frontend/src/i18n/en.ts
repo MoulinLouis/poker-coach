@@ -51,6 +51,10 @@ export const en = {
     emptyHighlight: "advise",
     emptySuffix: "on hero's turn to get a read.",
     toPrefix: "to",
+    strategy: {
+      header: "Strategy",
+      argmaxHint: "Follow plays the highlighted row",
+    },
   },
   costFooter: {
     session: "Session",

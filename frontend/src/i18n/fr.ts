@@ -53,6 +53,10 @@ export const fr: Dict = {
     emptyHighlight: "conseiller",
     emptySuffix: "au tour du hero pour obtenir une lecture.",
     toPrefix: "à",
+    strategy: {
+      header: "Stratégie",
+      argmaxHint: "Suivre joue la ligne mise en évidence",
+    },
   },
   costFooter: {
     session: "Session",
