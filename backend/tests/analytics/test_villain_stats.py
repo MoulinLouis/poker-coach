@@ -246,6 +246,43 @@ def test_limit_caps_window_to_recent_hands(migrated_engine: Engine) -> None:
     assert stats.hands_played == 50
 
 
+def test_wtsd_counts_showdown_hands(migrated_engine: Engine) -> None:
+    """Hands with 5 board cards and no fold count as showdown reached."""
+    session_id = _seed_session(migrated_engine)
+    showdown_history = [
+        {"actor": "hero", "type": "raise", "to_amount": 300},
+        {"actor": "villain", "type": "call", "to_amount": None},
+        {"actor": "villain", "type": "check", "to_amount": None},
+        {"actor": "hero", "type": "check", "to_amount": None},
+        {"actor": "villain", "type": "check", "to_amount": None},
+        {"actor": "hero", "type": "check", "to_amount": None},
+        {"actor": "villain", "type": "check", "to_amount": None},
+        {"actor": "hero", "type": "check", "to_amount": None},
+    ]
+    for _ in range(10):
+        _insert_hand(
+            migrated_engine,
+            session_id,
+            showdown_history,
+            board=["Ah", "7c", "2d", "5s", "Kh"],
+        )
+    stats = compute_villain_stats(migrated_engine, session_id)
+    assert stats.wtsd_pct == 100.0
+
+
+def test_wtsd_excludes_fold_hands(migrated_engine: Engine) -> None:
+    """Hands that end in a fold do not count as showdown reached."""
+    session_id = _seed_session(migrated_engine)
+    fold_history = [
+        {"actor": "hero", "type": "raise", "to_amount": 300},
+        {"actor": "villain", "type": "fold", "to_amount": None},
+    ]
+    for _ in range(10):
+        _insert_hand(migrated_engine, session_id, fold_history, board=[])
+    stats = compute_villain_stats(migrated_engine, session_id)
+    assert stats.wtsd_pct == 0.0
+
+
 def test_prompt_payload_shape_matches_template(migrated_engine: Engine) -> None:
     """Payload keys match what `coach/v2.md` references in the stats block."""
     payload = VillainStats.zero().as_prompt_payload()
