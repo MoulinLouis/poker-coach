@@ -44,7 +44,8 @@ export function LiveCoach() {
   const [setup, setSetup] = useState<SetupValues>({
     heroHole: "AsKd",
     villainHole: "QcQh",
-    effectiveStack: 10_000,
+    heroStack: 10_000,
+    villainStack: 10_000,
     ante: 0,
     button: "hero",
     presetId: "",
@@ -95,13 +96,15 @@ export function LiveCoach() {
         session_id: s.sessionId,
         bb: 100,
         ante: setup.ante,
-        effective_stack_start: setup.effectiveStack,
+        hero_stack_start: setup.heroStack,
+        villain_stack_start: setup.villainStack,
       });
       const snap = await engineStart({
-        effective_stack: setup.effectiveStack,
         bb: 100,
         ante: setup.ante,
         button: setup.button,
+        hero_stack: setup.heroStack,
+        villain_stack: setup.villainStack,
         hero_hole: hero,
         villain_hole: villain,
       });

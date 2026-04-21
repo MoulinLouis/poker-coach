@@ -14,6 +14,8 @@ function baseState(overrides: Partial<GameState> = {}): GameState {
     bb: 100,
     ante: 0,
     effective_stack: 10000,
+    hero_stack_start: 10000,
+    villain_stack_start: 10000,
     button: "hero",
     hero_hole: ["As", "Kd"],
     villain_hole: null,

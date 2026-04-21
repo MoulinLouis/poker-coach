@@ -32,9 +32,11 @@ _STREET_ORDER: tuple[str, ...] = (
 
 def start_hand(
     *,
-    effective_stack: int,
     bb: int,
     button: Seat,
+    effective_stack: int | None = None,
+    hero_stack: int | None = None,
+    villain_stack: int | None = None,
     ante: int = 0,
     hero_hole: tuple[str, str] | None = None,
     villain_hole: tuple[str, str] | None = None,
@@ -46,9 +48,30 @@ def start_hand(
         raise ValueError(f"bb ({bb}) must be a positive even integer")
     if ante < 0:
         raise ValueError(f"ante ({ante}) must be non-negative")
-    if effective_stack - bb - ante <= 0:
+
+    # Resolve stack shape: either legacy `effective_stack` (both equal) or
+    # the new pair `hero_stack` + `villain_stack`. Exactly one.
+    legacy = effective_stack is not None
+    pair = hero_stack is not None and villain_stack is not None
+    if legacy and pair:
         raise ValueError(
-            f"effective_stack ({effective_stack}) must cover bb ({bb}) + ante ({ante})"
+            "pass either `effective_stack` OR (`hero_stack` + `villain_stack`), not both"
+        )
+    if not legacy and not pair:
+        raise ValueError("must provide `effective_stack` OR both `hero_stack` and `villain_stack`")
+    if legacy:
+        assert effective_stack is not None
+        hero_stack_start = effective_stack
+        villain_stack_start = effective_stack
+    else:
+        assert hero_stack is not None and villain_stack is not None
+        hero_stack_start = hero_stack
+        villain_stack_start = villain_stack
+
+    effective_stack_resolved = min(hero_stack_start, villain_stack_start)
+    if effective_stack_resolved - bb - ante <= 0:
+        raise ValueError(
+            f"effective_stack ({effective_stack_resolved}) must cover bb ({bb}) + ante ({ante})"
         )
 
     if rng_seed is not None and deck_snapshot is None:
@@ -63,15 +86,21 @@ def start_hand(
 
     sb = bb // 2
     non_button = other_seat(button)
+    start_stacks = {"hero": hero_stack_start, "villain": villain_stack_start}
     # BB-ante format: only the non-button (BB) seat posts the ante.
-    stacks = {button: effective_stack - sb, non_button: effective_stack - bb - ante}
+    stacks = {
+        button: start_stacks[button] - sb,
+        non_button: start_stacks[non_button] - bb - ante,
+    }
     committed = {button: sb, non_button: bb}
 
     return GameState(
         hand_id=hand_id or uuid.uuid4().hex,
         bb=bb,
         ante=ante,
-        effective_stack=effective_stack,
+        effective_stack=effective_stack_resolved,
+        hero_stack_start=hero_stack_start,
+        villain_stack_start=villain_stack_start,
         button=button,
         hero_hole=hero_hole,
         villain_hole=villain_hole,
@@ -98,10 +127,11 @@ def initial_state(state: GameState) -> GameState:
     proves replay idempotency.
     """
     return start_hand(
-        effective_stack=state.effective_stack,
         bb=state.bb,
-        ante=state.ante,
         button=state.button,
+        hero_stack=state.hero_stack_start,
+        villain_stack=state.villain_stack_start,
+        ante=state.ante,
         hero_hole=state.hero_hole,
         villain_hole=state.villain_hole,
         rng_seed=state.rng_seed,

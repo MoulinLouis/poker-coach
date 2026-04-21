@@ -6,7 +6,8 @@ import { useLocale } from "../i18n";
 export interface SetupValues {
   heroHole: string;
   villainHole: string;
-  effectiveStack: number;
+  heroStack: number;
+  villainStack: number;
   ante: number;
   button: Seat;
   presetId: string;
@@ -81,12 +82,26 @@ export function SetupPanel({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5 lg:gap-6 items-start">
         {/* left column — fields */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Field label={t("setup.effectiveStack")} unit={t("setup.chipsUnit")}>
+          <Field label={t("setup.heroStack")} unit={t("setup.chipsUnit")}>
             <input
               type="number"
-              value={values.effectiveStack}
+              value={values.heroStack}
               onChange={(e) =>
-                onChange({ effectiveStack: parseInt(e.target.value || "0", 10) })
+                onChange({ heroStack: parseInt(e.target.value || "0", 10) })
+              }
+              className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
+              style={{
+                border: "1px solid rgba(201,162,94,0.22)",
+                background: "rgba(10,7,6,0.45)",
+              }}
+            />
+          </Field>
+          <Field label={t("setup.villainStack")} unit={t("setup.chipsUnit")}>
+            <input
+              type="number"
+              value={values.villainStack}
+              onChange={(e) =>
+                onChange({ villainStack: parseInt(e.target.value || "0", 10) })
               }
               className="w-full bg-transparent px-3 py-2 rounded-md font-mono tabular-nums text-[color:var(--color-bone)] outline-none transition-colors"
               style={{
@@ -171,6 +186,13 @@ export function SetupPanel({
               ))}
             </div>
           </Field>
+          <div className="col-span-2 sm:col-span-4 font-mono text-[9px] uppercase tracking-[0.3em] text-[color:var(--color-parchment-dim)]">
+            {t("setup.effectiveStack")}:{" "}
+            <span className="text-[color:var(--color-bone)] tabular-nums">
+              {Math.min(values.heroStack, values.villainStack)}
+            </span>{" "}
+            {t("setup.chipsUnit")}
+          </div>
         </div>
 
         {/* right column — card picker area */}

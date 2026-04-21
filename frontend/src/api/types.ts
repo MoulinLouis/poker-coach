@@ -29,6 +29,8 @@ export interface GameState {
   bb: number;
   ante: number;
   effective_stack: number;
+  hero_stack_start: number;
+  villain_stack_start: number;
   button: Seat;
   hero_hole: [string, string];
   villain_hole?: [string, string] | null;

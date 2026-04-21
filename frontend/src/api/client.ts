@@ -43,7 +43,9 @@ export async function createHand(input: {
   session_id: string;
   bb: number;
   ante?: number;
-  effective_stack_start: number;
+  effective_stack_start?: number;
+  hero_stack_start?: number;
+  villain_stack_start?: number;
   rng_seed?: number | null;
   deck_snapshot?: string[] | null;
 }): Promise<{ hand_id: string }> {
@@ -51,10 +53,12 @@ export async function createHand(input: {
 }
 
 export async function engineStart(input: {
-  effective_stack: number;
   bb: number;
   ante?: number;
   button: Seat;
+  effective_stack?: number;
+  hero_stack?: number;
+  villain_stack?: number;
   hero_hole?: [string, string] | null;
   villain_hole?: [string, string] | null;
   rng_seed?: number | null;

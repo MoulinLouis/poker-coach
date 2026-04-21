@@ -38,7 +38,9 @@ class CreateHandRequest(BaseModel):
     session_id: str
     bb: int
     ante: int = 0
-    effective_stack_start: int
+    effective_stack_start: int | None = None
+    hero_stack_start: int | None = None
+    villain_stack_start: int | None = None
     rng_seed: int | None = None
     deck_snapshot: list[str] | None = None
 

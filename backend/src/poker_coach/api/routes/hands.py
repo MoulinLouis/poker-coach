@@ -20,6 +20,21 @@ def create_hand(
         ).first()
         if row is None:
             raise HTTPException(status_code=404, detail=f"session {body.session_id} not found")
+        # Resolve stack shape same way start_hand does (legacy vs pair).
+        if body.hero_stack_start is not None and body.villain_stack_start is not None:
+            hero_s = body.hero_stack_start
+            villain_s = body.villain_stack_start
+        elif body.effective_stack_start is not None:
+            hero_s = body.effective_stack_start
+            villain_s = body.effective_stack_start
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "must provide effective_stack_start OR both "
+                    "hero_stack_start + villain_stack_start"
+                ),
+            )
         hand_id = new_id()
         conn.execute(
             insert(hands).values(
@@ -27,7 +42,9 @@ def create_hand(
                 session_id=body.session_id,
                 bb=body.bb,
                 ante=body.ante,
-                effective_stack_start=body.effective_stack_start,
+                effective_stack_start=min(hero_s, villain_s),
+                hero_stack_start=hero_s,
+                villain_stack_start=villain_s,
                 rng_seed=body.rng_seed,
                 deck_snapshot=body.deck_snapshot,
             )

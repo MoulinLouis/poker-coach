@@ -31,6 +31,8 @@ beforeEach(() => {
       acted_this_street: [],
       pending_reveal: null,
       effective_stack: 10000,
+      hero_stack_start: 10000,
+      villain_stack_start: 10000,
       button: "hero",
       last_aggressor: null,
       last_raise_size: 0,

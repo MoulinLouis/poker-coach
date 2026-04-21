@@ -24,6 +24,8 @@ def test_coach_v3_renders_with_v2_variables_plus_bb_chips() -> None:
         "pot_bb_live": 6.0,
         "ante_bb": 0.0,
         "effective_bb": 100.0,
+        "hero_stack_start_bb": 100.0,
+        "villain_stack_start_bb": 100.0,
         "hero_stack_bb": 97.0,
         "villain_stack_bb": 97.0,
         "hero_committed_bb": 0.0,

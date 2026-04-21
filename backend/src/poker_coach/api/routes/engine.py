@@ -25,10 +25,12 @@ router = APIRouter()
 
 
 class StartHandRequest(BaseModel):
-    effective_stack: int
     bb: int
     ante: int = 0
     button: Seat
+    effective_stack: int | None = None
+    hero_stack: int | None = None
+    villain_stack: int | None = None
     hero_hole: tuple[str, str] | None = None
     villain_hole: tuple[str, str] | None = None
     rng_seed: int | None = None
@@ -51,10 +53,12 @@ class ApplyActionRequest(BaseModel):
 def start(body: StartHandRequest) -> EngineSnapshot:
     try:
         state = start_hand(
-            effective_stack=body.effective_stack,
             bb=body.bb,
             ante=body.ante,
             button=body.button,
+            effective_stack=body.effective_stack,
+            hero_stack=body.hero_stack,
+            villain_stack=body.villain_stack,
             hero_hole=body.hero_hole,
             villain_hole=body.villain_hole,
             rng_seed=body.rng_seed,

@@ -49,6 +49,8 @@ class GameState(BaseModel):
     bb: int
     ante: int = 0
     effective_stack: int
+    hero_stack_start: int
+    villain_stack_start: int
     button: Seat
     hero_hole: tuple[str, str]
     villain_hole: tuple[str, str] | None = None

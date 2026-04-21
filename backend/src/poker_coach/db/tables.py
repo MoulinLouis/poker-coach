@@ -46,6 +46,8 @@ hands = Table(
     Column("bb", Integer, nullable=False),
     Column("ante", Integer, nullable=False, server_default="0"),
     Column("effective_stack_start", Integer, nullable=False),
+    Column("hero_stack_start", Integer, nullable=True),
+    Column("villain_stack_start", Integer, nullable=True),
     Column("deck_snapshot", JSON, nullable=True),
     Column("rng_seed", Integer, nullable=True),
     Column("winner", String(16), nullable=True),  # 'hero' | 'villain' | 'tie'
