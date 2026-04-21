@@ -17,6 +17,7 @@ import type {
   VillainProfile,
 } from "../api/types";
 import { useAdviceStream, type StreamState } from "../api/useAdviceStream";
+import { useLocale } from "../i18n";
 import { parseHole } from "../utils/cards";
 
 interface ColumnState {
@@ -55,6 +56,7 @@ function bb(state: GameState, chips: number): string {
 }
 
 export function SpotAnalysis() {
+  const { t } = useLocale();
   const [session, setSession] = useState<string | null>(null);
   const [presets, setPresets] = useState<PresetSummary[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -96,7 +98,7 @@ export function SpotAnalysis() {
     const hero = parseHole(heroHole);
     const villain = parseHole(villainHole);
     if (!hero || !villain) {
-      setError("hole cards must be 4 chars, e.g. AsKd");
+      setError(t("routes.spotAnalysis.errorHoleCards"));
       return;
     }
     try {
@@ -129,11 +131,11 @@ export function SpotAnalysis() {
 
   const compare = useCallback(async () => {
     if (!snapshot || snapshot.state.to_act !== "hero") {
-      setError("Compare runs on hero's turn");
+      setError(t("routes.spotAnalysis.errorCompareOnHeroTurn"));
       return;
     }
     if (selected.length === 0) {
-      setError("Select at least one model");
+      setError(t("routes.spotAnalysis.errorSelectModel"));
       return;
     }
     setError(null);
@@ -169,13 +171,13 @@ export function SpotAnalysis() {
 
   return (
     <div className="max-w-[1200px]">
-      <h1 className="mb-3 text-2xl font-semibold text-stone-100">Spot Analysis</h1>
+      <h1 className="mb-3 text-2xl font-semibold text-stone-100">{t("routes.spotAnalysis.title")}</h1>
 
       <section className="p-3 rounded-lg ring-1 ring-white/5 bg-stone-900">
-        <strong className="text-sm font-semibold text-stone-200">Spot</strong>
+        <strong className="text-sm font-semibold text-stone-200">{t("routes.spotAnalysis.spotHeader")}</strong>
         <div className="flex gap-2 mt-2 flex-wrap items-center">
           <label className="flex items-center gap-1 text-sm text-stone-300">
-            Hero hole{" "}
+            {t("routes.spotAnalysis.heroHoleLabel")}{" "}
             <input
               value={heroHole}
               onChange={(e) => setHeroHole(e.target.value)}
@@ -183,7 +185,7 @@ export function SpotAnalysis() {
             />
           </label>
           <label className="flex items-center gap-1 text-sm text-stone-300">
-            Villain hole{" "}
+            {t("routes.spotAnalysis.villainHoleLabel")}{" "}
             <input
               value={villainHole}
               onChange={(e) => setVillainHole(e.target.value)}
@@ -191,7 +193,7 @@ export function SpotAnalysis() {
             />
           </label>
           <label className="flex items-center gap-1 text-sm text-stone-300">
-            Effective stack{" "}
+            {t("routes.spotAnalysis.effectiveStackLabel")}{" "}
             <input
               type="number"
               value={effectiveStack}
@@ -200,25 +202,25 @@ export function SpotAnalysis() {
             />
           </label>
           <label className="flex items-center gap-1 text-sm text-stone-300">
-            Button{" "}
+            {t("routes.spotAnalysis.buttonLabel")}{" "}
             <select
               value={button}
               onChange={(e) => setButton(e.target.value as Seat)}
               className="bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
             >
-              <option value="hero">hero</option>
-              <option value="villain">villain</option>
+              <option value="hero">{t("routes.spotAnalysis.optionHero")}</option>
+              <option value="villain">{t("routes.spotAnalysis.optionVillain")}</option>
             </select>
           </label>
           <label className="flex items-center gap-1 text-sm text-stone-300">
-            Villain profile{" "}
+            {t("routes.spotAnalysis.villainProfileLabel")}{" "}
             <select
               value={villainProfile}
               onChange={(e) => setVillainProfile(e.target.value as VillainProfile)}
               className="bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-sm"
             >
-              <option value="unknown">unknown</option>
-              <option value="reg">reg</option>
+              <option value="unknown">{t("routes.spotAnalysis.optionUnknown")}</option>
+              <option value="reg">{t("routes.spotAnalysis.optionReg")}</option>
             </select>
           </label>
           <button
@@ -226,13 +228,13 @@ export function SpotAnalysis() {
             data-testid="spot-start"
             className="px-3 py-1 rounded bg-amber-500 text-stone-950 font-semibold text-sm hover:bg-amber-400 transition"
           >
-            Start
+            {t("routes.spotAnalysis.start")}
           </button>
         </div>
       </section>
 
       <section className="mt-3 p-3 rounded-lg ring-1 ring-white/5 bg-stone-900">
-        <strong className="text-sm font-semibold text-stone-200">Models to compare (up to 3)</strong>
+        <strong className="text-sm font-semibold text-stone-200">{t("routes.spotAnalysis.modelsHeader")}</strong>
         <div className="mt-2 flex gap-2 flex-wrap">
           {presets.map((p) => {
             const on = selected.includes(p.selector_id);
@@ -261,24 +263,27 @@ export function SpotAnalysis() {
           className="mt-3 p-3 rounded-lg ring-1 ring-white/5 bg-stone-900 leading-relaxed text-sm text-stone-300"
         >
           <div>
-            <strong className="text-stone-200">Street:</strong> {snapshot.state.street} ·{" "}
-            <strong className="text-stone-200">To act:</strong>{" "}
-            {snapshot.state.to_act ?? "(none)"} ·{" "}
-            <strong className="text-stone-200">Pot:</strong>{" "}
-            {bb(snapshot.state, snapshot.state.pot)}bb
+            <strong className="text-stone-200">{t("routes.spotAnalysis.streetLabel")}</strong> {snapshot.state.street} ·{" "}
+            <strong className="text-stone-200">{t("routes.spotAnalysis.toActLabel")}</strong>{" "}
+            {snapshot.state.to_act ?? t("routes.spotAnalysis.toActNone")} ·{" "}
+            <strong className="text-stone-200">{t("routes.spotAnalysis.potLabel")}</strong>{" "}
+            {bb(snapshot.state, snapshot.state.pot)}
+            {t("routes.spotAnalysis.bbUnit")}
           </div>
           <div>
-            <strong className="text-stone-200">Hero:</strong>{" "}
-            {snapshot.state.hero_hole.join(" ")} · stack{" "}
-            {bb(snapshot.state, snapshot.state.stacks.hero)}bb
+            <strong className="text-stone-200">{t("routes.spotAnalysis.heroLabel")}</strong>{" "}
+            {snapshot.state.hero_hole.join(" ")} · {t("routes.spotAnalysis.stackWord")}{" "}
+            {bb(snapshot.state, snapshot.state.stacks.hero)}
+            {t("routes.spotAnalysis.bbUnit")}
           </div>
           <div>
-            <strong className="text-stone-200">Villain:</strong> stack{" "}
-            {bb(snapshot.state, snapshot.state.stacks.villain)}bb
+            <strong className="text-stone-200">{t("routes.spotAnalysis.villainLabel")}</strong> {t("routes.spotAnalysis.stackWord")}{" "}
+            {bb(snapshot.state, snapshot.state.stacks.villain)}
+            {t("routes.spotAnalysis.bbUnit")}
           </div>
           <div>
-            <strong className="text-stone-200">Board:</strong>{" "}
-            {snapshot.state.board.length ? snapshot.state.board.join(" ") : "(none)"}
+            <strong className="text-stone-200">{t("routes.spotAnalysis.boardLabel")}</strong>{" "}
+            {snapshot.state.board.length ? snapshot.state.board.join(" ") : t("routes.spotAnalysis.boardNone")}
           </div>
           {snapshot.state.to_act && (
             <ActionRow
@@ -299,7 +304,7 @@ export function SpotAnalysis() {
                 (c) => c.stream.status === "streaming" || c.stream.status === "thinking",
               )}
             >
-              Compare ({selected.length})
+              {t("routes.spotAnalysis.compare")} ({selected.length})
             </button>
           )}
         </section>
@@ -318,7 +323,7 @@ export function SpotAnalysis() {
             >
               <strong className="text-sm font-semibold text-stone-200">{c.presetId}</strong>
               {c.stream.status === "thinking" && (
-                <p className="text-sm text-stone-400 italic mt-1">Thinking…</p>
+                <p className="text-sm text-stone-400 italic mt-1">{t("routes.spotAnalysis.thinking")}</p>
               )}
               {c.stream.reasoning && (
                 <pre className="whitespace-pre-wrap text-[13px] text-stone-500 mt-1 overflow-auto max-h-40">
@@ -330,9 +335,9 @@ export function SpotAnalysis() {
                   <div className="text-sm text-stone-200">
                     <strong>{c.stream.advice.action}</strong>
                     {c.stream.advice.to_amount_bb != null
-                      ? ` ${c.stream.advice.to_amount_bb}bb`
+                      ? ` ${c.stream.advice.to_amount_bb}${t("routes.spotAnalysis.bbUnit")}`
                       : ""}{" "}
-                    · conf {c.stream.advice.confidence}
+                    · {t("routes.spotAnalysis.confShort")} {c.stream.advice.confidence}
                   </div>
                   <div className="text-xs text-stone-400 mt-1">
                     {c.stream.advice.reasoning}
@@ -370,6 +375,8 @@ function ActionRow({
   actor: Seat;
   onAction: (action: Action) => void | Promise<void>;
 }) {
+  const { t } = useLocale();
+  const actorLabel = actor === "hero" ? t("routes.spotAnalysis.optionHero") : t("routes.spotAnalysis.optionVillain");
   return (
     <div className="mt-2 flex gap-1.5 flex-wrap">
       {legal.map((la) => {
@@ -381,7 +388,7 @@ function ActionRow({
               <input
                 placeholder={`${la.min_to != null ? (la.min_to / bbValue).toFixed(1) : ""}–${
                   la.max_to != null ? (la.max_to / bbValue).toFixed(1) : ""
-                } bb`}
+                } ${t("routes.spotAnalysis.sizePlaceholderUnit")}`}
                 value={value}
                 onChange={(e) => setForm({ ...form, [la.type]: e.target.value })}
                 className="w-20 bg-stone-800 text-stone-100 rounded px-1.5 py-0.5 ring-1 ring-white/10 text-xs"
@@ -401,7 +408,7 @@ function ActionRow({
               }}
               className="px-2 py-0.5 rounded bg-stone-700 text-stone-200 text-xs ring-1 ring-white/10 hover:bg-stone-600 transition"
             >
-              {actor} {la.type}
+              {actorLabel} {la.type}
             </button>
           </span>
         );
