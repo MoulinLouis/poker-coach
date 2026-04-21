@@ -9,7 +9,7 @@ export type TranslationState = {
   toggle: () => void;
 };
 
-export function useTranslation(text: string): TranslationState {
+export function useAdviceTranslation(text: string): TranslationState {
   const [lang, setLang] = useState<"en" | "fr">("en");
   const [frText, setFrText] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

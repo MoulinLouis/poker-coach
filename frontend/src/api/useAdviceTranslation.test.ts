@@ -2,15 +2,15 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "./client";
-import { useTranslation } from "./useTranslation";
+import { useAdviceTranslation } from "./useAdviceTranslation";
 
-describe("useTranslation", () => {
+describe("useAdviceTranslation", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
   it("starts in EN with no cached translation", () => {
-    const { result } = renderHook(() => useTranslation("hello"));
+    const { result } = renderHook(() => useAdviceTranslation("hello"));
     expect(result.current.lang).toBe("en");
     expect(result.current.frText).toBeNull();
     expect(result.current.loading).toBe(false);
@@ -22,7 +22,7 @@ describe("useTranslation", () => {
       .spyOn(client, "translateText")
       .mockResolvedValue({ translation: "bonjour", cost_usd: 0.001 });
 
-    const { result } = renderHook(() => useTranslation("hello"));
+    const { result } = renderHook(() => useAdviceTranslation("hello"));
     act(() => {
       result.current.toggle();
     });
@@ -44,7 +44,7 @@ describe("useTranslation", () => {
       .mockResolvedValueOnce({ translation: "salut", cost_usd: 0.001 });
 
     const { result, rerender } = renderHook(
-      ({ text }: { text: string }) => useTranslation(text),
+      ({ text }: { text: string }) => useAdviceTranslation(text),
       { initialProps: { text: "hello" } },
     );
 
@@ -62,7 +62,7 @@ describe("useTranslation", () => {
   it("reverts to EN on error", async () => {
     vi.spyOn(client, "translateText").mockRejectedValue(new Error("boom"));
 
-    const { result } = renderHook(() => useTranslation("hello"));
+    const { result } = renderHook(() => useAdviceTranslation("hello"));
     act(() => result.current.toggle());
 
     await waitFor(() => expect(result.current.error).toBe("boom"));
@@ -76,7 +76,7 @@ describe("useTranslation", () => {
       cost_usd: 0.001,
     });
 
-    const { result } = renderHook(() => useTranslation("hello"), {
+    const { result } = renderHook(() => useAdviceTranslation("hello"), {
       wrapper: StrictMode,
     });
     act(() => result.current.toggle());
@@ -93,7 +93,7 @@ describe("useTranslation", () => {
     });
     const spy = vi.spyOn(client, "translateText").mockReturnValue(pending);
 
-    const { result } = renderHook(() => useTranslation("hello"));
+    const { result } = renderHook(() => useAdviceTranslation("hello"));
     act(() => result.current.toggle());
     expect(result.current.loading).toBe(true);
 

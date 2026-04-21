@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Advice } from "../api/types";
 import type { StreamState } from "../api/useAdviceStream";
-import { type TranslationState, useTranslation } from "../api/useTranslation";
+import { type TranslationState, useAdviceTranslation } from "../api/useAdviceTranslation";
 
 export function AdvicePanel({
   stream,
@@ -14,8 +14,8 @@ export function AdvicePanel({
   presetLabel: string;
   onFollow?: () => void;
 }) {
-  const reasoningTranslation = useTranslation(stream.reasoning ?? "");
-  const adviceTranslation = useTranslation(stream.advice?.reasoning ?? "");
+  const reasoningTranslation = useAdviceTranslation(stream.reasoning ?? "");
+  const adviceTranslation = useAdviceTranslation(stream.advice?.reasoning ?? "");
 
   const displayedReasoning =
     reasoningTranslation.lang === "fr" && reasoningTranslation.frText !== null
