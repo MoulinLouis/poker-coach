@@ -1,4 +1,7 @@
+import { useLocale } from "../i18n";
+
 export function Pot({ potBb }: { potBb: number }) {
+  const { t } = useLocale();
   return (
     <div
       data-testid="pot"
@@ -17,11 +20,11 @@ export function Pot({ potBb }: { potBb: number }) {
           {potBb.toFixed(1)}
         </span>
         <span className="font-mono text-[10px] tracking-widest uppercase text-[color:var(--color-parchment-dim)]">
-          bb
+          {t("pot.bbUnit")}
         </span>
       </div>
       <span className="pl-2 border-l border-[color:var(--color-gold-shadow)]/60 text-[9px] uppercase tracking-[0.4em] text-[color:var(--color-parchment-dim)]">
-        Pot
+        {t("pot.label")}
       </span>
     </div>
   );

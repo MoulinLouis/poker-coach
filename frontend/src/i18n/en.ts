@@ -98,4 +98,8 @@ export const en = {
     bbUnit: "bb",
     depth: "depth",
   },
+  pot: {
+    bbUnit: "bb",
+    label: "Pot",
+  },
 } as const;

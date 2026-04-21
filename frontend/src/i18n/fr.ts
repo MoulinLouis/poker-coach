@@ -100,4 +100,8 @@ export const fr: Dict = {
     bbUnit: "bb",
     depth: "tapis",
   },
+  pot: {
+    bbUnit: "bb",
+    label: "Pot",
+  },
 };
