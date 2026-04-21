@@ -35,3 +35,8 @@ def test_provider_configuration_is_consistent() -> None:
             assert spec.thinking_mode is None, spec.selector_id
             assert spec.thinking_budget is None, spec.selector_id
             assert spec.reasoning_effort is None, spec.selector_id
+
+
+def test_opus_preset_uses_low_temperature() -> None:
+    spec = MODEL_PRESETS["claude-opus-4-7-deep"]
+    assert spec.temperature == 0.2

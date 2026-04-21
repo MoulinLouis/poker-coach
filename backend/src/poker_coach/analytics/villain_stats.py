@@ -63,8 +63,7 @@ def _pct(hit: int, opp: int) -> float:
 
 def _tally_hand(
     trace: list[dict[str, Any]],
-    board_revealed: bool,
-    reached_showdown: bool,
+    board: list[str],
 ) -> dict[str, int]:
     """Walk one hand's action trace and return per-hand counters.
 
@@ -72,6 +71,12 @@ def _tally_hand(
     Streets are inferred from the position of reveals in the engine, but
     `history` is flat — we segment by walking and tracking preflop raises.
     """
+    # A showdown occurred iff the runout reached the river (5 board cards)
+    # and the hand didn't end on a fold. Pure fold-out hands never see 5
+    # board cards because `fold` is terminal.
+    last_action_type = trace[-1]["type"] if trace else None
+    reached_showdown = len(board) == 5 and last_action_type != "fold"
+    board_revealed = bool(board)
     preflop_actions: list[dict[str, Any]] = []
     postflop_actions: list[dict[str, Any]] = []
     # Segment: preflop = actions until both players have acted and
@@ -82,15 +87,21 @@ def _tally_hand(
     # preflop ends when a player calls a raise. We track `last_raise`.
     seen_preflop_raise = False
     preflop_closed = False
+    actors_acted: set[str] = set()
     for act in trace:
         if not preflop_closed:
             preflop_actions.append(act)
+            actors_acted.add(act["actor"])
             if act["type"] in ("bet", "raise", "allin"):
                 seen_preflop_raise = True
             elif act["type"] == "call" and seen_preflop_raise:
                 preflop_closed = True
             elif act["type"] == "fold":
                 preflop_closed = True  # hand ends preflop
+            elif act["type"] == "check" and not seen_preflop_raise and len(actors_acted) == 2:
+                # BB's check after BTN-limp: both players have acted voluntarily
+                # and no raise is outstanding → preflop is over.
+                preflop_closed = True
         else:
             postflop_actions.append(act)
 
@@ -213,7 +224,7 @@ def compute_villain_stats(engine: Engine, session_id: str, limit: int = 50) -> V
         if not hand_ids:
             return VillainStats(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
-        traces: list[tuple[list[dict[str, Any]], bool]] = []
+        traces: list[tuple[list[dict[str, Any]], list[str]]] = []
         for hid in hand_ids:
             last = conn.execute(
                 select(decisions.c.game_state)
@@ -225,8 +236,8 @@ def compute_villain_stats(engine: Engine, session_id: str, limit: int = 50) -> V
                 continue
             gs = last.game_state
             history = gs.get("history", [])
-            board_revealed = bool(gs.get("board"))
-            traces.append((history, board_revealed))
+            board = gs.get("board", []) or []
+            traces.append((history, board))
 
     hands_played = len(traces)
     agg = {
@@ -245,8 +256,8 @@ def compute_villain_stats(engine: Engine, session_id: str, limit: int = 50) -> V
         "wtsd_op": 0,
         "wtsd_hit": 0,
     }
-    for history, board_revealed in traces:
-        per = _tally_hand(history, board_revealed=board_revealed, reached_showdown=False)
+    for history, board in traces:
+        per = _tally_hand(history, board=board)
         for k, v in per.items():
             agg[k] += v
 

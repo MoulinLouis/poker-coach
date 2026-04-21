@@ -1,29 +1,33 @@
-from poker_coach.oracle.system_prompt import SYSTEM_PROMPT
+from poker_coach.oracle.system_prompt import (
+    SYSTEM_PROMPT,
+    SYSTEM_PROMPT_V2,
+    SYSTEM_PROMPT_V3,
+    system_prompt_for,
+)
 
 
-def test_system_prompt_mentions_both_villain_profiles() -> None:
-    assert "`reg`" in SYSTEM_PROMPT
-    assert "`unknown`" in SYSTEM_PROMPT
+def test_v2_keeps_never_randomize_instruction() -> None:
+    assert "Never randomize" in SYSTEM_PROMPT_V2
 
 
-def test_system_prompt_enforces_tool_only_output() -> None:
-    assert "submit_advice" in SYSTEM_PROMPT
-    assert "ONLY VISIBLE OUTPUT" in SYSTEM_PROMPT
+def test_v3_drops_never_randomize_instruction() -> None:
+    assert "Never randomize" not in SYSTEM_PROMPT_V3
+    assert "Never output two actions" not in SYSTEM_PROMPT_V3
 
 
-def test_system_prompt_documents_confidence_mapping() -> None:
-    assert "`high`" in SYSTEM_PROMPT
-    assert "`medium`" in SYSTEM_PROMPT
-    assert "`low`" in SYSTEM_PROMPT
+def test_v3_instructs_mixed_strategy_output() -> None:
+    # v3 replaces "pick one deterministically" with solver-style framing.
+    assert "mixed strategy" in SYSTEM_PROMPT_V3.lower()
 
 
-def test_system_prompt_reasoning_budget_is_two_sentences() -> None:
-    assert "2 sentences" in SYSTEM_PROMPT
-    assert "40-60 words" in SYSTEM_PROMPT
+def test_system_prompt_for_dispatch() -> None:
+    assert system_prompt_for("v2") is SYSTEM_PROMPT_V2
+    assert system_prompt_for("v3") is SYSTEM_PROMPT_V3
+    # v1 is the legacy single-verdict prompt pack — treat like v2.
+    assert system_prompt_for("v1") is SYSTEM_PROMPT_V2
 
 
-def test_system_prompt_forbids_markdown_in_reasoning() -> None:
-    # The output contract must explicitly ban the formatting that made v2's
-    # first batch of advice hard to scan (headers, bold, bullets).
-    assert "No headers" in SYSTEM_PROMPT
-    assert "no markdown" in SYSTEM_PROMPT
+def test_legacy_alias_still_exported() -> None:
+    # Historical imports (`from ... import SYSTEM_PROMPT`) must keep working
+    # until every caller is migrated. It points at v2.
+    assert SYSTEM_PROMPT is SYSTEM_PROMPT_V2

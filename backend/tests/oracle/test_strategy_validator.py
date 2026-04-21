@@ -141,6 +141,55 @@ def test_rejects_empty_after_drop() -> None:
         )
 
 
+def test_argmax_tiebreak_prefers_fold_over_call_on_tie() -> None:
+    out = normalize_strategy(
+        [
+            {"action": "fold", "to_amount_bb": None, "frequency": 0.5},
+            {"action": "call", "to_amount_bb": None, "frequency": 0.5},
+        ],
+        legal_actions=[_la("fold"), _la("call")],
+        bb_chips=100,
+    )
+    # Conservatism: on a tie, fold is the argmax, not call.
+    assert out[0].action == "fold"
+
+
+def test_argmax_tiebreak_prefers_smaller_bet_sizing_on_tie() -> None:
+    out = normalize_strategy(
+        [
+            {"action": "bet", "to_amount_bb": 8.0, "frequency": 0.5},
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 0.5},
+        ],
+        legal_actions=[_la("bet", 1.0, 100.0)],
+        bb_chips=100,
+    )
+    assert out[0].to_amount_bb == 3.0
+
+
+def test_argmax_tiebreak_full_ordering() -> None:
+    # All six actions tied at equal frequency — argmax must be fold.
+    out = normalize_strategy(
+        [
+            {"action": "allin", "to_amount_bb": None, "frequency": 1 / 6},
+            {"action": "raise", "to_amount_bb": 10.0, "frequency": 1 / 6},
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 1 / 6},
+            {"action": "call", "to_amount_bb": None, "frequency": 1 / 6},
+            {"action": "check", "to_amount_bb": None, "frequency": 1 / 6},
+            {"action": "fold", "to_amount_bb": None, "frequency": 1 / 6},
+        ],
+        legal_actions=[
+            _la("allin", 100.0, 100.0),
+            _la("raise", 2.0, 100.0),
+            _la("bet", 1.0, 100.0),
+            _la("call"),
+            _la("check"),
+            _la("fold"),
+        ],
+        bb_chips=100,
+    )
+    assert out[0].action == "fold"
+
+
 def test_polarized_sizing_preserved() -> None:
     out = normalize_strategy(
         [

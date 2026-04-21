@@ -25,6 +25,15 @@ _NON_SIZING_ACTIONS = {"fold", "check", "call", "allin"}
 _TOLERANCE_LOW = 0.98
 _TOLERANCE_HIGH = 1.02
 
+_ACTION_CONSERVATISM: dict[str, int] = {
+    "fold": 0,
+    "check": 1,
+    "call": 2,
+    "bet": 3,
+    "raise": 4,
+    "allin": 5,
+}
+
 
 def normalize_strategy(
     raw: list[dict[str, Any]],
@@ -58,18 +67,12 @@ def normalize_strategy(
                 raise ValueError(f"sizing required for action {action!r}")
             to_chips = round(to_amount_bb * bb_chips)
             if la.min_to is not None and to_chips < la.min_to:
-                raise ValueError(
-                    f"sizing {to_amount_bb}bb out of range for {action!r}"
-                )
+                raise ValueError(f"sizing {to_amount_bb}bb out of range for {action!r}")
             if la.max_to is not None and to_chips > la.max_to:
-                raise ValueError(
-                    f"sizing {to_amount_bb}bb out of range for {action!r}"
-                )
+                raise ValueError(f"sizing {to_amount_bb}bb out of range for {action!r}")
         elif action in _NON_SIZING_ACTIONS:
             if to_amount_bb is not None:
-                raise ValueError(
-                    f"to_amount_bb must be null for action {action!r}"
-                )
+                raise ValueError(f"to_amount_bb must be null for action {action!r}")
         else:
             raise ValueError(f"unknown action {action!r}")
 
@@ -105,7 +108,13 @@ def normalize_strategy(
             )
         )
 
-    entries.sort(key=lambda e: (-e.frequency, e.action))
+    entries.sort(
+        key=lambda e: (
+            -e.frequency,
+            _ACTION_CONSERVATISM[e.action],
+            e.to_amount_bb if e.to_amount_bb is not None else 0.0,
+        )
+    )
     return entries
 
 
