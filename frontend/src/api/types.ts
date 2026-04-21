@@ -53,11 +53,18 @@ export interface EngineSnapshot {
   legal_actions: LegalAction[];
 }
 
+export interface StrategyEntry {
+  action: ActionType;
+  to_amount_bb: number | null;
+  frequency: number;
+}
+
 export interface Advice {
   action: ActionType;
   to_amount_bb?: number | null;
   reasoning: string;
   confidence: Confidence;
+  strategy?: StrategyEntry[] | null;
 }
 
 export interface PresetSummary {
