@@ -72,7 +72,7 @@ def test_v3_renders_live_pot() -> None:
 
     renderer = PromptRenderer(REPO_ROOT / "prompts")
     rendered = renderer.render("coach", "v3", variables)
-    assert "11.5" in rendered.rendered_prompt
+    assert "Pot (live, including this street): 11.5 bb" in rendered.rendered_prompt
 
 
 def test_v3_renders_payout_structure_when_provided() -> None:
