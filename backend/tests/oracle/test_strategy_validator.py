@@ -203,3 +203,40 @@ def test_polarized_sizing_preserved() -> None:
     assert len(out) == 3
     sizings = sorted(e.to_amount_bb for e in out if e.to_amount_bb is not None)
     assert sizings == [3.0, 7.0]
+
+
+import math
+
+
+def test_rejects_nan_frequency() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        normalize_strategy(
+            [{"action": "fold", "to_amount_bb": None, "frequency": float("nan")}],
+            legal_actions=[_la("fold")],
+            bb_chips=100,
+        )
+
+
+def test_rejects_nan_frequency_hidden_in_mix_that_sums_to_one() -> None:
+    # The dangerous silent-corruption case: fold=0.5 + check=NaN + call=0.5.
+    # Without the finite guard, NaN is silently dropped, fold+call sum to 1,
+    # tolerance passes, `check` disappears without warning.
+    with pytest.raises(ValueError, match="finite"):
+        normalize_strategy(
+            [
+                {"action": "fold", "to_amount_bb": None, "frequency": 0.5},
+                {"action": "check", "to_amount_bb": None, "frequency": float("nan")},
+                {"action": "call", "to_amount_bb": None, "frequency": 0.5},
+            ],
+            legal_actions=[_la("fold"), _la("check"), _la("call")],
+            bb_chips=100,
+        )
+
+
+def test_rejects_infinite_frequency() -> None:
+    with pytest.raises(ValueError, match="finite"):
+        normalize_strategy(
+            [{"action": "fold", "to_amount_bb": None, "frequency": math.inf}],
+            legal_actions=[_la("fold")],
+            bb_chips=100,
+        )
