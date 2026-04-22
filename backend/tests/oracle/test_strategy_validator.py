@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from poker_coach.engine.models import LegalAction
@@ -203,9 +205,6 @@ def test_polarized_sizing_preserved() -> None:
     assert len(out) == 3
     sizings = sorted(e.to_amount_bb for e in out if e.to_amount_bb is not None)
     assert sizings == [3.0, 7.0]
-
-
-import math
 
 
 def test_rejects_nan_frequency() -> None:

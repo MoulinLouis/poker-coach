@@ -458,9 +458,7 @@ def test_v3_decision_persists_v3_system_prompt(
 
         with migrated_engine.connect() as conn:
             row = conn.execute(
-                select(decisions.c.system_prompt).where(
-                    decisions.c.decision_id == decision_id
-                )
+                select(decisions.c.system_prompt).where(decisions.c.decision_id == decision_id)
             ).one()
 
         assert row.system_prompt is not None
