@@ -30,11 +30,7 @@ describe("LiveCoach — decision request shape", () => {
       default: "preset-a",
     });
     vi.spyOn(client, "createSession").mockResolvedValue({ session_id: "sess-1" });
-    vi.spyOn(client, "createHand").mockResolvedValue({
-      hand_id: "hand-1",
-      bb: 100,
-      effective_stack_start: 10_000,
-    });
+    vi.spyOn(client, "createHand").mockResolvedValue({ hand_id: "hand-1" });
     vi.spyOn(client, "engineStart").mockResolvedValue({
       state: {
         hand_id: "hand-1",
