@@ -54,3 +54,27 @@ def test_prompts_contain_icm_framework() -> None:
     for prompt in (SYSTEM_PROMPT_V2, SYSTEM_PROMPT_V3):
         assert "ICM" in prompt
         assert "payout" in prompt.lower()
+
+
+def test_v3_system_prompt_stays_above_anthropic_cache_threshold() -> None:
+    """Anthropic caching requires >=1024 input tokens on Sonnet/Opus, >=2048 on
+    Haiku. Below threshold, `cache_control` is a silent no-op. 3.5 chars/token is
+    a conservative average for English prose → assert >= 1024 * 3.5 = 3584 chars.
+
+    If this fails after trimming the prompt, either re-expand the prompt or
+    explicitly decide to drop caching for v3 (update CLAUDE.md gotcha #8).
+    """
+    min_chars = 3584
+    assert len(SYSTEM_PROMPT_V3) >= min_chars, (
+        f"SYSTEM_PROMPT_V3 is {len(SYSTEM_PROMPT_V3)} chars; "
+        f"below {min_chars} risks silently disabling Anthropic caching "
+        f"(see CLAUDE.md gotcha #8)"
+    )
+
+
+def test_v2_system_prompt_stays_above_anthropic_cache_threshold() -> None:
+    min_chars = 3584
+    assert len(SYSTEM_PROMPT_V2) >= min_chars, (
+        f"SYSTEM_PROMPT_V2 is {len(SYSTEM_PROMPT_V2)} chars; "
+        f"below {min_chars} risks silently disabling Anthropic caching"
+    )
