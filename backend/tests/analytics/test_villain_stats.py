@@ -311,6 +311,42 @@ def test_wtsd_excludes_fold_hands(migrated_engine: Engine) -> None:
     assert stats.wtsd_pct == 0.0
 
 
+def test_wtsd_excludes_hand_that_folds_on_river(migrated_engine: Engine) -> None:
+    """River-fold hand: board is fully dealt but trace ends on fold.
+
+    This is the case the `reached_showdown = len(board) == 5 and last_action != "fold"`
+    fix actually protects. Without the fix, villain would be counted as reaching
+    showdown whenever the board has 5 cards, inflating WTSD%.
+    """
+    session_id = _seed_session(migrated_engine)
+    river_fold_history = [
+        # Preflop: hero opens, villain calls.
+        {"actor": "hero", "type": "raise", "to_amount": 300},
+        {"actor": "villain", "type": "call", "to_amount": None},
+        # Flop: check-check.
+        {"actor": "villain", "type": "check", "to_amount": None},
+        {"actor": "hero", "type": "check", "to_amount": None},
+        # Turn: check-check.
+        {"actor": "villain", "type": "check", "to_amount": None},
+        {"actor": "hero", "type": "check", "to_amount": None},
+        # River: hero bets, villain folds.
+        {"actor": "villain", "type": "check", "to_amount": None},
+        {"actor": "hero", "type": "bet", "to_amount": 500},
+        {"actor": "villain", "type": "fold", "to_amount": None},
+    ]
+    for _ in range(10):
+        _insert_hand(
+            migrated_engine,
+            session_id,
+            river_fold_history,
+            board=["Ah", "7c", "2d", "5s", "Kh"],
+        )
+    stats = compute_villain_stats(migrated_engine, session_id)
+    assert stats.wtsd_pct == 0.0, (
+        "villain folded on the river → never reached showdown, WTSD% must be 0"
+    )
+
+
 def test_prompt_payload_shape_matches_template(migrated_engine: Engine) -> None:
     """Payload keys match what `coach/v2.md` references in the stats block."""
     payload = VillainStats.zero().as_prompt_payload()

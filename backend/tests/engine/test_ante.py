@@ -67,3 +67,37 @@ def test_ante_exceeds_bb_stack_rejected() -> None:
             hero_hole=("As", "Kd"),
             villain_hole=("Qc", "Qh"),
         )
+
+
+def test_bb_seat_short_of_ante_is_rejected() -> None:
+    """Villain is BB with stack=150; bb+ante=200 — not enough to post both.
+
+    `start_hand` uses `effective_resolved = min(hero_stack, villain_stack)`,
+    so this must raise regardless of which side is short. Explicitly name the
+    BB-short-of-ante case so future refactors don't silently re-allow it.
+    """
+    with pytest.raises(ValueError, match="must cover bb"):
+        start_hand(
+            hero_stack=10_000,
+            villain_stack=150,  # BB (button=hero → villain=BB) can't cover 100+100
+            bb=100,
+            ante=100,
+            button="hero",
+            hero_hole=("As", "Kd"),
+            villain_hole=("Qc", "Qh"),
+        )
+
+
+def test_button_seat_short_of_ante_is_rejected() -> None:
+    """Symmetric case: hero is button, hero_stack=150 (short of SB+ante=150
+    by any play-through safety margin)."""
+    with pytest.raises(ValueError, match="must cover bb"):
+        start_hand(
+            hero_stack=150,
+            villain_stack=10_000,
+            bb=100,
+            ante=100,
+            button="hero",
+            hero_hole=("As", "Kd"),
+            villain_hole=("Qc", "Qh"),
+        )

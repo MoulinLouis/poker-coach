@@ -53,7 +53,9 @@ _RUNOUT_POOL = [
 
 
 def _initial_total_chips(state: GameState) -> int:
-    return 2 * state.effective_stack
+    # Stacks can be asymmetric; derive total from the starting stacks
+    # recorded on the state.
+    return state.hero_stack_start + state.villain_stack_start
 
 
 def _chips_accounted(state: GameState) -> int:
@@ -93,25 +95,47 @@ def _safe_runout_cards(state: GameState, n: int) -> list[str]:
 def played_hand(draw: st.DrawFn) -> list[GameState]:
     """Strategy: play a full hand using only legal actions, returning the
     sequence of states visited (including start and terminal).
+
+    Explores both the legacy symmetric `effective_stack` path AND the new
+    independent-stacks shape, with antes up to `bb` (canonical BB-ante format).
     """
-    effective_stack = draw(st.integers(min_value=200, max_value=50_000))
     bb = draw(st.sampled_from([100, 200, 1_000]))
-    if effective_stack <= bb:
-        effective_stack = bb + bb
-    ante = draw(st.sampled_from([0, 50]))
-    # Ensure BB stack can cover blind + ante.
-    if effective_stack - bb - ante <= 0:
-        effective_stack = bb + ante + bb
+    # Ante can now equal bb (canonical BB-ante) or exceed it slightly.
+    ante = draw(st.sampled_from([0, 25, 50, 100, 200]))
     button: Seat = draw(st.sampled_from(["hero", "villain"]))
     rng_seed = draw(st.integers(min_value=0, max_value=2**30))
 
-    state = start_hand(
-        effective_stack=effective_stack,
-        bb=bb,
-        ante=ante,
-        button=button,
-        rng_seed=rng_seed,
-    )
+    # Mix legacy + new-shape draws so both code paths are explored.
+    use_independent_stacks = draw(st.booleans())
+    if use_independent_stacks:
+        hero_stack = draw(st.integers(min_value=200, max_value=50_000))
+        villain_stack = draw(st.integers(min_value=200, max_value=50_000))
+        # Ensure BOTH stacks cover blinds + ante; the engine's
+        # `effective_stack_resolved = min(...)` must be > bb + ante.
+        min_required = bb + ante + bb
+        if hero_stack < min_required:
+            hero_stack = min_required
+        if villain_stack < min_required:
+            villain_stack = min_required
+        state = start_hand(
+            hero_stack=hero_stack,
+            villain_stack=villain_stack,
+            bb=bb,
+            ante=ante,
+            button=button,
+            rng_seed=rng_seed,
+        )
+    else:
+        effective_stack = draw(st.integers(min_value=200, max_value=50_000))
+        if effective_stack - bb - ante <= 0:
+            effective_stack = bb + ante + bb
+        state = start_hand(
+            effective_stack=effective_stack,
+            bb=bb,
+            ante=ante,
+            button=button,
+            rng_seed=rng_seed,
+        )
     visited = [state]
     for _ in range(100):
         if state.street in ("showdown", "complete") and state.pending_reveal is None:

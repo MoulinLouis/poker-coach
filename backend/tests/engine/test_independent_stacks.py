@@ -77,3 +77,36 @@ def test_cannot_provide_both_shapes() -> None:
             button="hero",
             hero_hole=("As", "Kd"),
         )
+
+
+def test_ante_with_asymmetric_stacks_preserves_chip_conservation() -> None:
+    """Ante + independent stacks: posting should subtract exactly the right
+    amounts from each seat and add them to the pot.
+
+    Setup: hero stack 5000, villain stack 8000, bb=100, ante=100, button=hero.
+    → hero (SB) posts 50 SB = 50. hero stack after = 4950.
+    → villain (BB) posts 100 BB + 100 ante = 200. villain stack after = 7800.
+    → committed: hero=50, villain=100. pot = 100 (ante only; blinds are live).
+    Total chips = 4950 + 7800 + 50 + 100 + 100 = 13000 = 5000 + 8000.
+    """
+    state = start_hand(
+        hero_stack=5000,
+        villain_stack=8000,
+        bb=100,
+        ante=100,
+        button="hero",
+        hero_hole=("As", "Kd"),
+        villain_hole=("Qc", "Qh"),
+    )
+    total = sum(state.stacks.values()) + state.pot + sum(state.committed.values())
+    assert total == 13_000, (
+        f"chip conservation broken: stacks={state.stacks} pot={state.pot} "
+        f"committed={state.committed} total={total}"
+    )
+    # Specific amounts per seat:
+    assert state.stacks["hero"] == 4_950, (
+        f"hero posted 50 SB, stack should be 4950, got {state.stacks['hero']}"
+    )
+    assert state.stacks["villain"] == 7_800, (
+        f"villain posted 100 BB + 100 ante, stack should be 7800, got {state.stacks['villain']}"
+    )

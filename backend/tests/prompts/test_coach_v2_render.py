@@ -115,4 +115,4 @@ def test_v2_renders_live_pot() -> None:
 
     renderer = PromptRenderer(PROMPTS_ROOT)
     rendered = renderer.render("coach", "v2", variables)
-    assert "11.5" in rendered.rendered_prompt
+    assert "Pot (live, including this street): 11.5 bb" in rendered.rendered_prompt

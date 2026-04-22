@@ -14,6 +14,7 @@ The output is sorted descending by frequency so the argmax is always first.
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from typing import Any
 
@@ -76,6 +77,8 @@ def normalize_strategy(
         else:
             raise ValueError(f"unknown action {action!r}")
 
+        if not math.isfinite(frequency):
+            raise ValueError(f"frequency must be finite in entry {i} (got {frequency})")
         if frequency < 0:
             raise ValueError(f"negative frequency in entry {i}")
 

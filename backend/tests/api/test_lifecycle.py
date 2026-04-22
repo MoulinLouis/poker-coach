@@ -423,6 +423,52 @@ def test_v2_decision_persists_villain_profile_and_system_prompt(
         assert "reg" in row.rendered_prompt
 
 
+def test_v3_decision_persists_v3_system_prompt(
+    app_with_factory: Any, migrated_engine: Engine
+) -> None:
+    """POST /api/decisions with prompt_version=v3 must store the v3 system prompt.
+
+    Regression guard for the v3 system-prompt split (commit ee0687f):
+    - decisions.system_prompt must NOT contain "Never randomize" (that's a v2-ism)
+    - decisions.system_prompt MUST contain mixed-strategy framing
+    Purely checking `system_prompt_for` in isolation is not enough — the route
+    must actually wire it.
+    """
+    with TestClient(app_with_factory) as client:
+        session_id = client.post("/api/sessions", json={"mode": "live"}).json()["session_id"]
+        hand_id = client.post(
+            "/api/hands",
+            json={"session_id": session_id, "bb": 100, "effective_stack_start": 10_000},
+        ).json()["hand_id"]
+
+        resp = client.post(
+            "/api/decisions",
+            json={
+                "session_id": session_id,
+                "hand_id": hand_id,
+                "model_preset": "claude-opus-4-7-deep",
+                "prompt_name": "coach",
+                "prompt_version": "v3",
+                "game_state": _sample_game_state(),
+                "villain_profile": "reg",
+            },
+        )
+        assert resp.status_code == 200
+        decision_id = resp.json()["decision_id"]
+
+        with migrated_engine.connect() as conn:
+            row = conn.execute(
+                select(decisions.c.system_prompt).where(decisions.c.decision_id == decision_id)
+            ).one()
+
+        assert row.system_prompt is not None
+        # v3 dropped "Never randomize" and "Never output two actions"
+        assert "Never randomize" not in row.system_prompt
+        assert "Never output two actions" not in row.system_prompt
+        # v3 explicitly mentions mixed strategy output
+        assert "mixed strategy" in row.system_prompt.lower()
+
+
 def test_v2_decision_rejects_invalid_villain_profile(app_with_factory: Any) -> None:
     with TestClient(app_with_factory) as client:
         session_id = client.post("/api/sessions", json={"mode": "spot"}).json()["session_id"]

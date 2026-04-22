@@ -3,14 +3,17 @@
 - Hero's hole cards: As Kd
 - Board: Ah 7c 2d
 - Button (small blind): hero
+- Ante (BB posts): 0.0 bb
 - Pot (settled prior streets): 6.0 bb
 - Pot (live, including this street): 6.0 bb
-- Effective stack (starting): 100.0 bb
+- Starting stacks: hero 100.0 bb, villain 100.0 bb (effective 100.0 bb)
 - Hero stack behind: 97.0 bb
 - Villain stack behind: 97.0 bb
 - Hero committed this street: 0.0 bb
 - Villain committed this street: 0.0 bb
 - Stack depth: standard (SPR 16.7)
+
+
 
 ## Villain profile
 unknown
