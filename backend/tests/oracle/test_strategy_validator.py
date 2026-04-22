@@ -240,3 +240,63 @@ def test_rejects_infinite_frequency() -> None:
             legal_actions=[_la("fold")],
             bb_chips=100,
         )
+
+
+def test_argmax_non_tie_uses_frequency_not_conservatism() -> None:
+    """Sanity: when frequencies differ (even slightly), higher-freq wins.
+
+    Conservatism tie-break must NOT override a real frequency margin —
+    otherwise fold would always win everything.
+    """
+    out = normalize_strategy(
+        [
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 0.51},
+            {"action": "fold", "to_amount_bb": None, "frequency": 0.49},
+        ],
+        legal_actions=[_la("fold"), _la("bet", 1.0, 100.0)],
+        bb_chips=100,
+    )
+    assert out[0].action == "bet", "higher frequency wins, conservatism is only a tiebreaker"
+
+
+def test_argmax_near_tie_still_follows_frequency() -> None:
+    """A 0.5001 vs 0.4999 split is NOT an exact tie — frequency decides."""
+    out = normalize_strategy(
+        [
+            {"action": "call", "to_amount_bb": None, "frequency": 0.5001},
+            {"action": "fold", "to_amount_bb": None, "frequency": 0.4999},
+        ],
+        legal_actions=[_la("fold"), _la("call")],
+        bb_chips=100,
+    )
+    assert out[0].action == "call"
+
+
+def test_argmax_three_way_tie_full_ordering() -> None:
+    """fold/call/bet three-way tie resolves fold -> call -> bet (conservatism)."""
+    out = normalize_strategy(
+        [
+            {"action": "fold", "to_amount_bb": None, "frequency": 0.333},
+            {"action": "call", "to_amount_bb": None, "frequency": 0.334},
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 0.333},
+        ],
+        legal_actions=[_la("fold"), _la("call"), _la("bet", 1.0, 100.0)],
+        bb_chips=100,
+    )
+    # call has 0.001 more → it wins first on frequency. fold and bet truly tie
+    # at 0.333, conservatism picks fold next.
+    assert [e.action for e in out] == ["call", "fold", "bet"]
+
+
+def test_argmax_exact_three_way_tie_full_ordering() -> None:
+    """Three-way exact tie must resolve by conservatism across ALL positions."""
+    out = normalize_strategy(
+        [
+            {"action": "bet", "to_amount_bb": 3.0, "frequency": 1 / 3},
+            {"action": "fold", "to_amount_bb": None, "frequency": 1 / 3},
+            {"action": "call", "to_amount_bb": None, "frequency": 1 / 3},
+        ],
+        legal_actions=[_la("fold"), _la("call"), _la("bet", 1.0, 100.0)],
+        bb_chips=100,
+    )
+    assert [e.action for e in out] == ["fold", "call", "bet"]
